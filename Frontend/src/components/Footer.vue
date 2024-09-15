@@ -1,6 +1,6 @@
 <template>
     <footer class="footer">
-        <p class="text-left">© 2024 Southwest Airlines Operations Website. All rights reserved.</p>
+        <p class="text-left">© 2024 All-in-One Operations Website. All rights reserved.</p>
     </footer>
   </template>
   

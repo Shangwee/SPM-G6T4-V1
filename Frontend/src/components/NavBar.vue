@@ -21,8 +21,8 @@
         <div id="navbarSupportedContent" class="collapse navbar-collapse">
           <ul class="navbar-nav ml-auto">
             <li class="nav-item btn nav-link navbar-btn-hover" :class="{ 'navbar-btn-active': activeButton === 'Own Schedule' }" @click="handleOwnSchedule">My Schedule</li>
-            <li class="nav-item btn nav-link navbar-btn-hover" :class="{ 'navbar-btn-active': activeButton === 'Passenger Reassignment' }" @click="handlePassengerReassignment">Passenger Reassignment</li>
-            <li class="nav-item btn nav-link navbar-btn-hover" :class="{ 'navbar-btn-active': activeButton === 'Dashboards Analysis' }" @click="handleDashboards">Dashboard</li>
+            <li class="nav-item btn nav-link navbar-btn-hover" :class="{ 'navbar-btn-active': activeButton === 'Team Schedule' }" @click="handleTeamSchedule">Team Schedule</li>
+            <li class="nav-item btn nav-link navbar-btn-hover" :class="{ 'navbar-btn-active': activeButton === 'Arrangements' }" @click="handleArrangements">Arrangements</li>
            
             <li class="nav-item btn ml-3 nav-link navbar-btn" @click="handleLogin">Logout</li>
           </ul>
@@ -51,14 +51,14 @@
         activeButton.value = 'Own Schedule';
       };
   
-      const handlePassengerReassignment = () => {
-        router.push('/passengerreassignment');
-        activeButton.value = 'Passenger Reassignment';
+      const handleTeamSchedule = () => {
+        router.push('/teamschedule');
+        activeButton.value = 'Team Schedule';
       };
   
-      const handleDashboards = () => {
-        router.push('/dashboards');
-        activeButton.value = 'Dashboards Analysis';
+      const handleArrangements = () => {
+        router.push('/arrangements');
+        activeButton.value = 'Arrangements';
       };
   
       const handleLogin = async () => {
@@ -84,7 +84,7 @@
         }
       });
   
-      return { handleOwnSchedule, handlePassengerReassignment, handleDashboards, handleLogin, activeButton };
+      return { handleOwnSchedule, handleTeamSchedule, handleArrangements, handleLogin, activeButton };
     },
   };
   </script>
