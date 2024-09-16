@@ -1,7 +1,7 @@
 <template>
     <nav class="navbar navbar-expand-lg py-3 navbar-white bg-white border rounded-2 border-2 shadow-sm fixed-top">
       <div class="container">
-        <router-link to="/home" class="navbar-brand">
+        <router-link to="/" class="navbar-brand">
           <!-- <img src="../assets/Southwest-Airlines-Logo.png" width="100" alt="" class="d-inline-block align-middle mr-2"> -->
            <h3 class="text-primary">All-in-One</h3>
         </router-link>
@@ -22,7 +22,14 @@
           <ul class="navbar-nav ml-auto">
             <li class="nav-item btn nav-link navbar-btn-hover" :class="{ 'navbar-btn-active': activeButton === 'Own Schedule' }" @click="handleOwnSchedule">My Schedule</li>
             <li class="nav-item btn nav-link navbar-btn-hover" :class="{ 'navbar-btn-active': activeButton === 'Team Schedule' }" @click="handleTeamSchedule">Team Schedule</li>
-            <li class="nav-item btn nav-link navbar-btn-hover" :class="{ 'navbar-btn-active': activeButton === 'Arrangements' }" @click="handleArrangements">Arrangements</li>
+            <li v-if="userRole === 2"
+            class="nav-item btn nav-link navbar-btn-hover" :class="{ 'navbar-btn-active': activeButton === 'Arrangements' }" @click="handleArrangements">Arrangements</li>
+
+            <li v-if="userRole === 3"
+            class="nav-item btn nav-link navbar-btn-hover" :class="{ 'navbar-btn-active': activeButton === 'Requests' }" @click="handleRequests">Requests</li>
+
+            
+
            
             <li class="nav-item btn ml-3 nav-link navbar-btn" @click="handleLogin">Logout</li>
           </ul>
@@ -45,6 +52,18 @@
       const router = useRouter();
       const activeButton = ref(null);
       const isBootstrapLoaded = ref(false);
+      const userRole = ref(null);
+
+      // Fetch user role from backend
+      const fetchUserRole = async () => {
+        try {
+          const response = await fetch('/api/user');
+          const data = await response.json();
+          userRole.value = data.role; // Set the user role based on the fetched data
+        } catch (error) {
+          console.error('Failed to fetch user role:', error);
+        }
+      };
   
       const handleOwnSchedule = () => {
         router.push('/ownschedule');
@@ -60,6 +79,11 @@
         router.push('/arrangements');
         activeButton.value = 'Arrangements';
       };
+
+      const handleRequests = () => {
+        router.push('/requests');
+        activeButton.value = 'Requests'
+      }
   
       const handleLogin = async () => {
         // Implement your login logic here
@@ -72,6 +96,7 @@
           isBootstrapLoaded.value = true;
         }
         console.log('Bootstrap loaded:', isBootstrapLoaded.value);
+        fetchUserRole();
       });
   
       watch(isBootstrapLoaded, (loaded) => {
@@ -84,7 +109,7 @@
         }
       });
   
-      return { handleOwnSchedule, handleTeamSchedule, handleArrangements, handleLogin, activeButton };
+      return { handleOwnSchedule, handleTeamSchedule, handleArrangements, handleLogin, handleRequests, activeButton , userRole};
     },
   };
   </script>

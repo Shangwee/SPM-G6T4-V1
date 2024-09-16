@@ -4,17 +4,17 @@ import Login  from "@/components/Login.vue";
 import OwnSchedule from "@/components/OwnSchedule.vue";
 import TeamSchedule from "@/components/TeamSchedule.vue";
 import Arrangements from "@/components/Arrangements.vue";
-
+import Requests from "@/components/Requests.vue";
 
 
 const routes = [
     {
-        path: '/',
+        path: '/login',
         name: 'Login',
         component: Login
     },
     {
-        path: '/home',
+        path: '/',
         name: 'Home',
         component: Home
     },
@@ -28,13 +28,17 @@ const routes = [
         name: 'OwnSchedule',
         component: OwnSchedule
     },
-      
+    {
+        path: '/requests',
+        name: 'Requests',
+        component: Requests
+    },
 
-      {
-        path: '/arrangements', 
-        name: 'Arrangements',
-        component: Arrangements,
-      }
+    {
+    path: '/arrangements', 
+    name: 'Arrangements',
+    component: Arrangements,
+    }
 
 
 ]
