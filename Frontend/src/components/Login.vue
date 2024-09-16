@@ -5,8 +5,8 @@
                 <form @submit.prevent="login">
                     <h2>Login</h2>
                     <div class="input-group">
-                        <label for="username">Username</label>
-                        <input type="text" id="username" v-model="credentials.username" required>
+                        <label for="staffID">Staff ID</label>
+                        <input type="text" id="staffID" v-model="credentials.staffID" required>
                     </div>
                     <div class="input-group">
                         <label for="password">Password</label>
@@ -31,22 +31,49 @@ export default {
     data() {
         return {
             credentials: {
-                username: '',
+                staffID: '',
                 password: ''
             }
         };
     },
     methods: {
-        login() {
-            // default username and password for login
-            if (this.credentials.username === '123' && this.credentials.password === '123') {
-                console.log('Login successful');
-                this.$router.push({ name: 'Home' });
-            } else {
-                alert('Incorrect username or password!');
-            }
+    //     login() {
+    //         // default username and password for login
+    //         if (this.credentials.username === '123' && this.credentials.password === '123') {
+    //             console.log('Login successful');
+    //             this.$router.push({ name: 'Home' });
+    //         } else {
+    //             alert('Incorrect username or password!');
+    //         }
+    //     }
+    // }
+    async login() {
+      try {
+        const response = await fetch('http://localhost:3000/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            staffID: this.staffID,
+            password: this.password,
+          }),
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+          // On success, redirect or store token
+          console.log('Login successful:', data);
+          // Redirect user to dashboard or homepage
+          this.$router.push('/home');
+        } else {
+          this.errorMessage = data.message;
         }
-    }
+      } catch (error) {
+        this.errorMessage = 'Login failed, please try again.';
+      }
+    },
+  },
 };
 </script>
 
