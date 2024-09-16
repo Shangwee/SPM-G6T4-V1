@@ -5,6 +5,7 @@ import OwnSchedule from "@/components/OwnSchedule.vue";
 import TeamSchedule from "@/components/TeamSchedule.vue";
 import Arrangements from "@/components/Arrangements.vue";
 import Requests from "@/components/Requests.vue";
+import Notifications from "@/components/Notifications.vue";
 
 
 const routes = [
@@ -35,10 +36,15 @@ const routes = [
     },
 
     {
-    path: '/arrangements', 
-    name: 'Arrangements',
-    component: Arrangements,
-    }
+        path: '/arrangements', 
+        name: 'Arrangements',
+        component: Arrangements,
+    },
+    {
+        path: '/notifications',
+        name: 'Notifications',
+        component: Notifications,
+    },
 
 
 ]

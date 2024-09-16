@@ -28,6 +28,8 @@
             <li v-if="userRole === 3"
             class="nav-item btn nav-link navbar-btn-hover" :class="{ 'navbar-btn-active': activeButton === 'Requests' }" @click="handleRequests">Requests</li>
 
+            <li class="nav-item btn nav-link navbar-btn-hover" :class="{ 'navbar-btn-active': activeButton === 'Notifications' }" @click="handleNotifications">Notifications</li>
+
             
 
            
@@ -82,13 +84,18 @@
 
       const handleRequests = () => {
         router.push('/requests');
-        activeButton.value = 'Requests'
+        activeButton.value = 'Requests';
       }
   
       const handleLogin = async () => {
         // Implement your login logic here
         router.push('/')
       };
+
+      const handleNotifications = async () => {
+        router.push('/notifications');
+        activeButton.value = 'Notifications';
+      }
   
       onMounted(() => {
         // Check if Bootstrap is loaded
@@ -109,7 +116,7 @@
         }
       });
   
-      return { handleOwnSchedule, handleTeamSchedule, handleArrangements, handleLogin, handleRequests, activeButton , userRole};
+      return { handleOwnSchedule, handleTeamSchedule, handleArrangements, handleLogin, handleRequests, handleNotifications, activeButton , userRole};
     },
   };
   </script>
