@@ -33,3 +33,64 @@ services:
     volumes:
       - ./Account/db/account.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
       - ./Account/employee.csv:/var/lib/mysql-files/employee.csv  # Mount the file
+
+  #################################
+  # Schedule: The Schedule microservice
+  #################################
+  schedule:
+    build: ./Schedule
+    image: SPM/schedule:1.0
+    restart: always
+    ports: [5002:5000]
+    depends_on:
+      - schedule_db
+    environment:
+      DB_HOST: schedule_db
+      DB_USER: root
+      DB_PASSWORD: ""
+      DB_NAME: db
+      DB_PORT: 3306
+  #################################
+  # Schedule SQL Database
+  #################################
+  schedule_db:
+    image: mysql:latest
+    restart: always
+    ports: [3302:3306]
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+      MYSQL_DATABASE: db
+    volumes:
+      - ./Schedule/db/schedule.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
+      - ./Schedule/schedule.csv:/var/lib/mysql-files/schedule.csv # Mount the file
+
+
+  #################################
+  # Request: The Request microservice
+  #################################
+  request:
+    build: ./Request
+    image: SPM/request:1.0
+    restart: always
+    ports: [5003:5000]
+    depends_on:
+      - request_db
+    environment:
+      DB_HOST: request_db
+      DB_USER: root
+      DB_PASSWORD: ""
+      DB_NAME: db
+      DB_PORT: 3306
+  #################################
+  # Request SQL Database
+  #################################
+  request_db:
+    image: mysql:latest
+    restart: always
+    ports: [3303:3306]
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+      MYSQL_DATABASE: db
+    volumes:
+      - ./Request/db/request.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
+      - ./Request/request.csv:/var/lib/mysql-files/request.csv # Mount the file
