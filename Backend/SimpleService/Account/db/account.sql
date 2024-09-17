@@ -19,5 +19,5 @@ CREATE TABLE Employee (
 LOAD DATA INFILE '/var/lib/mysql-files/employee.csv'
 INTO TABLE Employee
 FIELDS TERMINATED BY ','
-LINES TERMINATED BY '\n'
+LINES TERMINATED BY '\r\n'
 IGNORE 1 ROWS;

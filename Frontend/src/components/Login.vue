@@ -17,10 +17,9 @@
             </div>
             <div class="text-section">
                 <div class="border rounded-3 border-2 border-light p-2 bg-opacity-75 bg-white">
-                    <h2>Welcome to Southwest Airlines Operations Crew Scheduling System</h2>
+                    <h2>Welcome to Work-From-Home Management System</h2>
                     <p>Enter your login details to start accessing.</p>
                 </div>
-                
             </div>
         </div>
     </div>
@@ -37,43 +36,32 @@ export default {
         };
     },
     methods: {
-    //     login() {
-    //         // default username and password for login
-    //         if (this.credentials.username === '123' && this.credentials.password === '123') {
-    //             console.log('Login successful');
-    //             this.$router.push({ name: 'Home' });
-    //         } else {
-    //             alert('Incorrect username or password!');
-    //         }
-    //     }
-    // }
-    async login() {
-      try {
-        const response = await fetch('http://localhost:3000/api/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            staffID: this.staffID,
-            password: this.password,
-          }),
-        });
-        const data = await response.json();
+        async login() {
+            try {
+                const response = await fetch('http://localhost:5001/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(this.credentials),
+                });
+                const data = await response.json();
 
-        if (response.ok) {
-          // On success, redirect or store token
-          console.log('Login successful:', data);
-          // Redirect user to dashboard or homepage
-          this.$router.push('/home');
-        } else {
-          this.errorMessage = data.message;
-        }
-      } catch (error) {
-        this.errorMessage = 'Login failed, please try again.';
-      }
+                if (response.ok) {
+                    //add data into session 
+                    sessionStorage.setItem('staffID', data.Staff_ID);
+                    sessionStorage.setItem('role', data.Role);
+
+                    // Redirect user to dashboard or homepage
+                    this.$router.push('/');
+                } else {
+                    this.errorMessage = data.message;
+                }
+            } catch (error) {
+                this.errorMessage = 'Login failed, please try again.';
+            }
+        },
     },
-  },
 };
 </script>
 
@@ -83,7 +71,7 @@ export default {
     justify-content: center;
     margin-top: 200px;
 
-  
+
 }
 
 .card-container {
@@ -140,9 +128,10 @@ button {
 button:hover {
     background-color: #3f51b5;
 }
+
 .img {
-  width: 50%;
-  height: 100%;
-  overflow: hidden;
+    width: 50%;
+    height: 100%;
+    overflow: hidden;
 }
 </style>

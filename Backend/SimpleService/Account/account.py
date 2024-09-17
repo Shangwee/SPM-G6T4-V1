@@ -21,14 +21,14 @@ def create_user():
     data = request.get_json()
 
     # ** Extract the data from the request
-    staff_fname = data['Staff_FName']
-    staff_lname = data['Staff_LName']
-    dept = data['Dept']
-    position = data['Position']
-    country = data['Country']
-    email = data['Email']
-    password = data['Password']
-    role = data['Role']
+    staff_fname = data['taff_FName']
+    staff_lname = data['staff_LName']
+    dept = data['dept']
+    position = data['position']
+    country = data['country']
+    email = data['email']
+    password = data['password']
+    role = data['role']
     if 'Reporting_Manager' in data:
         reporting_manager = data['Reporting_Manager']
     else:
@@ -119,13 +119,13 @@ def get_users():
         return jsonify({'error': str(e)}), 500
 
 # ** Get a single user by ID (READ)
-@app.route('/users/<int:staff_id>', methods=['GET'])
+@app.route('/user/<int:staff_id>', methods=['GET'])
 def get_user(staff_id):
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor(dictionary=True)
         cursor.execute('''
-            SELECT Staff_ID, Staff_FName, Staff_LName, Dept, Position, Country, Email, Reporting_Manager, Role
+            SELECT Staff_ID, Staff_FName, Staff_LName, Dept, Position, Country, Email, Reporting_Manager, Role, Password
             FROM Employee
             WHERE Staff_ID = %s
         ''', (staff_id,))
@@ -142,7 +142,7 @@ def get_user(staff_id):
         return jsonify({'error': str(e)}), 500
     
 # ** Delete a user by ID (DELETE)
-@app.route('/users/<int:staff_id>', methods=['DELETE'])
+@app.route('/user/<int:staff_id>', methods=['DELETE'])
 def delete_user(staff_id):
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
@@ -168,24 +168,33 @@ def delete_user(staff_id):
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    staffID = data['StaffID']
-    password = data['Password']
+
+    staffID = data['staffID']
+    password = data['password']
+
 
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor(dictionary=True)
+
     cursor.execute('''
         SELECT Staff_ID, Staff_FName, Staff_LName, Dept, Position, Country, Email, Reporting_Manager, Role
         FROM Employee
         WHERE Staff_ID = %s AND Password = %s
     ''', (staffID, password))
+
+    # ** Fetch the user
     user = cursor.fetchone()
+
+    # ** close the cursor and connection
     cursor.close()
     conn.close()
 
     if user:
         return jsonify(user), 200
     else:
-        return jsonify({'message': 'Invalid credentials'}), 401
+        return jsonify({'error': 'Invalid credentials'}), 401
+
+
     
 # ** counting the number of users based on the query without pagination
 def get_count_by_query(query):

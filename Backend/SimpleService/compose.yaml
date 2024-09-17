@@ -39,7 +39,7 @@ services:
   #################################
   schedule:
     build: ./Schedule
-    image: SPM/schedule:1.0
+    image: spm/schedule:1.0
     restart: always
     ports: [5002:5000]
     depends_on:
@@ -47,7 +47,7 @@ services:
     environment:
       DB_HOST: schedule_db
       DB_USER: root
-      DB_PASSWORD: ""
+      DB_PASSWORD: root
       DB_NAME: db
       DB_PORT: 3306
   #################################
@@ -58,7 +58,7 @@ services:
     restart: always
     ports: [3302:3306]
     environment:
-      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+      MYSQL_ROOT_PASSWORD: root 
       MYSQL_DATABASE: db
     volumes:
       - ./Schedule/db/schedule.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
@@ -70,7 +70,7 @@ services:
   #################################
   request:
     build: ./Request
-    image: SPM/request:1.0
+    image: spm/request:1.0
     restart: always
     ports: [5003:5000]
     depends_on:
@@ -78,7 +78,7 @@ services:
     environment:
       DB_HOST: request_db
       DB_USER: root
-      DB_PASSWORD: ""
+      DB_PASSWORD: root
       DB_NAME: db
       DB_PORT: 3306
   #################################
@@ -89,7 +89,7 @@ services:
     restart: always
     ports: [3303:3306]
     environment:
-      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+      MYSQL_ROOT_PASSWORD: root 
       MYSQL_DATABASE: db
     volumes:
       - ./Request/db/request.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
