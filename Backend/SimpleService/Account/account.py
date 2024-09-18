@@ -21,7 +21,7 @@ def create_user():
     data = request.get_json()
 
     # ** Extract the data from the request
-    staff_fname = data['taff_FName']
+    staff_fname = data['staff_FName']
     staff_lname = data['staff_LName']
     dept = data['dept']
     position = data['position']
