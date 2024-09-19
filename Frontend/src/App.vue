@@ -1,15 +1,15 @@
 <script setup>
 
 import Footer from './components/Footer.vue'
-import NavBar from './components/NavBar.vue';
+
 </script>
 
 <template>
-  <router-view></router-view>
-
-  <img src="./assets/background.jpg" class="bottom-image">
-  <Footer></Footer>
-
+  <div>
+    <router-view></router-view>
+    <img src="./assets/background.jpg" class="bottom-image">
+    <Footer></Footer>
+  </div>
 </template>
 
 <style scoped>
