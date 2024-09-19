@@ -13,7 +13,7 @@
           <h3 class="mb-3">Team Schedule</h3> <!-- Remove bottom margin to bring closer to the button -->
         </div>
         <div class="col-12 col-md-8 calendar-wrapper">
-          <Calander></Calander>
+          <Calander scheduleType="team"></Calander>
         </div>
       </div>
       <br>

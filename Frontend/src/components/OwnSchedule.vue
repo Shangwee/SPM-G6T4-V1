@@ -12,7 +12,7 @@ import Calander from "./Calander.vue";
           <h3 class="mb-3">My Schedule</h3> <!-- Remove bottom margin to bring closer to the button -->
         </div>
         <div class="col-12 col-md-8 calendar-wrapper">
-          <Calander></Calander>
+          <Calander scheduleType="user"></Calander>
         </div>
       </div>
       <br>
@@ -24,7 +24,7 @@ import Calander from "./Calander.vue";
 export default {
   data() {
     return {
-      
+
     };
   },
 

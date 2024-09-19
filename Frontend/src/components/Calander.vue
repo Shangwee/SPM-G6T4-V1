@@ -30,12 +30,33 @@
   
   <script>
   export default {
+    props: {
+        scheduleType: {
+            type: String,
+            required: true,
+            validator: value => ['user', 'team'].includes(value),
+        },
+    },
     data() {
       return {
         currentDate: new Date(), // Current date initialized
         selectedDay: null,
+        staffId: null,
       };
     },
+    created() {
+        this.staffId = sessionStorage.getItem('staffID'); // Retrieve Staff_ID
+        if (this.staffId) {
+        console.log('Staff ID:', this.staffId); // Example usage
+        } else {
+        console.error('No Staff ID found.'); // Handle the case when Staff_ID is not found
+        }
+        if (this.scheduleType === 'user') {
+            this.fetchUserSchedule();
+        } else {
+            this.fetchTeamSchedule();
+        }
+    },  
     computed: {
       currentYear() {
         return this.currentDate.getFullYear();
@@ -68,6 +89,16 @@
       },
     },
     methods: {
+        
+        fetchUserSchedule() {
+        // Logic to fetch user's schedule using this.staffId
+        console.log('Fetching user schedule for Staff ID:', this.staffId);
+        },
+        fetchTeamSchedule() {
+        // Logic to fetch team's schedule using this.staffId
+        console.log('Fetching team schedule for Staff ID:', this.staffId);
+        },
+
       selectDay(day) {
         if (day) {
           this.selectedDay = day;
