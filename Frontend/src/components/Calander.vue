@@ -88,8 +88,16 @@
         return days;
       },
     },
+    mounted() {
+    // Add a global click event listener
+        document.addEventListener('click', this.handleOutsideClick);
+    },
+    beforeUnmount() {
+        // Clean up the event listener when the component is destroyed
+        document.removeEventListener('click', this.handleOutsideClick);
+    },
     methods: {
-        
+        // SECTION TO EDIT FOR BACKEND
         fetchUserSchedule() {
         // Logic to fetch user's schedule using this.staffId
         console.log('Fetching user schedule for Staff ID:', this.staffId);
@@ -102,9 +110,16 @@
       selectDay(day) {
         if (day) {
           this.selectedDay = day;
-          alert(`You selected: ${day} ${this.currentMonthName}, ${this.currentYear}`);
+        //   alert(`You selected: ${day} ${this.currentMonthName}, ${this.currentYear}`);
         }
       },
+        // Method to deselect the day if clicked outside of the calendar
+        handleOutsideClick(event) {
+        const calendar = this.$el;
+        if (!calendar.contains(event.target)) {
+            this.deselectDay();
+        }
+        },
       deselectDay() {
         this.selectedDay = null; // Clear the selected day
       },
