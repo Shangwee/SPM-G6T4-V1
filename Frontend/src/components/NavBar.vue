@@ -109,13 +109,16 @@
   
       onMounted(() => {
         // Check if Bootstrap is loaded
-        if (window.bootstrap && window.bootstrap.Collapse) {
-          isBootstrapLoaded.value = true;
-        }
-        console.log('Bootstrap loaded:', isBootstrapLoaded.value);
-        fetchUserRole();
-        checkLoggedIn();
+        window.addEventListener('load', () => {
+          if (window.bootstrap && window.bootstrap.Collapse) {
+            isBootstrapLoaded.value = true;
+          }
+          console.log('Bootstrap loaded:', isBootstrapLoaded.value);
+          fetchUserRole();
+          checkLoggedIn();
+        });
       });
+
   
       watch(isBootstrapLoaded, (loaded) => {
         if (loaded) {
