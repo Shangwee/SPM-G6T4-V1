@@ -15,8 +15,37 @@ db_config = {
     'database': environ.get('DB_NAME')
 }
 
-# Get all schedules
-@app.route('/schedules', methods=['GET'])
+# Create new schedule (Create)
+@app.route('/schedule', methods=['POST'])
+def create_schedule():
+    data = request.get_json()
+
+    staff_id = data["staff_id"]
+    request_id = data["request_id"]
+    date = data["date"]
+
+    if not staff_id or not request_id or not date:
+        return jsonify({'error': 'Please provide all the required fields'}), 400
+    
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO Schedule (Staff_ID, Request_ID, Date)
+            VALUES (%s, %s, %s)
+        ''', (staff_id, request_id, date))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({'message': 'Schedule created successfully'}), 201
+    except mysql.connector.IntegrityError:
+        return jsonify({'message': 'Schedule already exists'}), 409
+
+
+# Get all schedules (Read)
+@app.route('/schedule', methods=['GET'])
 def get_schedules():
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor(dictionary=True)
@@ -31,6 +60,24 @@ def get_schedules():
 
     return jsonify(schedules), 200
 
+# Delete schedule by id (Delete)
+@app.route('/schedule/<int:schedule_id>', methods=['DELETE'])
+def delete_schedule(schedule_id):
+    conn = mysql.connector.connect(**db_config)
+    cursor = conn.cursor()
+    cursor.execute('''
+        DELETE FROM Schedule
+        WHERE Schedule_ID = %s
+    ''', (schedule_id,))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    if cursor.rowcount == 0:
+        return jsonify({'message': 'Schedule not found'}), 404
+
+    return jsonify({'message': 'Schedule deleted successfully'}), 200
 
 @app.route('/get_own_schedule', methods=['GET'])
 def get_own_schedule():
