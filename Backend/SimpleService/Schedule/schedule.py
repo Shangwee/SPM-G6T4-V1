@@ -15,7 +15,7 @@ db_config = {
     'database': environ.get('DB_NAME')
 }
 
-# get all schedules
+# Get all schedules
 @app.route('/schedules', methods=['GET'])
 def get_schedules():
     conn = mysql.connector.connect(**db_config)
@@ -57,8 +57,8 @@ def get_own_schedule():
 
     return jsonify(schedules), 200
 
-@app.route('/get_own_schedule', methods=['GET'])
-def get_own_schedule():
+@app.route('/get_own_department_schedule', methods=['GET'])
+def get_own_department_schedule():
 
     # Extract the user ID and department from the query parameters, might need to change later
     user_id = request.args.get('user_id')
