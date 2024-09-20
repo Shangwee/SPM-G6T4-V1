@@ -125,7 +125,7 @@ def get_user(staff_id):
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor(dictionary=True)
         cursor.execute('''
-            SELECT Staff_ID, Staff_FName, Staff_LName, Dept, Position, Country, Email, Reporting_Manager, Role, Password
+            SELECT Staff_ID, Staff_FName, Staff_LName, Dept, Position, Country, Email, Reporting_Manager, Role
             FROM Employee
             WHERE Staff_ID = %s
         ''', (staff_id,))
@@ -163,7 +163,6 @@ def delete_user(staff_id):
 
     return jsonify({'message': 'User deleted successfully'}), 200
 
-
 # ** login to the system
 @app.route('/login', methods=['POST'])
 def login():
@@ -193,8 +192,6 @@ def login():
         return jsonify(user), 200
     else:
         return jsonify({'error': 'Invalid credentials'}), 401
-
-
     
 # ** counting the number of users based on the query without pagination
 def get_count_by_query(query):
