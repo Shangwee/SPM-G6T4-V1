@@ -66,7 +66,7 @@ export default {
   data() {
     return {
       currentDate: new Date(),
-      selectedDay: null,
+      selectedDay: null, // This will hold the day number
       staffId: null,
     };
   },
@@ -82,6 +82,7 @@ export default {
     } else {
       this.fetchTeamSchedule();
     }
+    this.selectToday(); // Initialize with today's date selected
   },
   computed: {
     currentYear() {
@@ -141,9 +142,15 @@ export default {
         this.currentYear === today.getFullYear()
       );
     },
+    selectToday() {
+      // Automatically select today's date when the component is created
+      const today = new Date();
+      this.selectedDay = today.getDate();
+    }
   },
 };
 </script>
+
 
 <style scoped>
 .calendar-container {
