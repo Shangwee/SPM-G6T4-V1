@@ -1,5 +1,6 @@
 <template>
     <div class="calendar-container">
+      <!-- Calendar Section -->
       <div class="calendar card shadow-sm" @click="deselectDay">
         <div class="calendar-header d-flex justify-content-between align-items-center p-3">
           <button class="btn btn-outline-primary" @click.stop="previousMonth">
@@ -27,26 +28,46 @@
           </div>
         </div>
       </div>
-      <!-- Section to show staff schedule -->
-      <div v-if="selectedDay" class="staff-schedule mt-4">
-        <h5 class="schedule-title">Staff Schedule for {{ selectedDay }} {{ currentMonthName }}, {{ currentYear }}</h5>
-        <div class="row">
-          <div class="col-md-6">
-            <div class="card office-card">
-              <h6>In Office</h6>
-              <ul>
-                <li>John Doe</li>
-                <li>Emily Davis</li>
-              </ul>
-            </div>
+  
+      <!-- Filters and Staff Schedule Section -->
+      <div class="staff-schedule-container">
+        <!-- Filters Section -->
+        <div class="filter-controls d-flex justify-content-between mb-4">
+          <div class="form-group mr-2">
+            <label for="department">Department</label>
+            <select id="department" v-model="selectedDepartment" class="form-control" @change="filterByDepartment">
+              <option value="">All Departments</option>
+              <option v-for="department in departments" :key="department" :value="department">{{ department }}</option>
+            </select>
           </div>
-          <div class="col-md-6">
-            <div class="card home-card">
-              <h6>Working from Home</h6>
-              <ul>
-                <li>Jane Smith</li>
-                <li>Michael Lee</li>
-              </ul>
+          <div class="form-group">
+            <label for="team">Team</label>
+            <select id="team" v-model="selectedTeam" class="form-control" @change="filterByTeam">
+              <option value="">All Teams</option>
+              <option v-for="team in teams" :key="team" :value="team">{{ team }}</option>
+            </select>
+          </div>
+        </div>
+  
+        <!-- Staff Schedule Section -->
+        <div v-if="selectedDay" class="staff-schedule">
+          <h5 class="schedule-title">Staff Schedule for {{ selectedDay }} {{ currentMonthName }}, {{ currentYear }}</h5>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card office-card">
+                <h6>In Office</h6>
+                <ul>
+                  <li v-for="staff in filteredStaffInOffice" :key="staff">{{ staff }}</li>
+                </ul>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card home-card">
+                <h6>Working from Home</h6>
+                <ul>
+                  <li v-for="staff in filteredStaffWorkingFromHome" :key="staff">{{ staff }}</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
@@ -54,34 +75,33 @@
     </div>
   </template>
   
+
+
   <script>
   export default {
-    props: {
-      scheduleType: {
-        type: String,
-        required: true,
-        validator: value => ['user', 'team'].includes(value),
-      },
-    },
     data() {
       return {
         currentDate: new Date(),
         selectedDay: null,
         staffId: null,
+        departments: ['HR', 'Finance', 'IT', 'Marketing'], // Example departments
+        teams: ['Team A', 'Team B', 'Team C'], // Example teams
+        selectedDepartment: '',
+        selectedTeam: '',
+        staff: [
+          { name: 'John Doe', department: 'HR', team: 'Team A', location: 'office' },
+          { name: 'Emily Davis', department: 'Finance', team: 'Team B', location: 'office' },
+          { name: 'Jane Smith', department: 'IT', team: 'Team A', location: 'home' },
+          { name: 'Michael Lee', department: 'Marketing', team: 'Team C', location: 'home' },
+        ],
+        filteredStaffInOffice: [],
+        filteredStaffWorkingFromHome: [],
       };
     },
     created() {
       this.staffId = sessionStorage.getItem('staffID');
-      if (this.staffId) {
-        console.log('Staff ID:', this.staffId);
-      } else {
-        console.error('No Staff ID found.');
-      }
-      if (this.scheduleType === 'user') {
-        this.fetchUserSchedule();
-      } else {
-        this.fetchTeamSchedule();
-      }
+      this.selectToday(); // Automatically select today's date when the component is created
+      this.filterStaff();
     },
     computed: {
       currentYear() {
@@ -113,12 +133,6 @@
       },
     },
     methods: {
-      fetchUserSchedule() {
-        console.log('Fetching user schedule for Staff ID:', this.staffId);
-      },
-      fetchTeamSchedule() {
-        console.log('Fetching team schedule for Staff ID:', this.staffId);
-      },
       selectDay(day) {
         if (day) {
           this.selectedDay = day;
@@ -141,146 +155,192 @@
           this.currentYear === today.getFullYear()
         );
       },
+      selectToday() {
+        // Automatically select today's date when the component is created
+        const today = new Date();
+        this.selectedDay = today.getDate(); // Set selectedDay to today's date
+      },
+      filterByDepartment() {
+        this.filterStaff();
+      },
+      filterByTeam() {
+        this.filterStaff();
+      },
+      filterStaff() {
+        // Filter staff by selected department and team
+        this.filteredStaffInOffice = this.staff.filter(
+          (staff) =>
+            staff.location === 'office' &&
+            (this.selectedDepartment === '' || staff.department === this.selectedDepartment) &&
+            (this.selectedTeam === '' || staff.team === this.selectedTeam)
+        );
+        this.filteredStaffWorkingFromHome = this.staff.filter(
+          (staff) =>
+            staff.location === 'home' &&
+            (this.selectedDepartment === '' || staff.department === this.selectedDepartment) &&
+            (this.selectedTeam === '' || staff.team === this.selectedTeam)
+        );
+      },
     },
   };
   </script>
   
-  <style scoped>
+
+<style scoped>
+.calendar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  height: 80vh; /* Increase height to give more space */
+  padding-bottom: 0;
+}
+
+.calendar {
+  background-color: rgba(255, 255, 255, 0.9);
+  width: 65%; /* Keep the calendar width */
+  margin: 0 auto;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr); /* Ensure 7 columns for the days of the week */
+  gap: 1px;
+  width: 100%; /* Ensure the grid takes full width */
+}
+
+.calendar-cell {
+  height: 80px; /* Adjust height to make sure the grid cells are tall enough */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #e0e0e0;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  background-color: white;
+}
+
+.calendar-day {
+  padding: 10px 0;
+  background-color: #f1f3f4;
+  color: #5f6368;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Style today and selected day */
+.calendar-cell.today {
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+}
+
+.calendar-cell.selected-day {
+  background-color: #0d6efd;
+  color: white;
+  border: 2px solid #004085;
+}
+
+/* Empty day cells for padding */
+.empty-day {
+  background-color: #fafafa;
+}
+
+.staff-schedule-container {
+  width: 33%; /* Adjust the filter and staff schedule width */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.filter-controls {
+  display: flex; /* Align filters in a row */
+  justify-content: space-between;
+  background-color: #f8f9fa;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.filter-controls .form-group {
+  width: 48%;
+}
+
+.filter-controls select {
+  width: 100%;
+  padding: 5px;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+}
+
+.staff-schedule {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.schedule-title {
+  font-weight: bold;
+  text-align: center;
+  font-size: 1.25rem;
+  margin-bottom: 20px;
+}
+
+.card {
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.office-card h6,
+.home-card h6 {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #333;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+}
+
+.office-card ul,
+.home-card ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.office-card ul li,
+.home-card ul li {
+  font-size: 0.95rem;
+  padding: 5px 0;
+  color: #555;
+}
+
+@media (max-width: 768px) {
   .calendar-container {
-    display: flex;
-    justify-content: space-between; /* Align calendar and staff schedule side by side */
-    align-items: flex-start; /* Align items to the top */
-    height: 70vh; /* Adjusted height to ensure it fits within the viewport */
-    padding-bottom: 0;
-  }
-  
-  .calendar {
-    background-color: rgba(255, 255, 255, 0.9);
-    width: 58%; /* The calendar takes 58% of the available width */
-    margin: 0 auto;
-    border-radius: 8px;
-    padding: 10px;
-  }
-  
-  .calendar-header h4 {
-    font-weight: bold;
-  }
-  
-  .calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 1px;
-    width: 100%;
-  }
-  
-  .calendar-cell {
-    height: 60px; /* Adjust the calendar height */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: 1px solid #e0e0e0;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    background-color: white;
-  }
-  
-  .calendar-cell:hover {
-    background-color: #f0f0f0;
-  }
-  
-  .calendar-cell.today {
-    background-color: #007bff;
-    color: white;
-    font-weight: bold;
-  }
-  
-  .calendar-cell.selected-day {
-    background-color: #0d6efd;
-    color: white;
-    border: 2px solid #004085;
-  }
-  
-  .empty-day {
-    background-color: #fafafa;
-  }
-  
-  /* Improved Staff Schedule Styling */
-  .staff-schedule {
-    width: 40%; /* Staff schedule takes 40% of the available width */
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    padding: 20px;
-    display: flex;
     flex-direction: column;
-    justify-content: flex-start; /* Align content to the top */
+    height: auto;
   }
-  
-  .schedule-title {
-    font-weight: bold;
-    text-align: center;
-    font-size: 1.25rem;
+
+  .calendar, .staff-schedule-container {
+    width: 100%;
     margin-bottom: 20px;
   }
-  
-  /* Cards for In Office and Working from Home */
-  .card {
-    background-color: #fff;
-    border: 1px solid #e0e0e0;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+
+  .calendar-cell {
+    height: 60px;
   }
-  
-  .office-card h6,
-  .home-card h6 {
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: #333;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 10px;
+
+  .card {
     margin-bottom: 10px;
   }
-  
-  .office-card ul,
-  .home-card ul {
-    list-style-type: none;
-    padding: 0;
+}
+
+@media (max-width: 576px) {
+  .calendar-cell {
+    height: 50px;
   }
-  
-  .office-card ul li,
-  .home-card ul li {
-    font-size: 0.95rem;
-    padding: 5px 0;
-    color: #555;
-  }
-  
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-    .calendar-container {
-      flex-direction: column; /* Stack vertically on smaller screens */
-      height: auto;
-    }
-  
-    .calendar, .staff-schedule {
-      width: 100%; /* Make both full-width on small screens */
-      margin-bottom: 20px;
-    }
-  
-    .calendar-cell {
-      height: 40px;
-    }
-  
-    .card {
-      margin-bottom: 10px;
-    }
-  }
-  
-  @media (max-width: 576px) {
-    .calendar-cell {
-      height: 30px;
-    }
-  }
-  
-  </style>
-  
+}
+</style>
