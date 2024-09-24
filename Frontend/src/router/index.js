@@ -6,6 +6,7 @@ import TeamSchedule from "@/components/TeamSchedule.vue";
 import Arrangements from "@/components/Arrangements.vue";
 import Requests from "@/components/Requests.vue";
 import Notifications from "@/components/Notifications.vue";
+import TestPage from '@/components/TestPage.vue';
 
 
 const routes = [
@@ -45,6 +46,12 @@ const routes = [
         name: 'Notifications',
         component: Notifications,
     },
+
+    {
+        path: '/test', // Add a path for the test page
+        name: 'TestPage',
+        component: TestPage, // Assign the TestPage component to this route
+      },
 
 
 ]
