@@ -82,7 +82,7 @@ export default {
     } else {
       this.fetchTeamSchedule();
     }
-    this.selectToday(); // Initialize with today's date selected
+    this.selectToday(); // Automatically select today's date when the component is created
   },
   computed: {
     currentYear() {
@@ -126,7 +126,8 @@ export default {
       }
     },
     deselectDay() {
-      this.selectedDay = null;
+      // When deselecting, instead of clearing the selection, we select today's date
+      this.selectToday();
     },
     nextMonth() {
       this.currentDate = new Date(this.currentYear, this.currentMonth + 1, 1);
@@ -143,14 +144,13 @@ export default {
       );
     },
     selectToday() {
-      // Automatically select today's date when the component is created
+      // Automatically select today's date when the component is created or when deselected
       const today = new Date();
       this.selectedDay = today.getDate();
-    }
+    },
   },
 };
 </script>
-
 
 <style scoped>
 .calendar-container {

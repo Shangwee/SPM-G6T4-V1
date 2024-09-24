@@ -1,189 +1,190 @@
 <template>
-    <div class="calendar-container">
-      <!-- Calendar Section -->
-      <div class="calendar card shadow-sm" @click="deselectDay">
-        <div class="calendar-header d-flex justify-content-between align-items-center p-3">
-          <button class="btn btn-outline-primary" @click.stop="previousMonth">
-            <i class="bi bi-arrow-left-circle"></i> Previous
-          </button>
-          <h4 class="m-0">{{ currentMonthName }} {{ currentYear }}</h4>
-          <button class="btn btn-outline-primary" @click.stop="nextMonth">
-            Next <i class="bi bi-arrow-right-circle"></i>
-          </button>
-        </div>
-        <div class="calendar-grid p-2">
-          <div class="calendar-day fw-bold text-center" v-for="day in daysOfWeek" :key="day">{{ day }}</div>
-          <div
-            v-for="(day, index) in daysInMonth"
-            :key="index"
-            class="calendar-cell text-center"
-            @click.stop="selectDay(day)"
-            :class="{
-              'empty-day': day === '',
-              'selected-day': day === selectedDay,
-              'today': isToday(day)
-            }"
-          >
-            <span v-if="day">{{ day }}</span>
-          </div>
+  <div class="calendar-container">
+    <!-- Calendar Section -->
+    <div class="calendar card shadow-sm" @click="deselectDay">
+      <div class="calendar-header d-flex justify-content-between align-items-center p-3">
+        <button class="btn btn-outline-primary" @click.stop="previousMonth">
+          <i class="bi bi-arrow-left-circle"></i> Previous
+        </button>
+        <h4 class="m-0">{{ currentMonthName }} {{ currentYear }}</h4>
+        <button class="btn btn-outline-primary" @click.stop="nextMonth">
+          Next <i class="bi bi-arrow-right-circle"></i>
+        </button>
+      </div>
+      <div class="calendar-grid p-2">
+        <div class="calendar-day fw-bold text-center" v-for="day in daysOfWeek" :key="day">{{ day }}</div>
+        <div
+          v-for="(day, index) in daysInMonth"
+          :key="index"
+          class="calendar-cell text-center"
+          @click.stop="selectDay(day)"
+          :class="{
+            'empty-day': day === '',
+            'selected-day': day === selectedDay,
+            'today': isToday(day)
+          }"
+        >
+          <span v-if="day">{{ day }}</span>
         </div>
       </div>
-  
-      <!-- Filters and Staff Schedule Section -->
-      <div class="staff-schedule-container">
-        <!-- Filters Section -->
-        <div class="filter-controls d-flex justify-content-between mb-4">
-          <div class="form-group mr-2">
-            <label for="department">Department</label>
-            <select id="department" v-model="selectedDepartment" class="form-control" @change="filterByDepartment">
-              <option value="">All Departments</option>
-              <option v-for="department in departments" :key="department" :value="department">{{ department }}</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="team">Team</label>
-            <select id="team" v-model="selectedTeam" class="form-control" @change="filterByTeam">
-              <option value="">All Teams</option>
-              <option v-for="team in teams" :key="team" :value="team">{{ team }}</option>
-            </select>
-          </div>
+    </div>
+
+    <!-- Filters and Staff Schedule Section -->
+    <div class="staff-schedule-container">
+      <!-- Filters Section -->
+      <div class="filter-controls d-flex justify-content-between mb-4">
+        <div class="form-group mr-2">
+          <label for="department">Department</label>
+          <select id="department" v-model="selectedDepartment" class="form-control" @change="filterByDepartment">
+            <option value="">All Departments</option>
+            <option v-for="department in departments" :key="department" :value="department">{{ department }}</option>
+          </select>
         </div>
-  
-        <!-- Staff Schedule Section -->
-        <div v-if="selectedDay" class="staff-schedule">
-          <h5 class="schedule-title">Staff Schedule for {{ selectedDay }} {{ currentMonthName }}, {{ currentYear }}</h5>
-          <div class="row">
-            <div class="col-md-6">
-              <div class="card office-card">
-                <h6>In Office</h6>
-                <ul>
-                  <li v-for="staff in filteredStaffInOffice" :key="staff">{{ staff }}</li>
-                </ul>
-              </div>
+        <div class="form-group">
+          <label for="team">Team</label>
+          <select id="team" v-model="selectedTeam" class="form-control" @change="filterByTeam">
+            <option value="">All Teams</option>
+            <option v-for="team in teams" :key="team" :value="team">{{ team }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Staff Schedule Section -->
+      <div v-if="selectedDay" class="staff-schedule">
+        <h5 class="schedule-title">Staff Schedule for {{ selectedDay }} {{ currentMonthName }}, {{ currentYear }}</h5>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card office-card">
+              <h6>In Office</h6>
+              <ul>
+                <li v-for="staff in filteredStaffInOffice" :key="staff">{{ staff }}</li>
+              </ul>
             </div>
-            <div class="col-md-6">
-              <div class="card home-card">
-                <h6>Working from Home</h6>
-                <ul>
-                  <li v-for="staff in filteredStaffWorkingFromHome" :key="staff">{{ staff }}</li>
-                </ul>
-              </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card home-card">
+              <h6>Working from Home</h6>
+              <ul>
+                <li v-for="staff in filteredStaffWorkingFromHome" :key="staff">{{ staff }}</li>
+              </ul>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </template>
-  
+  </div>
+</template>
 
-
-  <script>
-  export default {
-    data() {
-      return {
-        currentDate: new Date(),
-        selectedDay: null,
-        staffId: null,
-        departments: ['HR', 'Finance', 'IT', 'Marketing'], // Example departments
-        teams: ['Team A', 'Team B', 'Team C'], // Example teams
-        selectedDepartment: '',
-        selectedTeam: '',
-        staff: [
-          { name: 'John Doe', department: 'HR', team: 'Team A', location: 'office' },
-          { name: 'Emily Davis', department: 'Finance', team: 'Team B', location: 'office' },
-          { name: 'Jane Smith', department: 'IT', team: 'Team A', location: 'home' },
-          { name: 'Michael Lee', department: 'Marketing', team: 'Team C', location: 'home' },
-        ],
-        filteredStaffInOffice: [],
-        filteredStaffWorkingFromHome: [],
-      };
+<script>
+export default {
+  data() {
+    return {
+      currentDate: new Date(),
+      selectedDay: null, // This will hold the day number
+      staffId: null,
+      departments: ['HR', 'Finance', 'IT', 'Marketing'], // Example departments
+      teams: ['Team A', 'Team B', 'Team C'], // Example teams
+      selectedDepartment: '',
+      selectedTeam: '',
+      staff: [
+        { name: 'John Doe', department: 'HR', team: 'Team A', location: 'office' },
+        { name: 'Emily Davis', department: 'Finance', team: 'Team B', location: 'office' },
+        { name: 'Jane Smith', department: 'IT', team: 'Team A', location: 'home' },
+        { name: 'Michael Lee', department: 'Marketing', team: 'Team C', location: 'home' },
+      ],
+      filteredStaffInOffice: [],
+      filteredStaffWorkingFromHome: [],
+    };
+  },
+  created() {
+    this.staffId = sessionStorage.getItem('staffID');
+    this.selectToday(); // Automatically select today's date when the component is created
+    this.filterStaff();
+  },
+  computed: {
+    currentYear() {
+      return this.currentDate.getFullYear();
     },
-    created() {
-      this.staffId = sessionStorage.getItem('staffID');
-      this.selectToday(); // Automatically select today's date when the component is created
+    currentMonth() {
+      return this.currentDate.getMonth();
+    },
+    currentMonthName() {
+      return this.currentDate.toLocaleString('default', { month: 'long' });
+    },
+    daysOfWeek() {
+      return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    },
+    daysInMonth() {
+      const days = [];
+      const firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
+      const lastDate = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) {
+        days.push('');
+      }
+
+      for (let day = 1; day <= lastDate; day++) {
+        days.push(day);
+      }
+
+      return days;
+    },
+  },
+  methods: {
+    selectDay(day) {
+      if (day) {
+        this.selectedDay = day;
+      }
+    },
+    deselectDay() {
+      // Automatically select today's date when clicking outside of a day (white space)
+      this.selectToday();
+    },
+    nextMonth() {
+      this.currentDate = new Date(this.currentYear, this.currentMonth + 1, 1);
+    },
+    previousMonth() {
+      this.currentDate = new Date(this.currentYear, this.currentMonth - 1, 1);
+    },
+    isToday(day) {
+      const today = new Date();
+      return (
+        day === today.getDate() &&
+        this.currentMonth === today.getMonth() &&
+        this.currentYear === today.getFullYear()
+      );
+    },
+    selectToday() {
+      // Automatically select today's date when the component is created or when deselected
+      const today = new Date();
+      this.selectedDay = today.getDate();
+      this.filterStaff(); // Ensure filtering happens when selecting today
+    },
+    filterByDepartment() {
       this.filterStaff();
     },
-    computed: {
-      currentYear() {
-        return this.currentDate.getFullYear();
-      },
-      currentMonth() {
-        return this.currentDate.getMonth();
-      },
-      currentMonthName() {
-        return this.currentDate.toLocaleString('default', { month: 'long' });
-      },
-      daysOfWeek() {
-        return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      },
-      daysInMonth() {
-        const days = [];
-        const firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
-        const lastDate = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
-  
-        for (let i = 0; i < firstDay; i++) {
-          days.push('');
-        }
-  
-        for (let day = 1; day <= lastDate; day++) {
-          days.push(day);
-        }
-  
-        return days;
-      },
+    filterByTeam() {
+      this.filterStaff();
     },
-    methods: {
-      selectDay(day) {
-        if (day) {
-          this.selectedDay = day;
-        }
-      },
-      deselectDay() {
-        this.selectedDay = null;
-      },
-      nextMonth() {
-        this.currentDate = new Date(this.currentYear, this.currentMonth + 1, 1);
-      },
-      previousMonth() {
-        this.currentDate = new Date(this.currentYear, this.currentMonth - 1, 1);
-      },
-      isToday(day) {
-        const today = new Date();
-        return (
-          day === today.getDate() &&
-          this.currentMonth === today.getMonth() &&
-          this.currentYear === today.getFullYear()
-        );
-      },
-      selectToday() {
-        // Automatically select today's date when the component is created
-        const today = new Date();
-        this.selectedDay = today.getDate(); // Set selectedDay to today's date
-      },
-      filterByDepartment() {
-        this.filterStaff();
-      },
-      filterByTeam() {
-        this.filterStaff();
-      },
-      filterStaff() {
-        // Filter staff by selected department and team
-        this.filteredStaffInOffice = this.staff.filter(
-          (staff) =>
-            staff.location === 'office' &&
-            (this.selectedDepartment === '' || staff.department === this.selectedDepartment) &&
-            (this.selectedTeam === '' || staff.team === this.selectedTeam)
-        );
-        this.filteredStaffWorkingFromHome = this.staff.filter(
-          (staff) =>
-            staff.location === 'home' &&
-            (this.selectedDepartment === '' || staff.department === this.selectedDepartment) &&
-            (this.selectedTeam === '' || staff.team === this.selectedTeam)
-        );
-      },
+    filterStaff() {
+      // Filter staff by selected department and team
+      this.filteredStaffInOffice = this.staff.filter(
+        (staff) =>
+          staff.location === 'office' &&
+          (this.selectedDepartment === '' || staff.department === this.selectedDepartment) &&
+          (this.selectedTeam === '' || staff.team === this.selectedTeam)
+      );
+      this.filteredStaffWorkingFromHome = this.staff.filter(
+        (staff) =>
+          staff.location === 'home' &&
+          (this.selectedDepartment === '' || staff.department === this.selectedDepartment) &&
+          (this.selectedTeam === '' || staff.team === this.selectedTeam)
+      );
     },
-  };
-  </script>
+  },
+};
+</script>
+
   
 
 <style scoped>
