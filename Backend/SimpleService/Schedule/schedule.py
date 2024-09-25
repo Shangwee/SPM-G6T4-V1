@@ -78,7 +78,7 @@ def create_schedule():
 
 
 # Get all schedules (Read) with optional date filtering
-@app.route('/schedule', methods=['GET'])
+@app.route('/schedule/organisation', methods=['GET'])
 def get_schedules():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
