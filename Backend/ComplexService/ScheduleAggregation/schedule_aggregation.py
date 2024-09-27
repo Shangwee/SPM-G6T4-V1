@@ -10,8 +10,8 @@ CORS(app)
 
 # Microservice URL configurations
 # TODO:Change this later 
-SCHEDULE_SERVICE_URL = "http://schedule:5000"  
-ACCOUNTS_SERVICE_URL = "http://account:5001" 
+ACCOUNTS_SERVICE_URL = "http://host.docker.internal:5001"
+SCHEDULE_SERVICE_URL = "http://host.docker.internal:5002"
 
 # Utility function to validate date format
 def validate_date(date_string):
@@ -136,4 +136,4 @@ def get_all_schedules(start_date, end_date):
         return {'error': f'Failed to retrieve all schedules: {str(e)}'}
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=6003, debug=True)
