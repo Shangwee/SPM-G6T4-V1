@@ -39,14 +39,13 @@
 
             <!-- Staff Schedule Section -->
             <div v-if="selectedDay" class="staff-schedule">
-                <h5 class="schedule-title">Staff Schedule for {{ selectedDay }} {{ currentMonthName }}, {{ currentYear
-                    }}</h5>
+                <h5 class="schedule-title">Staff Schedule for {{ selectedDay }} {{ currentMonthName }} {{ currentYear }}</h5>
                 <div class="row">
                     <div class="col-md-6">
                         <div class="card office-card">
                             <h6>In Office</h6>
                             <ul>
-                                <li v-for="staff in filteredStaffInOffice" :key="staff">{{ staff.name }}</li>
+                                <li v-for="staff in filteredStaffInOffice" :key="staff.name">{{ staff.name }}</li>
                             </ul>
                         </div>
                     </div>
@@ -54,7 +53,7 @@
                         <div class="card home-card">
                             <h6>Working from Home</h6>
                             <ul>
-                                <li v-for="staff in filteredStaffWorkingFromHome" :key="staff">{{ staff.name }}</li>
+                                <li v-for="staff in filteredStaffWorkingFromHome" :key="staff.name">{{ staff.name }}</li>
                             </ul>
                         </div>
                     </div>
@@ -71,17 +70,27 @@ export default {
             currentDate: new Date(),
             selectedDay: null,
             staffId: null,
-            teams: [], // Teams fetched from the backend based on the department
-            selectedTeam: '', // This will store the selected team
-            staff: [], // Staff fetched from backend
-            filteredStaffInOffice: [],
-            filteredStaffWorkingFromHome: [],
+            teams: ['Team A', 'Team B', 'Team C'], // Mock team names
+            selectedTeam: '', // Selected team for filtering
+            staff: [
+                { name: 'John Doe', team: 'Team A', location: 'office' },
+                { name: 'Jane Smith', team: 'Team A', location: 'home' },
+                { name: 'Mark Lee', team: 'Team B', location: 'office' },
+                { name: 'Lisa Wong', team: 'Team B', location: 'home' },
+                { name: 'Samuel Jackson', team: 'Team C', location: 'office' },
+                { name: 'Sophia Brown', team: 'Team C', location: 'home' },
+                { name: 'Michael Clark', team: 'Team C', location: 'office' },
+                { name: 'Linda Johnson', team: 'Team A', location: 'home' },
+                { name: 'Robert Miller', team: 'Team B', location: 'office' },
+                { name: 'Emily Wilson', team: 'Team A', location: 'office' }
+            ], // Mock staff data
+            filteredStaffInOffice: [], // Filtered office staff
+            filteredStaffWorkingFromHome: [], // Filtered work-from-home staff
         };
     },
     created() {
         this.staffId = sessionStorage.getItem('staffID');
-        this.fetchTeams(); // Fetch teams based on user's department
-        this.selectToday();
+        this.selectToday(); // Select today's date
         this.filterStaff(); // Initial filter on page load
     },
     computed: {
@@ -141,24 +150,21 @@ export default {
             this.selectedDay = today.getDate();
             this.filterStaff();
         },
-        fetchTeams() {
-            // Assume the backend returns a list of teams based on the user's department
-            // For example, this could be fetched via an API call
-            this.teams = ['Team A', 'Team B', 'Team C']; // Replace with real API call
-        },
         filterByTeam() {
-            this.filterStaff(); // Filter staff based on the selected team
+            this.filterStaff(); // Filter staff based on selected team
         },
         filterStaff() {
+            // Filter staff for those in office
             this.filteredStaffInOffice = this.staff.filter(
                 (staff) =>
                     staff.location === 'office' &&
-                    (this.selectedTeam === '' || staff.team === this.selectedTeam) // Filtering by team
+                    (this.selectedTeam === '' || staff.team === this.selectedTeam)
             );
+            // Filter staff for those working from home
             this.filteredStaffWorkingFromHome = this.staff.filter(
                 (staff) =>
                     staff.location === 'home' &&
-                    (this.selectedTeam === '' || staff.team === this.selectedTeam) // Filtering by team
+                    (this.selectedTeam === '' || staff.team === this.selectedTeam)
             );
         },
     },
@@ -174,10 +180,10 @@ export default {
     padding-bottom: 0;
 }
 
-/* Adjusting the calendar width to match the Manager calendar (58%) */
+/* Adjusting the calendar width to match the Manager calendar (70%) */
 .calendar {
     background-color: rgba(255, 255, 255, 0.9);
-    width: 58%;
+    width: 70%;
     margin: 0 auto;
     border-radius: 8px;
     padding: 10px;
@@ -238,11 +244,12 @@ export default {
 
 /* Adjust staff schedule and filters to match Manager view (40%) */
 .staff-schedule-container {
-    width: 40%;
+    width: 70%;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
 }
+
 
 .filter-controls {
     display: flex;
@@ -300,14 +307,28 @@ export default {
 
 .office-card ul,
 .home-card ul {
-    list-style-type: none;
+    list-style-type: none; /* Remove bullet points */
     padding: 0;
 }
 
 .office-card ul li,
 .home-card ul li {
-    font-size: 0.95rem;
-    padding: 5px 0;
+    font-size: 0.85rem; /* Reduced font size for compactness */
+    padding: 3px 0; /* Reduced padding between list items */
+    color: #555;
+}
+
+.staff-list {
+    list-style-type: none; /* Remove bullet points */
+    padding: 0;
+    margin: 0;
+    max-height: 200px; /* Set a maximum height for long lists */
+    overflow-y: auto; /* Enable vertical scrolling */
+}
+
+.staff-item {
+    font-size: 0.85rem; /* Reduced font size for compactness */
+    padding: 3px 0; /* Reduced padding between list items */
     color: #555;
 }
 
