@@ -1,18 +1,51 @@
 <script setup>
   import NavBar from "./NavBar.vue";
-  // import PassengerManagement from "./PassengerManagement.vue";
-  // import LiveChat from "./LiveChat.vue";
+  import Calander from "./Calander.vue";
 </script>
 
 <template>
-  <div class="d-flex justify-content-center align-items-center vh-100">
-    <div>
-      <NavBar></NavBar>
-      <div class="container mt-5 pt-5">
-        <h3 class="text-center" style="margin-top: -200px;">Team Schedule</h3>
+  <div>
+    <NavBar></NavBar>
+    <br>
+    <div class="container-fluid">
+      <div class="row text-center justify-content-center">
+        <div class="col-12">
+          <h3 class="mb-3">Team Schedule</h3> <!-- Remove bottom margin to bring closer to the button -->
+        </div>
+        <div class="col-12 col-md-8 calendar-wrapper">
+          <Calander scheduleType="team"></Calander>
+        </div>
       </div>
+      <br>
     </div>
   </div>
 </template>
 
-<style></style>
+<script>
+export default {
+  data() {
+    return {
+      
+    };
+  },
+
+  methods: {
+    
+  },
+  components: {
+    Calander
+  },  
+};
+</script>
+
+<style>
+.calendar-wrapper {
+  max-width: 100%; /* Adjust the width here */
+  margin: 0 auto;   /* Center the calendar */
+  padding: 20px;    /* Add some padding around the calendar */
+}
+
+.container-fluid {
+  margin-top: 100px;
+}
+</style>

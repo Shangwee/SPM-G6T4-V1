@@ -13,6 +13,11 @@
                         <input type="password" id="password" v-model="credentials.password" required>
                     </div>
                     <button type="submit">Login</button>
+
+                    <!-- Error popup -->
+                    <div v-if="errorMessage" class="error-popup">
+                        {{ errorMessage }}
+                    </div>
                 </form>
             </div>
             <div class="text-section">
@@ -32,12 +37,16 @@ export default {
             credentials: {
                 staffID: '',
                 password: ''
-            }
+            },
+            errorMessage: '' // Initialize as empty
         };
     },
     methods: {
         async login() {
             try {
+                // Reset the error message before trying login
+                this.errorMessage = '';
+
                 const response = await fetch('http://localhost:5001/login', {
                     method: 'POST',
                     headers: {
@@ -45,20 +54,23 @@ export default {
                     },
                     body: JSON.stringify(this.credentials),
                 });
+
                 const data = await response.json();
 
                 if (response.ok) {
-                    //add data into session 
+                    // Successful login
                     sessionStorage.setItem('staffID', data.Staff_ID);
                     sessionStorage.setItem('role', data.Role);
 
-                    // Redirect user to dashboard or homepage
+                    // Redirect user to the homepage or dashboard
                     this.$router.push('/');
                 } else {
-                    this.errorMessage = data.message;
+                    // Display error message from response
+                    this.errorMessage = data.message || 'Incorrect login details, please try again.';
                 }
             } catch (error) {
-                this.errorMessage = 'Login failed, please try again.';
+                // Catch any network or server errors
+                this.errorMessage = 'Login failed, please try again later.';
             }
         },
     },
@@ -70,16 +82,12 @@ export default {
     display: flex;
     justify-content: center;
     margin-top: 200px;
-
-
 }
 
 .card-container {
     display: flex;
     width: 900px;
-    /* Or desired width */
     height: 500px;
-    /* Or desired height */
     box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2);
     border-radius: 20px;
     overflow: hidden;
@@ -99,12 +107,7 @@ export default {
 }
 
 .text-section {
-    /* background-color: #3f51b5;
-    color: white; */
     background-image: url('../assets/94999.png');
-    overflow: hidden;
-    width: 50%;
-    height: 100%;
     background-size: contain;
 }
 
@@ -129,9 +132,23 @@ button:hover {
     background-color: #3f51b5;
 }
 
-.img {
-    width: 50%;
-    height: 100%;
-    overflow: hidden;
+/* Error popup styles */
+.error-popup {
+    margin-top: 10px;
+    padding: 10px;
+    color: white;
+    background-color: red;
+    border-radius: 4px;
+    text-align: center;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 </style>
