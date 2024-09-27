@@ -86,7 +86,7 @@ def aggregate_schedules():
 # Helper function to validate user position (only allow HR and Directors)
 def validate_position(position):
     # Check if the user's position is "HR Team" or "Director"
-    if position == 'HR Team' or position == 'Director':
+    if position == 'HR Team' or position == 'Director' or position == "MD":
         return True
     return False
 
@@ -129,7 +129,7 @@ def get_schedules_by_team(reporting_manager, start_date, end_date):
 # Helper function to get all schedules with date filtering
 def get_all_schedules(start_date, end_date):
     try:
-        response = requests.get(f"{SCHEDULE_SERVICE_URL}/schedule?start_date={start_date}&end_date={end_date}")
+        response = requests.get(f"{SCHEDULE_SERVICE_URL}/schedule/organisation?start_date={start_date}&end_date={end_date}")
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
