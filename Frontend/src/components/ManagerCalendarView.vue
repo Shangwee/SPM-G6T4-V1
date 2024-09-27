@@ -39,7 +39,8 @@
 
             <!-- Staff Schedule Section -->
             <div v-if="selectedDay" class="staff-schedule">
-                <h5 class="schedule-title">Staff Schedule for {{ selectedDay }} {{ currentMonthName }} {{ currentYear }}</h5>
+                <h5 class="schedule-title">Staff Schedule for {{ selectedDay }} {{ currentMonthName }} {{ currentYear }}
+                </h5>
                 <div class="row">
                     <div class="col-md-6">
                         <div class="card office-card">
@@ -53,7 +54,8 @@
                         <div class="card home-card">
                             <h6>Working from Home</h6>
                             <ul>
-                                <li v-for="staff in filteredStaffWorkingFromHome" :key="staff.name">{{ staff.name }}</li>
+                                <li v-for="staff in filteredStaffWorkingFromHome" :key="staff.name">{{ staff.name }}
+                                </li>
                             </ul>
                         </div>
                     </div>
@@ -307,28 +309,36 @@ export default {
 
 .office-card ul,
 .home-card ul {
-    list-style-type: none; /* Remove bullet points */
+    list-style-type: none;
+    /* Remove bullet points */
     padding: 0;
 }
 
 .office-card ul li,
 .home-card ul li {
-    font-size: 0.85rem; /* Reduced font size for compactness */
-    padding: 3px 0; /* Reduced padding between list items */
+    font-size: 0.85rem;
+    /* Reduced font size for compactness */
+    padding: 3px 0;
+    /* Reduced padding between list items */
     color: #555;
 }
 
 .staff-list {
-    list-style-type: none; /* Remove bullet points */
+    list-style-type: none;
+    /* Remove bullet points */
     padding: 0;
     margin: 0;
-    max-height: 200px; /* Set a maximum height for long lists */
-    overflow-y: auto; /* Enable vertical scrolling */
+    max-height: 200px;
+    /* Set a maximum height for long lists */
+    overflow-y: auto;
+    /* Enable vertical scrolling */
 }
 
 .staff-item {
-    font-size: 0.85rem; /* Reduced font size for compactness */
-    padding: 3px 0; /* Reduced padding between list items */
+    font-size: 0.85rem;
+    /* Reduced font size for compactness */
+    padding: 3px 0;
+    /* Reduced padding between list items */
     color: #555;
 }
 

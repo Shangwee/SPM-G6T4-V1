@@ -192,7 +192,8 @@ export default {
 
 .calendar {
   background-color: rgba(255, 255, 255, 0.9);
-  width: 70%; /* Increased width from 58% to 65% */
+  width: 70%;
+  /* Increased width from 58% to 65% */
   margin: 0 auto;
   border-radius: 8px;
   padding: 10px;
@@ -248,7 +249,8 @@ export default {
 }
 
 .staff-schedule-container {
-  width: 70%; /* Increased width from 40% to 50% */
+  width: 70%;
+  /* Increased width from 40% to 50% */
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -310,14 +312,18 @@ export default {
 
 /* Updated staff list to be more compact */
 .staff-list {
-  list-style-type: none; /* Removed bullet points */
-  padding-left: 0; /* Removed extra padding */
+  list-style-type: none;
+  /* Removed bullet points */
+  padding-left: 0;
+  /* Removed extra padding */
   margin: 0;
 }
 
 .staff-item {
-  font-size: 0.85rem; /* Reduced font size for compactness */
-  padding: 3px 0; /* Reduced padding between list items */
+  font-size: 0.85rem;
+  /* Reduced font size for compactness */
+  padding: 3px 0;
+  /* Reduced padding between list items */
   color: #555;
 }
 
