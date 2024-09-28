@@ -56,7 +56,7 @@
                   </div>
                   <div v-if="userRole===3">
                     <li v-for="staff in staffManage" :key="staff.id">
-                      {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }})
+                      {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }}) - {{ staff.Position }}
                     </li>
                   </div>
                 </ul>
