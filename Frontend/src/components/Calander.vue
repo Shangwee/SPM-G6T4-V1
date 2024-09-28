@@ -52,7 +52,7 @@
     <!-- Team or personal schedule section -->
     <div v-if="scheduleType === 'team'" class="staff-schedule-container">
       <div class="filter-controls d-flex flex-column mb-4">
-        <div class="filter-controls d-flex mb-4">
+        <div v-if="userRole === 3 || userRole === 1" class="filter-controls d-flex mb-4">
           <div v-if="userRole === 1" class="form-group mr-2" style="flex: 1;">
             <label for="department">Department</label>
             <select id="department" v-model="selectedDepartment" class="form-control" @change="filterByDepartment">
