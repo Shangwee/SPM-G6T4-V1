@@ -41,7 +41,7 @@
         </div>
       </div>
       <!-- Legend -->
-      <div class="legend">
+      <div v-if="scheduleType==='team'" class="legend">
         <div class="legend-item">
           <div class="wfh-color"></div>
           <span class="legend-text">WFH</span>
@@ -57,7 +57,7 @@
             <label for="department">Department</label>
             <select id="department" v-model="selectedDepartment" class="form-control" @change="filterByDepartment">
               <option value="">All Departments</option>
-              <option v-for="department in departments" :key="department" :value="department">{{ department }}</option>
+              <option v-for="department in depts" :key="department" :value="department">{{ department }}</option>
             </select>
           </div>
           <div v-if="userRole === 3 || userRole === 1" class="form-group" :class="{'full-width': userRole === 3}" style="flex: 1;">
@@ -86,6 +86,11 @@
                       {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }}) - {{ staff.Position }}
                     </li>
                   </div>
+                  <div v-if="userRole === 1">
+                    <li v-for="staff in staffManageDept" :key="staff.id">
+                      {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }}) - {{ staff.Position }}
+                    </li>
+                  </div>
                 </ul>
               </div>
             </div>
@@ -106,12 +111,16 @@ export default {
       staffId: null,
       reportingManager: null,
       userRole: null,
+      userDept: null,
       ownSchedule: [],
       scheduleStaff: [],
       scheduleManage: [],
       homeStaff: [],
       staffManage: [],
       teams: [],
+      depts: [],
+      staffManageDept: [],
+      scheduleManageDept: [],
       selectedDepartment: '',
       selectedTeam: '',
       scheduleType: '', // Define this according to your application logic
@@ -132,6 +141,7 @@ export default {
   if (this.staffId) {
     try {
       await this.fetchUserRole(); // Wait for user role to be fetched
+      this.fetchUserDept();
       this.fetchOwnSchedule(); 
       this.selectToday(); // Automatically select today's date
       
@@ -141,8 +151,10 @@ export default {
         console.log("Fetching staff team schedule for user role 2");
         this.fetchReportingManager(); // Fetch Reporting_Manager for the logged-in staff
         await this.fetchStaffTeamSchedule();
-      } else {
+      } else if (this.userRole === 3) {
         await this.fetchManageTeamSchedule();
+      } else if (this.userRole === 1) {
+        await this.fetchManageDeptSchedule();
       }
     } catch (error) {
       console.error("Error in created lifecycle:", error);
@@ -184,15 +196,25 @@ export default {
 
   methods: {
     fetchUserRole() {
-    return axios.get(`http://localhost:5001/user/${this.staffId}`)
-      .then(response => {
-        this.userRole = response.data.Role; // Set the userRole based on response
-      })
-      .catch(error => {
-        console.error("Failed to fetch user role:", error);
-        throw error; // Re-throw the error to catch it in created()
-      });
-  },
+      return axios.get(`http://localhost:5001/user/${this.staffId}`)
+        .then(response => {
+          this.userRole = response.data.Role; // Set the userRole based on response
+        })
+        .catch(error => {
+          console.error("Failed to fetch user role:", error);
+          throw error; // Re-throw the error to catch it in created()
+        });
+    },
+    fetchUserDept() {
+      return axios.get(`http://localhost:5001/user/${this.staffId}`)
+        .then(response => {
+          this.userDept = response.data.Dept; // Set the userRole based on response
+        })
+        .catch(error => {
+          console.error("Failed to fetch user dept:", error);
+          throw error; // Re-throw the error to catch it in created()
+        });
+    },
     fetchOwnSchedule() {
       axios
         .get(`http://localhost:5002/schedule/personal/${this.staffId}`)
@@ -292,6 +314,48 @@ export default {
         }
       },
 
+      fetchManageDeptMembers() {
+      this.staffManageDept = [];
+        this.scheduleManageDept.forEach((schedule) => {
+          axios
+            .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
+            .then((response) => {
+              
+              this.staffManageDept.push(response.data);
+              // get all teams
+              if (!this.depts.includes(response.data.Position)) {
+                this.depts.push(response.data.Position);
+              }
+            })
+            .catch((error) => {
+              console.error("Error fetching Reporting Manager:", error);
+            });
+            console.log(this.staffManageDept);
+        });
+      },
+      
+      async fetchManageDeptSchedule() {
+        let params = {
+          type: "Dept",
+          // staffId: sessionStorage.getItem('staffID'),
+          // Reporting_Manager: parseInt(this.staffId, 10),
+          department: this.userDept,
+          start_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
+          end_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
+        };
+        console.log("Fetching manage dept schedule with params:", params);
+        try {
+          
+          const response = await axios.get(`http://localhost:6003/aggregateSchedule`, { params: params });
+          console.log("Dept schedule response:", response.data);
+          this.scheduleManageDept = response.data;
+          
+          await this.fetchManageTeamMembers(); // Wait for the team members to be fetched
+        } catch (error) {
+          console.error("Error fetching dept schedule:", error);
+        }
+      },
+
 
     selectDay(day) {
       if (this.selectedDay === day) {
@@ -303,8 +367,10 @@ export default {
       if (this.userRole === 2) {
         this.fetchReportingManager();
         this.fetchStaffTeamSchedule();
-      } else {
+      } else if (this.userRole === 3) {
         this.fetchManageTeamSchedule();
+      } else {
+        this.fetchManageDeptSchedule();
       }
     },
     
@@ -527,5 +593,25 @@ export default {
   .calendar-cell {
     height: 50px;
   }
+}
+.legend {
+  display: flex;
+  flex-direction: column;
+}
+
+.legend-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.legend .wfh-color {
+  width: 20px;
+  height: 20px;
+  background-color: #b6c6fd;
+}
+
+.legend-text {
+  margin: 8px 8px;
 }
 </style>
