@@ -6,9 +6,6 @@ import TeamSchedule from "@/components/TeamSchedule.vue";
 import Arrangements from "@/components/Arrangements.vue";
 import Requests from "@/components/Requests.vue";
 import Notifications from "@/components/Notifications.vue";
-import DirectorCalendarView from '@/components/DirectorCalendarView.vue';
-import ManagerCalendarView from '@/components/ManagerCalendarView.vue';
-import StaffCalendarView from '@/components/StaffCalendarView.vue';
 
 
 const routes = [
@@ -48,24 +45,6 @@ const routes = [
         name: 'Notifications',
         component: Notifications,
     },
-
-      {
-        path: '/DirectorCalendarView', // Add a path for the test page
-        name: 'DirectorCalendarView',
-        component: DirectorCalendarView, // Assign the TestPage component to this route
-      },
-
-      {
-        path: '/StaffCalendarView', // Add a path for the test page
-        name: 'StaffCalendarView',
-        component: StaffCalendarView, // Assign the TestPage component to this route
-      },
-
-      {
-        path: '/ManagerCalendarView', // Add a path for the test page
-        name: 'ManagerCalendarView',
-        component: ManagerCalendarView, // Assign the TestPage component to this route
-      },
 
 
 ]
