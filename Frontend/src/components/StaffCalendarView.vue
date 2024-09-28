@@ -1,7 +1,9 @@
 <template>
   <div class="calendar-container">
     <div class="calendar card shadow-sm" @click="deselectDay">
-      <div class="calendar-header d-flex justify-content-between align-items-center p-3">
+      <div
+        class="calendar-header d-flex justify-content-between align-items-center p-3"
+      >
         <button class="btn btn-outline-primary" @click.stop="previousMonth">
           <i class="bi bi-arrow-left-circle"></i> Previous
         </button>
@@ -11,13 +13,24 @@
         </button>
       </div>
       <div class="calendar-grid p-2">
-        <div class="calendar-day fw-bold text-center" v-for="day in daysOfWeek" :key="day">{{ day }}</div>
-        <div v-for="(day, index) in daysInMonth" :key="index" class="calendar-cell text-center"
-          @click.stop="selectDay(day)" :class="{
+        <div
+          class="calendar-day fw-bold text-center"
+          v-for="day in daysOfWeek"
+          :key="day"
+        >
+          {{ day }}
+        </div>
+        <div
+          v-for="(day, index) in daysInMonth"
+          :key="index"
+          class="calendar-cell text-center"
+          @click.stop="selectDay(day)"
+          :class="{
             'empty-day': day === '',
             'selected-day': day === selectedDay,
-            'today': isToday(day)
-          }">
+            today: isToday(day),
+          }"
+        >
           <span v-if="day">{{ day }}</span>
         </div>
       </div>
@@ -25,21 +38,29 @@
 
     <!-- Section to show team schedule based on Reporting_Manager -->
     <div v-if="selectedDay" class="staff-schedule mt-4">
-      <h5 class="schedule-title">Team Schedule for {{ selectedDay }} {{ currentMonthName }}, {{ currentYear }}</h5>
+      <h5 class="schedule-title">
+        Team Schedule for {{ selectedDay }} {{ currentMonthName }},
+        {{ currentYear }}
+      </h5>
       <div class="row">
-        <div class="col-md-6">
+        <!-- <div class="col-md-6">
           <div class="card office-card">
             <h6>In Office</h6>
             <ul>
-              <li v-for="staff in officeStaff" :key="staff.id">{{ staff.name }}</li>
+              <li v-for="staff in officeStaff" :key="staff.id">
+                {{ staff.name }}
+              </li>
             </ul>
           </div>
-        </div>
+        </div> -->
         <div class="col-md-6">
           <div class="card home-card">
             <h6>Working from Home</h6>
             <ul>
-              <li v-for="staff in homeStaff" :key="staff.id">{{ staff.name }}</li>
+              <li v-for="staff in homeStaff" :key="staff.id">
+                {{ staff.Staff_FName }}
+                {{ staff.Staff_LName }} ({{ staff.Staff_ID }})
+              </li>
             </ul>
           </div>
         </div>
@@ -49,7 +70,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import axios from "axios";
 
 export default {
   data() {
@@ -58,17 +79,18 @@ export default {
       selectedDay: null,
       staffId: null,
       reportingManager: null,
-      officeStaff: [], // List of staff in the office
+      schedule: [],
+      // officeStaff: [], // List of staff in the office
       homeStaff: [], // List of staff working from home
     };
   },
   created() {
-    this.staffId = sessionStorage.getItem('staffID');
-    
+    this.staffId = sessionStorage.getItem("staffID");
+
     if (this.staffId) {
       this.fetchReportingManager(); // Fetch Reporting_Manager for the logged-in staff
     } else {
-      console.error('No Staff ID found.');
+      console.error("No Staff ID found.");
     }
 
     this.selectToday(); // Automatically select today's date when the component is created
@@ -81,18 +103,26 @@ export default {
       return this.currentDate.getMonth();
     },
     currentMonthName() {
-      return this.currentDate.toLocaleString('default', { month: 'long' });
+      return this.currentDate.toLocaleString("default", { month: "long" });
     },
     daysOfWeek() {
-      return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     },
     daysInMonth() {
       const days = [];
-      const firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
-      const lastDate = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
+      const firstDay = new Date(
+        this.currentYear,
+        this.currentMonth,
+        1
+      ).getDay();
+      const lastDate = new Date(
+        this.currentYear,
+        this.currentMonth + 1,
+        0
+      ).getDate();
 
       for (let i = 0; i < firstDay; i++) {
-        days.push('');
+        days.push("");
       }
 
       for (let day = 1; day <= lastDate; day++) {
@@ -103,32 +133,75 @@ export default {
     },
   },
   methods: {
+    fetchTeamMembers() {
+      console.log(this.schedule);
+
+      this.schedule.forEach((schedule) => {
+        console.log(schedule.Staff_ID);
+        axios
+          .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
+          .then((response) => {
+            console.log(response.data);
+            this.homeStaff.push(response.data);
+          })
+          .catch((error) => {
+            console.error("Error fetching Reporting Manager:", error);
+          });
+      });
+    },
     fetchReportingManager() {
-      // Call your backend API to get the Reporting_Manager for this staff ID
-      axios.get(`/api/getReportingManager?staffId=${this.staffId}`)
-        .then(response => {
-          this.reportingManager = response.data.reportingManager;
-          this.fetchTeamSchedule(); // Fetch team schedule based on Reporting_Manager
+      // console.log(this.staffId);
+      axios
+        .get(`http://localhost:5001/user/${this.staffId}`)
+        .then((response) => {
+          // console.log(response.data);
+          this.reportingManager = response.data.Reporting_Manager;
+          this.fetchTeamSchedule();
         })
-        .catch(error => {
-          console.error('Error fetching Reporting Manager:', error);
+        .catch((error) => {
+          console.error("Error fetching Reporting Manager:", error);
         });
     },
     fetchTeamSchedule() {
-      // Fetch the team schedule using the Reporting_Manager variable
-      axios.get(`/api/getTeamSchedule?reportingManager=${this.reportingManager}`)
-        .then(response => {
-          this.officeStaff = response.data.officeStaff;
-          this.homeStaff = response.data.homeStaff;
+      // console.log(
+      //   `${this.currentDate.getFullYear()}-${
+      //     this.currentDate.getMonth() + 1
+      //   }-${this.currentDate.getDate()}`
+      // );
+
+      let params = {
+        type: "Team",
+        Reporting_Manager: this.reportingManager,
+        start_date: `${this.currentDate.getFullYear()}-${
+          this.currentDate.getMonth() + 1
+        }-${this.currentDate.getDate()}`,
+        end_date: `${this.currentDate.getFullYear()}-${
+          this.currentDate.getMonth() + 1
+        }-${this.currentDate.getDate()}`,
+      };
+
+      axios
+        .get(`http://localhost:6003/aggregateSchedule`, { params: params })
+        .then((response) => {
+          // this.officeStaff = response.data.officeStaff;
+          this.schedule = response.data;
+          console.log(response.data);
+          this.fetchTeamMembers();
         })
-        .catch(error => {
-          console.error('Error fetching team schedule:', error);
+        .catch((error) => {
+          console.error("Error fetching team schedule:", error);
         });
     },
     selectDay(day) {
       if (day) {
         this.selectedDay = day;
         // Optionally, you can refetch the schedule for a specific day
+        this.currentDate = new Date(
+          this.currentYear,
+          this.currentMonth,
+          this.selectedDay
+        );
+        this.fetchReportingManager();
       }
     },
     deselectDay() {

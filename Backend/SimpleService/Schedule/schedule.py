@@ -161,7 +161,7 @@ def get_department_schedule(department):
 # Function to get staff IDs by department from the accounts microservice
 def get_staff_ids_by_department(department):
     try:
-        response = requests.get(f"http://account:5000/users?dept={department}")
+        response = requests.get(f"http://host.docker.internal:5001/users?dept={department}")
         response.raise_for_status()
         users = response.json().get('users', [])
         staff_ids = [user['Staff_ID'] for user in users]
@@ -173,7 +173,7 @@ def get_staff_ids_by_department(department):
 # Function to get staff IDs by team from the accounts microservice
 def get_staff_ids_by_team(team):
     try:
-        response = requests.get(f"http://account:5000/users?Reporting_Manager={team}")
+        response = requests.get(f"http://host.docker.internal:5001/users?Reporting_Manager={team}")
         response.raise_for_status()
         users = response.json().get('users', [])
         staff_ids = [user['Staff_ID'] for user in users]
