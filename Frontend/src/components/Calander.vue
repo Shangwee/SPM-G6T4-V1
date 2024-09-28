@@ -183,18 +183,22 @@ export default {
 
   methods: {
     selectDay(day) {
-      if (day) {
-        this.selectedDay = day;
+      if (this.selectedDay === day) {
+        this.selectedDay = null; // Deselect if the day is already selected
+      } else {
+        this.selectedDay = day; // Select the new day
       }
     },
     deselectDay() {
-      this.selectToday();
+      this.selectedDay = null; // Deselect day
     },
     nextMonth() {
       this.currentDate = new Date(this.currentYear, this.currentMonth + 1, 1);
+      this.selectedDay = null; // Deselect day when month changes
     },
     previousMonth() {
       this.currentDate = new Date(this.currentYear, this.currentMonth - 1, 1);
+      this.selectedDay = null; // Deselect day when month changes
     },
     isToday(day) {
       const today = new Date();
