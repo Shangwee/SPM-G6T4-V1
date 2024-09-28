@@ -20,6 +20,7 @@ services:
       DB_PASSWORD: root
       DB_NAME: account
       DB_PORT: 3306
+      
   #################################
   # Account SQL Database
   #################################

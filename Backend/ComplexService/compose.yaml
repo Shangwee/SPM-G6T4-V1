@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+
+# Complex microservice 
+
+  #################################
+  # ManageRequest: The ManageRequest microservice
+  #################################
+  ManageRequest:
+    build:
+      context: ./ManageRequest
+      dockerfile: Dockerfile
+    image: spm/managerequest:1.0
+    restart: always
+    ports: ["6002:6002"]
+    environment:
+      PYTHONUNBUFFERED: 1 
+
+  #################################
+  # ScheduleAggregation: The ScheduleAggregation microservice
+  #################################
+  ScheduleAggregation:
+    build:
+      context: ./ScheduleAggregation
+      dockerfile: Dockerfile
+    image: spm/scheduleaggregation:1.0
+    restart: always
+    ports: ["6003:6003"]
+    environment:
+      PYTHONUNBUFFERED: 1

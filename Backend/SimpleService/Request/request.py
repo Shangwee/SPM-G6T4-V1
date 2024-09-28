@@ -2,7 +2,7 @@ import mysql.connector
 from flask import Flask, request, jsonify
 from os import environ
 from flask_cors import CORS
-import datetime
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -16,7 +16,6 @@ db_config = {
     'database': environ.get('DB_NAME')
 }
 
-
 # ** get all requests (add filters)
 @app.route('/request', methods=['GET'])
 def get_request():
@@ -29,6 +28,8 @@ def get_request():
     Employee_ID = request.args.get('Employee_ID')
     Approver_ID = request.args.get('Approver_ID')
     Status = request.args.get('Status')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
 
     # ** pagination parameters
     page = request.args.get('page')
@@ -41,12 +42,19 @@ def get_request():
         query += " AND Approver_ID = {Approver_ID}"
     if Status:
         query += " AND Status = {Status}"
+
+    if (start_date and not validate_date(start_date)) or (end_date and not validate_date(end_date)):
+        return jsonify({'error': 'Invalid date format, use YYYY-MM-DD'}), 400
+    
+    values = ()
+    
+    query, values = apply_date_filters(query, values, start_date, end_date)
     
     if page and page_size:
         offset = (int(page) - 1) * int(page_size)
         query += f" LIMIT {page_size} OFFSET {offset}"
 
-    cursor.execute(query)
+    cursor.execute(query, values)
 
     requests = cursor.fetchall()
 
@@ -66,9 +74,16 @@ def get_request_by_employee_id(Employee_ID):
 
      # ** Extract the parameters from the query string
     Status = request.args.get('Status')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
 
     if Status:
         query += f" AND Status = {Status}"
+
+    if (start_date and not validate_date(start_date)) or (end_date and not validate_date(end_date)):
+        return jsonify({'error': 'Invalid date format, use YYYY-MM-DD'}), 400
+    
+    query, values = apply_date_filters(query, values, start_date, end_date)
 
     # ** pagination parameters
     page = request.args.get('page')
@@ -99,11 +114,19 @@ def get_request_by_approver_id(Approver_ID):
     # ** Extract the parameters from the query string
     Employee_ID = request.args.get('Employee_ID')
     Status = request.args.get('Status')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
 
     if Employee_ID:
         query += f" AND Employee_ID = {Employee_ID}"
     if Status:
         query += f" AND Status = {Status}"
+
+    if (start_date and not validate_date(start_date)) or (end_date and not validate_date(end_date)):
+        return jsonify({'error': 'Invalid date format, use YYYY-MM-DD'}), 400
+    
+    query, values = apply_date_filters(query, values, start_date, end_date)
+    
 
     # ** pagination parameters
     page = request.args.get('page')
@@ -155,6 +178,10 @@ def create_request():
     Comments = data['Comments']
     Status = 0
     Date = data['Date']
+
+    # ** validate date format
+    if not validate_date(Date):
+        return jsonify({'error': 'Invalid date format. Please use YYYY-MM-DD'}), 400
 
     # ** check if the request already exists
     check_exist = check_if_request_exists_by_employee_id_date(Employee_ID, Date)
@@ -233,6 +260,28 @@ def check_if_request_exists_by_employee_id_date(employee_id, date):
     conn.close()
 
     return request
+
+
+# ** Utility function to validate date format
+def validate_date(date_string):
+    try:
+        datetime.strptime(date_string, '%Y-%m-%d')
+        return True
+    except ValueError:
+        return False
+    
+# ** Utility function to apply date filters to a query
+def apply_date_filters(query, parameters, start_date, end_date):
+    if start_date and end_date:
+        query += " AND Date BETWEEN %s AND %s"
+        parameters += (start_date, end_date)
+    elif start_date:
+        query += " AND Date >= %s"
+        parameters += (start_date,)
+    elif end_date:
+        query += " AND Date <= %s"
+        parameters += (end_date,)
+    return query, parameters
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
