@@ -84,8 +84,8 @@ export default {
       scheduleStaff: [],
       scheduleManage: [],
       homeStaff: [],
-      teams: [],
       staffManage: [],
+      teams: [],
       selectedDepartment: '',
       selectedTeam: '',
       scheduleType: '', // Define this according to your application logic
@@ -108,11 +108,12 @@ export default {
       await this.fetchUserRole(); // Wait for user role to be fetched
       this.fetchOwnSchedule(); 
       this.selectToday(); // Automatically select today's date
-      this.fetchReportingManager(); // Fetch Reporting_Manager for the logged-in staff
+      
       
       // Wait for reportingManager to be set before checking userRole
       if (this.userRole === 2) {
         console.log("Fetching staff team schedule for user role 2");
+        this.fetchReportingManager(); // Fetch Reporting_Manager for the logged-in staff
         await this.fetchStaffTeamSchedule();
       } else {
         await this.fetchManageTeamSchedule();
@@ -230,6 +231,7 @@ export default {
           axios
             .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
             .then((response) => {
+              
               this.staffManage.push(response.data);
               // get all teams
               if (!this.teams.includes(response.data.Position)) {
@@ -239,25 +241,23 @@ export default {
             .catch((error) => {
               console.error("Error fetching Reporting Manager:", error);
             });
+            console.log(this.staffManage);
         });
       },
     
       async fetchManageTeamSchedule() {
         let params = {
           type: "Team",
-          staffId: sessionStorage.getItem('staffID'),
-          Reporting_Manager: this.staffId,
-          start_date: `${this.currentDate.getFullYear()}-${
-            this.currentDate.getMonth() + 1
-          }-${this.currentDate.getDate()}`,
-          end_date: `${this.currentDate.getFullYear()}-${
-            this.currentDate.getMonth() + 1
-          }-${this.currentDate.getDate()}`,
+          // staffId: sessionStorage.getItem('staffID'),
+          Reporting_Manager: parseInt(this.staffId, 10),
+          start_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
+          end_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
         };
-
+        console.log("Fetching manage team schedule with params:", params);
         try {
           
           const response = await axios.get(`http://localhost:6003/aggregateSchedule`, { params: params });
+          console.log("Team schedule response:", response.data);
           this.scheduleManage = response.data;
           
           await this.fetchManageTeamMembers(); // Wait for the team members to be fetched
@@ -273,8 +273,9 @@ export default {
       } else {
         this.selectedDay = day; // Select the new day
       }
-      this.fetchReportingManager();
+      
       if (this.userRole === 2) {
+        this.fetchReportingManager();
         this.fetchStaffTeamSchedule();
       } else {
         this.fetchManageTeamSchedule();
