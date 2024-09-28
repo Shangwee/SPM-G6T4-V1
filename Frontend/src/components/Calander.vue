@@ -1,7 +1,6 @@
 <template>
-  <div class="calendar-container" >
-    <!-- Calendar Section -->
-    <div class="calendar card shadow-sm" @click="deselectDay" >
+  <div class="calendar-container">
+    <div class="calendar card shadow-sm" @click="deselectDay">
       <div class="calendar-header d-flex justify-content-between align-items-center p-3">
         <button class="btn btn-outline-primary" @click.stop="previousMonth">
           <i class="bi bi-arrow-left-circle"></i> Previous
@@ -24,68 +23,48 @@
       </div>
     </div>
 
-              <!-- Filters and Staff Schedule Section -->
-              <div v-if=" scheduleType==='team'" class="staff-schedule-container">
-                <!-- Filters Section -->
-                <div class="filter-controls d-flex flex-column mb-4">
-                  <!-- Department Filter -->
-                  <div class="filter-controls d-flex mb-4">
-                  <!-- Department Filter -->
-                  <div v-if="userRole===1" class="form-group mr-2" style="flex: 1;">
-                    <label for="department">Department</label>
-                    <select id="department" v-model="selectedDepartment" class="form-control" @change="filterByDepartment">
-                      <option value="">All Departments</option>
-                      <option v-for="department in departments" :key="department" :value="department">{{ department }}</option>
-                    </select>
-                  </div>
-                  <!-- Team Filter -->
-                  <div v-if="userRole===3 || userRole===1" class="form-group" :class="{'full-width': userRole === 3}" style="flex: 1;">
-                    <label for="team">Team</label>
-                    <select id="team" v-model="selectedTeam" class="form-control" @change="filterByTeam">
-                      <option value="">All Teams</option>
-                      <option v-for="team in teams" :key="team" :value="team">{{ team }}</option>
-                    </select>
-                  </div>
-</div>
+    <div v-if="scheduleType === 'team'" class="staff-schedule-container">
+      <div class="filter-controls d-flex flex-column mb-4">
+        <div class="filter-controls d-flex mb-4">
+          <div v-if="userRole === 1" class="form-group mr-2" style="flex: 1;">
+            <label for="department">Department</label>
+            <select id="department" v-model="selectedDepartment" class="form-control" @change="filterByDepartment">
+              <option value="">All Departments</option>
+              <option v-for="department in departments" :key="department" :value="department">{{ department }}</option>
+            </select>
+          </div>
+          <div v-if="userRole === 3 || userRole === 1" class="form-group" :class="{'full-width': userRole === 3}" style="flex: 1;">
+            <label for="team">Team</label>
+            <select id="team" v-model="selectedTeam" class="form-control" @change="filterByTeam">
+              <option value="">All Teams</option>
+              <option v-for="team in teams" :key="team" :value="team">{{ team }}</option>
+            </select>
+          </div>
+        </div>
 
-                  
-                  <!-- Staff Schedule Section -->
-                  <div v-if="selectedDay && (userRole===3 || userRole===1)" class="staff-schedule mt-4">
-                    <h5 class="schedule-title">Staff Schedule for {{ selectedDay }} {{ currentMonthName }}, {{ currentYear }}</h5>
-                    <div class="row">
-                       <!-- In Office Section -->
-                      <!-- <div class="col-md-6 mb-3">
-                        <div class="card office-card">
-                          <h6>In Office</h6>
-                          <ul class="staff-list">
-                            <li v-for="staff in filteredStaffInOffice" :key="staff.name" class="staff-item">
-                              {{ staff.name }}
-                            </li>
-                          </ul>
-                        </div>
-                      </div> -->
-                      <!-- Working from Home Section -->
-                      <div class="col-md-6 mb-3 full-width">
-                        <div class="card home-card">
-                          <h6>Working from Home</h6>
-                          <ul class="staff-list">
-                            <li v-for="staff in filteredStaffWorkingFromHome" :key="staff.name" class="staff-item">
-                              {{ staff.name }}
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+        <div v-if="selectedDay && (userRole === 3 || userRole === 1)" class="staff-schedule mt-4">
+          <h5 class="schedule-title">Staff Schedule for {{ selectedDay }} {{ currentMonthName }}, {{ currentYear }}</h5>
+          <div class="row">
+            <div class="col-md-6 mb-3 full-width">
+              <div class="card home-card">
+                <h6>Working from Home</h6>
+                <ul class="staff-list">
+                  <li v-if="userRole === 2" v-for="staff in homeStaff" :key="staff.id">
+                    {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }})
+                  </li>
+                </ul>
               </div>
-
-              
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import { ref, onMounted } from 'vue';
+import axios from "axios";
 
 export default {
   setup() {
@@ -94,15 +73,10 @@ export default {
 
     const fetchUserRole = async () => {
       try {
-        // Fetch user ID from session storage
         staffID.value = JSON.parse(sessionStorage.getItem('staffID'));
-
-        // Fetch user role based on the staff ID
         const response = await fetch(`http://localhost:5001/user/${staffID.value}`, {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
         });
 
         const data = await response.json();
@@ -116,51 +90,43 @@ export default {
       fetchUserRole();
     });
 
-    return {
-      userRole,
-      staffID,
-    };
+    return { userRole, staffID };
   },
 
   data() {
     return {
       currentDate: new Date(),
       selectedDay: null,
-      departments: ['HR', 'Finance', 'IT', 'Marketing'],
-      teams: ['Team A', 'Team B', 'Team C'],
+      staffId: null,
+      reportingManager: null,
+      ownSchedule: [],
+      schedule: [],
+      homeStaff: [],
+      teams: [],
       selectedDepartment: '',
       selectedTeam: '',
-      staff: [
-        { name: 'John Doe', department: 'HR', team: 'Team A', location: 'office' },
-        { name: 'Emily Davis', department: 'Finance', team: 'Team B', location: 'office' },
-        { name: 'Jane Smith', department: 'IT', team: 'Team A', location: 'home' },
-        { name: 'Michael Lee', department: 'Marketing', team: 'Team C', location: 'home' },
-      ],
-      filteredStaffInOffice: [],
-      filteredStaffWorkingFromHome: [],
+      scheduleType: '', // Define this according to your application logic
     };
   },
+  
   props: {
-        scheduleType: {
-            type: String,
-            required: true,
-            validator: value => ['user', 'team'].includes(value),
-        },
+    scheduleType: {
+      type: String,
+      required: true,
+      validator: value => ['user', 'team'].includes(value),
     },
+  },
 
-created() {
-        this.staffId = sessionStorage.getItem('staffID'); // Retrieve Staff_ID
-        if (this.staffId) {
-        console.log('Staff ID:', this.staffId); // Example usage
-        } else {
-        console.error('No Staff ID found.'); // Handle the case when Staff_ID is not found
-        }
-        if (this.scheduleType === 'user') {
-            this.fetchUserSchedule();
-        } else {
-            this.fetchTeamSchedule();
-        }
-    }, 
+  created() {
+    this.staffId = sessionStorage.getItem('staffID'); // Retrieve Staff_ID
+    if (this.scheduleType === 'user') {
+      this.fetchUserSchedule();
+    } else {
+      this.fetchReportingManager(); // Fetch Reporting_Manager for the logged-in staff
+    }
+    this.selectToday(); // Automatically select today's date when the component is created
+  },
+
   computed: {
     currentYear() {
       return this.currentDate.getFullYear();
@@ -192,32 +158,94 @@ created() {
   },
 
   methods: {
+    fetchOwnSchedule() {
+      axios
+        .get(`http://localhost:5002/schedule/personal/${this.staffId}`)
+        .then((response) => {
+          console.log(response.data);
+          this.ownSchedule = response.data;
+        })
+        .catch((error) => {
+          console.error("Error fetching own Schedule:", error);
+        });
+    },
+    
+    fetchTeamMembers() {
+      this.homeStaff = [];
+      this.schedule.forEach((schedule) => {
+        axios
+          .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
+          .then((response) => {
+            this.homeStaff.push(response.data);
+            // get all teams
+            if (!this.teams.includes(response.data.Position)) {
+              this.teams.push(response.data.Position);
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching Team Members info", error);
+          });
+      });
+    },
+    
+    fetchReportingManager() {
+      axios
+        .get(`http://localhost:5001/user/${this.staffId}`)
+        .then((response) => {
+          this.reportingManager = response.data.Reporting_Manager;
+          this.fetchTeamSchedule();
+        })
+        .catch((error) => {
+          console.error("Error fetching Reporting Manager:", error);
+        });
+    },
+    
+    fetchTeamSchedule() {
+      let params = {
+        type: "Team",
+        Reporting_Manager: this.reportingManager,
+        start_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
+        end_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
+      };
+
+      axios
+        .get(`http://localhost:6003/aggregateSchedule`, { params: params })
+        .then((response) => {
+          this.schedule = response.data;
+          this.fetchTeamMembers();
+        })
+        .catch((error) => {
+          console.error("Error fetching team schedule:", error);
+        });
+    },
+
     fetchUserSchedule() {
-        // Logic to fetch user's schedule using this.staffId
-        console.log('Fetching user schedule for Staff ID:', this.staffId);
-        },
-        fetchTeamSchedule() {
-        // Logic to fetch team's schedule using this.staffId
-        console.log('Fetching team schedule for Staff ID:', this.staffId);
-        },
+      console.log('Fetching user schedule for Staff ID:', this.staffId);
+    },
+
     selectDay(day) {
       if (this.selectedDay === day) {
         this.selectedDay = null; // Deselect if the day is already selected
       } else {
         this.selectedDay = day; // Select the new day
       }
+      this.fetchReportingManager();
     },
+    
     deselectDay() {
       this.selectedDay = null; // Deselect day
     },
+    
     nextMonth() {
       this.currentDate = new Date(this.currentYear, this.currentMonth + 1, 1);
       this.selectedDay = null; // Deselect day when month changes
     },
+    
     previousMonth() {
       this.currentDate = new Date(this.currentYear, this.currentMonth - 1, 1);
       this.selectedDay = null; // Deselect day when month changes
     },
+    
     isToday(day) {
       const today = new Date();
       return (
@@ -226,30 +254,9 @@ created() {
         this.currentYear === today.getFullYear()
       );
     },
+    
     selectToday() {
-      const today = new Date();
-      this.selectedDay = today.getDate();
-      this.filterStaff();
-    },
-    filterByDepartment() {
-      this.filterStaff();
-    },
-    filterByTeam() {
-      this.filterStaff();
-    },
-    filterStaff() {
-      this.filteredStaffInOffice = this.staff.filter(
-        (staff) =>
-          staff.location === 'office' &&
-          (this.selectedDepartment === '' || staff.department === this.selectedDepartment) &&
-          (this.selectedTeam === '' || staff.team === this.selectedTeam)
-      );
-      this.filteredStaffWorkingFromHome = this.staff.filter(
-        (staff) =>
-          staff.location === 'home' &&
-          (this.selectedDepartment === '' || staff.department === this.selectedDepartment) &&
-          (this.selectedTeam === '' || staff.team === this.selectedTeam)
-      );
+      this.selectedDay = this.currentDate.getDate(); // Automatically select today
     },
   },
 };
