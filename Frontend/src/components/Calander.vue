@@ -1,7 +1,7 @@
 <template>
-  <div class="calendar-container" @click="deselectDay">
+  <div class="calendar-container" >
     <!-- Calendar Section -->
-    <div class="calendar card shadow-sm" >
+    <div class="calendar card shadow-sm" @click="deselectDay" >
       <div class="calendar-header d-flex justify-content-between align-items-center p-3">
         <button class="btn btn-outline-primary" @click.stop="previousMonth">
           <i class="bi bi-arrow-left-circle"></i> Previous
@@ -25,74 +25,62 @@
     </div>
 
               <!-- Filters and Staff Schedule Section -->
-              <div v-if="userRole===3 || userRole===1" class="staff-schedule-container">
+              <div v-if=" scheduleType==='team'" class="staff-schedule-container">
                 <!-- Filters Section -->
-                <div class="filter-controls d-flex justify-content-between mb-4">
-                  <div v-if="userRole===1" class="form-group mr-2">
+                <div class="filter-controls d-flex flex-column mb-4">
+                  <!-- Department Filter -->
+                  <div class="filter-controls d-flex mb-4">
+                  <!-- Department Filter -->
+                  <div v-if="userRole===1" class="form-group mr-2" style="flex: 1;">
                     <label for="department">Department</label>
                     <select id="department" v-model="selectedDepartment" class="form-control" @change="filterByDepartment">
                       <option value="">All Departments</option>
                       <option v-for="department in departments" :key="department" :value="department">{{ department }}</option>
                     </select>
                   </div>
-                  <div v-if="userRole===3 || userRole===1" class="form-group" :class="{'full-width': userRole === 3}">
+                  <!-- Team Filter -->
+                  <div v-if="userRole===3 || userRole===1" class="form-group" :class="{'full-width': userRole === 3}" style="flex: 1;">
                     <label for="team">Team</label>
                     <select id="team" v-model="selectedTeam" class="form-control" @change="filterByTeam">
                       <option value="">All Teams</option>
                       <option v-for="team in teams" :key="team" :value="team">{{ team }}</option>
                     </select>
                   </div>
-                </div>
+</div>
 
-                <!-- Staff Schedule Section -->
-                <div v-if="selectedDay" class="staff-schedule">
-                  <h5 class="schedule-title">Staff Schedule for {{ selectedDay }} {{ currentMonthName }}, {{ currentYear }}</h5>
-                  <div class="row">
-                    <div class="col-md-6">
-                      <div class="card office-card">
-                        <h6>In Office</h6>
-                        <ul class="staff-list">
-                          <li v-for="staff in filteredStaffInOffice" :key="staff.name" class="staff-item">
-                            {{ staff.name }}
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                    <div class="col-md-6">
-                      <div class="card home-card">
-                        <h6>Working from Home</h6>
-                        <ul class="staff-list">
-                          <li v-for="staff in filteredStaffWorkingFromHome" :key="staff.name" class="staff-item">
-                            {{ staff.name }}
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <!-- Section to show team schedule based on Reporting_Manager -->
-              <div >
-                <div v-if="selectedDay && userRole===2" class="staff-schedule mt-4">
-                  <h5 class="schedule-title">
-                    Team Schedule for {{ selectedDay }} {{ currentMonthName }},
-                    {{ currentYear }}
-                  </h5>
-                  <div class="row">
-                    <div class="col-md-6">
-                      <div class="card home-card">
-                        <h6>Working from Home</h6>
-                        <ul>
-                          <li v-for="staff in homeStaff" :key="staff.id">
-                            {{ staff.Staff_FName }}
-                            {{ staff.Staff_LName }} ({{ staff.Staff_ID }})
-                          </li>
-                        </ul>
+                  
+                  <!-- Staff Schedule Section -->
+                  <div v-if="selectedDay && (userRole===3 || userRole===1)" class="staff-schedule mt-4">
+                    <h5 class="schedule-title">Staff Schedule for {{ selectedDay }} {{ currentMonthName }}, {{ currentYear }}</h5>
+                    <div class="row">
+                       <!-- In Office Section -->
+                      <!-- <div class="col-md-6 mb-3">
+                        <div class="card office-card">
+                          <h6>In Office</h6>
+                          <ul class="staff-list">
+                            <li v-for="staff in filteredStaffInOffice" :key="staff.name" class="staff-item">
+                              {{ staff.name }}
+                            </li>
+                          </ul>
+                        </div>
+                      </div> -->
+                      <!-- Working from Home Section -->
+                      <div class="col-md-6 mb-3 full-width">
+                        <div class="card home-card">
+                          <h6>Working from Home</h6>
+                          <ul class="staff-list">
+                            <li v-for="staff in filteredStaffWorkingFromHome" :key="staff.name" class="staff-item">
+                              {{ staff.name }}
+                            </li>
+                          </ul>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
+
+              
   </div>
 </template>
 
@@ -204,6 +192,14 @@ created() {
   },
 
   methods: {
+    fetchUserSchedule() {
+        // Logic to fetch user's schedule using this.staffId
+        console.log('Fetching user schedule for Staff ID:', this.staffId);
+        },
+        fetchTeamSchedule() {
+        // Logic to fetch team's schedule using this.staffId
+        console.log('Fetching team schedule for Staff ID:', this.staffId);
+        },
     selectDay(day) {
       if (this.selectedDay === day) {
         this.selectedDay = null; // Deselect if the day is already selected
