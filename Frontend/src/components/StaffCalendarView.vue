@@ -22,16 +22,16 @@
         </div>
       </div>
     </div>
-    <!-- Section to show staff schedule -->
+
+    <!-- Section to show team schedule based on Reporting_Manager -->
     <div v-if="selectedDay" class="staff-schedule mt-4">
-      <h5 class="schedule-title">Staff Schedule for {{ selectedDay }} {{ currentMonthName }}, {{ currentYear }}</h5>
+      <h5 class="schedule-title">Team Schedule for {{ selectedDay }} {{ currentMonthName }}, {{ currentYear }}</h5>
       <div class="row">
         <div class="col-md-6">
           <div class="card office-card">
             <h6>In Office</h6>
             <ul>
-              <li>John Doe</li>
-              <li>Emily Davis</li>
+              <li v-for="staff in officeStaff" :key="staff.id">{{ staff.name }}</li>
             </ul>
           </div>
         </div>
@@ -39,8 +39,7 @@
           <div class="card home-card">
             <h6>Working from Home</h6>
             <ul>
-              <li>Jane Smith</li>
-              <li>Michael Lee</li>
+              <li v-for="staff in homeStaff" :key="staff.id">{{ staff.name }}</li>
             </ul>
           </div>
         </div>
@@ -50,33 +49,28 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
-  props: {
-    scheduleType: {
-      type: String,
-      required: true,
-      validator: value => ['user', 'team'].includes(value),
-    },
-  },
   data() {
     return {
       currentDate: new Date(),
-      selectedDay: null, // This will hold the day number
+      selectedDay: null,
       staffId: null,
+      reportingManager: null,
+      officeStaff: [], // List of staff in the office
+      homeStaff: [], // List of staff working from home
     };
   },
   created() {
     this.staffId = sessionStorage.getItem('staffID');
+    
     if (this.staffId) {
-      console.log('Staff ID:', this.staffId);
+      this.fetchReportingManager(); // Fetch Reporting_Manager for the logged-in staff
     } else {
       console.error('No Staff ID found.');
     }
-    if (this.scheduleType === 'user') {
-      this.fetchUserSchedule();
-    } else {
-      this.fetchTeamSchedule();
-    }
+
     this.selectToday(); // Automatically select today's date when the component is created
   },
   computed: {
@@ -109,20 +103,36 @@ export default {
     },
   },
   methods: {
-    fetchUserSchedule() {
-      console.log('Fetching user schedule for Staff ID:', this.staffId);
+    fetchReportingManager() {
+      // Call your backend API to get the Reporting_Manager for this staff ID
+      axios.get(`/api/getReportingManager?staffId=${this.staffId}`)
+        .then(response => {
+          this.reportingManager = response.data.reportingManager;
+          this.fetchTeamSchedule(); // Fetch team schedule based on Reporting_Manager
+        })
+        .catch(error => {
+          console.error('Error fetching Reporting Manager:', error);
+        });
     },
     fetchTeamSchedule() {
-      console.log('Fetching team schedule for Staff ID:', this.staffId);
+      // Fetch the team schedule using the Reporting_Manager variable
+      axios.get(`/api/getTeamSchedule?reportingManager=${this.reportingManager}`)
+        .then(response => {
+          this.officeStaff = response.data.officeStaff;
+          this.homeStaff = response.data.homeStaff;
+        })
+        .catch(error => {
+          console.error('Error fetching team schedule:', error);
+        });
     },
     selectDay(day) {
       if (day) {
         this.selectedDay = day;
+        // Optionally, you can refetch the schedule for a specific day
       }
     },
     deselectDay() {
-      // When deselecting, instead of clearing the selection, we select today's date
-      this.selectToday();
+      this.selectToday(); // Reset to today when deselected
     },
     nextMonth() {
       this.currentDate = new Date(this.currentYear, this.currentMonth + 1, 1);
@@ -139,7 +149,6 @@ export default {
       );
     },
     selectToday() {
-      // Automatically select today's date when the component is created or when deselected
       const today = new Date();
       this.selectedDay = today.getDate();
     },
@@ -186,7 +195,6 @@ export default {
   background-color: white;
 }
 
-/* Highlight for today's date */
 .calendar-cell.today {
   background-color: #d1e7ff;
   color: #0d6efd;
@@ -195,7 +203,6 @@ export default {
   border: 1px solid #0d6efd;
 }
 
-/* Highlight for the selected date */
 .calendar-cell.selected-day {
   background-color: #e2e3e5;
   color: #495057;
@@ -210,7 +217,6 @@ export default {
   border: 2px solid #0d6efd;
 }
 
-/* Hover */
 .calendar-cell:hover {
   background-color: #f8f9fa;
   transition: background-color 0.3s ease;
@@ -220,7 +226,6 @@ export default {
   background-color: #fafafa;
 }
 
-/* Staff Schedule Styling */
 .staff-schedule {
   width: 70%;
   background-color: #f8f9fa;
@@ -238,7 +243,6 @@ export default {
   margin-bottom: 20px;
 }
 
-/* Cards for In Office and Working from Home */
 .card {
   background-color: #fff;
   border: 1px solid #e0e0e0;
@@ -261,45 +265,19 @@ export default {
 .office-card ul,
 .home-card ul {
   list-style-type: none;
-  /* Remove bullet points */
   padding: 0;
   margin: 0;
   max-height: 200px;
-  /* Set a maximum height for long lists */
   overflow-y: auto;
-  /* Enable vertical scrolling */
 }
 
 .office-card ul li,
 .home-card ul li {
   font-size: 0.85rem;
-  /* Reduced font size for compactness */
   padding: 3px 0;
-  /* Reduced padding between list items */
   color: #555;
 }
 
-.staff-list {
-  list-style-type: none;
-  /* Remove bullet points */
-  padding: 0;
-  margin: 0;
-  max-height: 200px;
-  /* Set a maximum height for long lists */
-  overflow-y: auto;
-  /* Enable vertical scrolling */
-}
-
-.staff-item {
-  font-size: 0.85rem;
-  /* Reduced font size for compactness */
-  padding: 3px 0;
-  /* Reduced padding between list items */
-  color: #555;
-}
-
-
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .calendar-container {
     flex-direction: column;
