@@ -67,31 +67,31 @@ import { ref, onMounted } from 'vue';
 import axios from "axios";
 
 export default {
-  setup() {
-    const userRole = ref(null);
-    const staffID = ref(null);
+  // setup() {
+  //   const userRole = ref(null);
+  //   const staffID = ref(null);
 
-    const fetchUserRole = async () => {
-      try {
-        staffID.value = JSON.parse(sessionStorage.getItem('staffID'));
-        const response = await fetch(`http://localhost:5001/user/${staffID.value}`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
+  //   const fetchUserRole = async () => {
+  //     try {
+  //       staffID.value = JSON.parse(sessionStorage.getItem('staffID'));
+  //       const response = await fetch(`http://localhost:5001/user/${staffID.value}`, {
+  //         method: 'GET',
+  //         headers: { 'Content-Type': 'application/json' },
+  //       });
 
-        const data = await response.json();
-        userRole.value = data.Role;
-      } catch (error) {
-        console.error('Failed to fetch user role:', error);
-      }
-    };
+  //       const data = await response.json();
+  //       userRole.value = data.Role;
+  //     } catch (error) {
+  //       console.error('Failed to fetch user role:', error);
+  //     }
+  //   };
 
-    onMounted(() => {
-      fetchUserRole();
-    });
+  //   onMounted(() => {
+  //     fetchUserRole();
+  //   });
 
-    return { userRole, staffID };
-  },
+  //   return { userRole, staffID };
+  // },
 
   data() {
     return {
@@ -99,6 +99,7 @@ export default {
       selectedDay: null,
       staffId: null,
       reportingManager: null,
+      userRole: null,
       ownSchedule: [],
       scheduleStaff: [],
       scheduleManage: [],
@@ -119,27 +120,30 @@ export default {
     },
   },
 
-  created() {
-    this.staffId = sessionStorage.getItem('staffID'); // Retrieve Staff_ID
-    this.fetchUserRole();
-    if (this.staffId) {
+  async created() {
+  this.staffId = sessionStorage.getItem('staffID'); // Retrieve Staff_ID
+
+  if (this.staffId) {
+    try {
+      await this.fetchUserRole(); // Wait for user role to be fetched
       this.fetchOwnSchedule(); 
-    } else {
-      console.error("No Staff ID found.");
-    }
-    this.selectToday(); // Automatically select today's date when the component is created
-    this.fetchReportingManager(); // Fetch Reporting_Manager for the logged-in staff
-
-    if (this.userRole === 2) {
-      console.log("gay");
-      this.fetchStaffTeamSchedule();
+      this.selectToday(); // Automatically select today's date
+      this.fetchReportingManager(); // Fetch Reporting_Manager for the logged-in staff
       
-    } else {
-      this.fetchManageTeamSchedule();
-
+      // Wait for reportingManager to be set before checking userRole
+      if (this.userRole === 2) {
+        console.log("Fetching staff team schedule for user role 2");
+        await this.fetchStaffTeamSchedule();
+      } else {
+        await this.fetchManageTeamSchedule();
+      }
+    } catch (error) {
+      console.error("Error in created lifecycle:", error);
     }
-
-  },
+  } else {
+    console.error("No Staff ID found.");
+  }
+},
 
   computed: {
     currentYear() {
