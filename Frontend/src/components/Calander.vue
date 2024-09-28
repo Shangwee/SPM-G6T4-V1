@@ -72,6 +72,7 @@
                 </div>
               </div>
               <!-- Section to show team schedule based on Reporting_Manager -->
+              <div >
                 <div v-if="selectedDay && userRole===2" class="staff-schedule mt-4">
                   <h5 class="schedule-title">
                     Team Schedule for {{ selectedDay }} {{ currentMonthName }},
@@ -91,6 +92,7 @@
                     </div>
                   </div>
                 </div>
+              </div>
   </div>
 </template>
 
@@ -150,7 +152,27 @@ export default {
       filteredStaffWorkingFromHome: [],
     };
   },
+  props: {
+        scheduleType: {
+            type: String,
+            required: true,
+            validator: value => ['user', 'team'].includes(value),
+        },
+    },
 
+created() {
+        this.staffId = sessionStorage.getItem('staffID'); // Retrieve Staff_ID
+        if (this.staffId) {
+        console.log('Staff ID:', this.staffId); // Example usage
+        } else {
+        console.error('No Staff ID found.'); // Handle the case when Staff_ID is not found
+        }
+        if (this.scheduleType === 'user') {
+            this.fetchUserSchedule();
+        } else {
+            this.fetchTeamSchedule();
+        }
+    }, 
   computed: {
     currentYear() {
       return this.currentDate.getFullYear();
