@@ -79,6 +79,7 @@ export default {
       selectedDay: null,
       staffId: null,
       reportingManager: null,
+      ownSchedule: [],
       schedule: [],
       // officeStaff: [], // List of staff in the office
       homeStaff: [], // List of staff working from home
@@ -88,6 +89,7 @@ export default {
     this.staffId = sessionStorage.getItem("staffID");
 
     if (this.staffId) {
+      this.fetchOwnSchedule();
       this.fetchReportingManager(); // Fetch Reporting_Manager for the logged-in staff
     } else {
       console.error("No Staff ID found.");
@@ -133,8 +135,20 @@ export default {
     },
   },
   methods: {
+    fetchOwnSchedule() {
+      axios
+        .get(`http://localhost:5002/schedule/personal/${this.staffId}`)
+        .then((response) => {
+          console.log(response.data);
+          this.ownSchedule = response.data;
+        })
+        .catch((error) => {
+          console.error("Error fetching own Schedule:", error);
+        });
+    },
     fetchTeamMembers() {
       console.log(this.schedule);
+      this.homeStaff = [];
 
       this.schedule.forEach((schedule) => {
         console.log(schedule.Staff_ID);
@@ -145,7 +159,7 @@ export default {
             this.homeStaff.push(response.data);
           })
           .catch((error) => {
-            console.error("Error fetching Reporting Manager:", error);
+            console.error("Error fetching Team Members info", error);
           });
       });
     },
