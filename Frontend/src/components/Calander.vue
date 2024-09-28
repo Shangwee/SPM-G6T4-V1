@@ -43,7 +43,7 @@ export default {
   methods: {
     getRoleFromSession() {
       // Assuming the role is stored in sessionStorage after login
-      const storedRole = sessionStorage.getItem('Role'); // Example of how to get the role
+      const storedRole = sessionStorage.getItem('role'); // Example of how to get the role
       if (storedRole) {
         this.role = parseInt(storedRole); // Convert the string to an integer
       }

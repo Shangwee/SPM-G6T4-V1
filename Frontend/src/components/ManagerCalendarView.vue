@@ -25,7 +25,7 @@
       </div>
   
       <!-- Filters and Staff Schedule Section -->
-      <div class="staff-schedule-container">
+      <div class="staff-schedule-container p-2">
         <!-- Team Filter Section -->
         <div class="filter-controls d-flex justify-content-between mb-4">
           <div class="form-group">
@@ -42,19 +42,11 @@
           <h5 class="schedule-title">Staff Schedule for {{ selectedDay }} {{ currentMonthName }} {{ currentYear }}
           </h5>
           <div class="row">
-            <div class="col-md-6">
-              <div class="card office-card">
-                <h6>In Office</h6>
-                <ul>
-                  <li v-for="staff in filteredStaffInOffice" :key="staff.name">{{ staff.name }}</li>
-                </ul>
-              </div>
-            </div>
-            <div class="col-md-6">
+            <div class="col-md-12">
               <div class="card home-card">
                 <h6>Working from Home</h6>
                 <ul>
-                  <li v-for="staff in filteredStaffWorkingFromHome" :key="staff.name">{{ staff.name }}
+                  <li v-for="staff in staff" :key="staff.ID">{{ staff.Staff_FName }} {{ staff.Staff_LName }} - {{ staff.Position }}
                   </li>
                 </ul>
               </div>
@@ -66,72 +58,25 @@
   </template>
   
   <script>
+  import axios from "axios";
+
   export default {
     data() {
       return {
         currentDate: new Date(),
         selectedDay: null,
         staffId: null,
-        teams: ['Team A', 'Team B', 'Team C'], // Mock team names
+        teams: [], // Mock team names
         selectedTeam: '', // Selected team for filtering
-        staff: [
-          {
-            name: 'John Doe',
-            team: 'Team A',
-            schedule: {
-              '2024-09-28': 'office',
-              '2024-09-29': 'home'
-            }
-          },
-          {
-            name: 'Jane Smith',
-            team: 'Team A',
-            schedule: {
-              '2024-09-28': 'home',
-              '2024-09-29': 'office'
-            }
-          },
-          {
-            name: 'Mark Lee',
-            team: 'Team B',
-            schedule: {
-              '2024-09-28': 'office',
-              '2024-09-29': 'office'
-            }
-          },
-          {
-            name: 'Lisa Wong',
-            team: 'Team B',
-            schedule: {
-              '2024-09-28': 'home',
-              '2024-09-29': 'home'
-            }
-          },
-          {
-            name: 'Samuel Jackson',
-            team: 'Team C',
-            schedule: {
-              '2024-09-28': 'office',
-              '2024-09-29': 'home'
-            }
-          },
-          {
-            name: 'Sophia Brown',
-            team: 'Team C',
-            schedule: {
-              '2024-09-28': 'home',
-              '2024-09-29': 'office'
-            }
-          }
-        ], // Mock staff data
-        filteredStaffInOffice: [], // Filtered office staff
+        staff: [],
+        schedule: [],
         filteredStaffWorkingFromHome: [], // Filtered work-from-home staff
       };
     },
     created() {
       this.staffId = sessionStorage.getItem('staffID');
       this.selectToday(); // Select today's date
-      this.filterStaff(); // Initial filter on page load
+      this.fetchTeamSchedule(); // Fetch team schedule data
     },
     computed: {
       currentYear() {
@@ -163,10 +108,55 @@
       },
     },
     methods: {
+      fetchTeamMembers() {
+        this.schedule.forEach((schedule) => {
+          axios
+            .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
+            .then((response) => {
+              this.staff.push(response.data);
+              // get all teams
+              if (!this.teams.includes(response.data.Position)) {
+                this.teams.push(response.data.Position);
+              }
+            })
+            .catch((error) => {
+              console.error("Error fetching Reporting Manager:", error);
+            });
+        });
+      },
+
+      fetchTeamSchedule() {
+        let params = {
+          type: "Team",
+          Reporting_Manager: this.staffId,
+          start_date: `${this.currentDate.getFullYear()}-${
+            this.currentDate.getMonth() + 1
+          }-${this.currentDate.getDate()}`,
+          end_date: `${this.currentDate.getFullYear()}-${
+            this.currentDate.getMonth() + 1
+          }-${this.currentDate.getDate()}`,
+        };
+        axios .get(`http://localhost:6003/aggregateSchedule`, { params: params })
+        .then((response) => {
+          this.schedule = response.data;
+          this.fetchTeamMembers();
+        })
+        .catch((error) => {
+          console.error("Error fetching team schedule:", error);
+        });
+      },
+
       selectDay(day) {
         if (day) {
+          this.staff = [];
+
           this.selectedDay = day;
-          this.filterStaff();  // Re-filter the staff based on the newly selected day
+          this.currentDate = new Date(
+          this.currentYear,
+          this.currentMonth,
+          this.selectedDay
+          );
+          this.fetchTeamSchedule(); // Fetch team schedule data
         }
       },
       deselectDay() {
@@ -189,28 +179,7 @@
       selectToday() {
         const today = new Date();
         this.selectedDay = today.getDate();
-        this.filterStaff();
-      },
-      filterByTeam() {
-        this.filterStaff(); // Filter staff based on selected team
-      },
-      filterStaff() {
-        const selectedDate = `${this.currentYear}-${String(this.currentMonth + 1).padStart(2, '0')}-${String(this.selectedDay).padStart(2, '0')}`;
-  
-        // Filter staff for those in office on the selected date
-        this.filteredStaffInOffice = this.staff.filter(
-          (staff) =>
-            staff.schedule && staff.schedule[selectedDate] === 'office' &&
-            (this.selectedTeam === '' || staff.team === this.selectedTeam)
-        );
-  
-        // Filter staff for those working from home on the selected date
-        this.filteredStaffWorkingFromHome = this.staff.filter(
-          (staff) =>
-            staff.schedule && staff.schedule[selectedDate] === 'home' &&
-            (this.selectedTeam === '' || staff.team === this.selectedTeam)
-        );
-      },
+      }
     },
   };
   </script>
