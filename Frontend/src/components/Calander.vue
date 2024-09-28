@@ -100,9 +100,11 @@ export default {
       staffId: null,
       reportingManager: null,
       ownSchedule: [],
-      schedule: [],
+      scheduleStaff: [],
+      scheduleManage: [],
       homeStaff: [],
       teams: [],
+      staff: [],
       selectedDepartment: '',
       selectedTeam: '',
       scheduleType: '', // Define this according to your application logic
@@ -119,12 +121,24 @@ export default {
 
   created() {
     this.staffId = sessionStorage.getItem('staffID'); // Retrieve Staff_ID
-    if (this.scheduleType === 'user') {
-      this.fetchUserSchedule();
+    this.fetchUserRole();
+    if (this.staffId) {
+      this.fetchOwnSchedule(); 
     } else {
-      this.fetchReportingManager(); // Fetch Reporting_Manager for the logged-in staff
+      console.error("No Staff ID found.");
     }
     this.selectToday(); // Automatically select today's date when the component is created
+    this.fetchReportingManager(); // Fetch Reporting_Manager for the logged-in staff
+
+    if (this.userRole === 2) {
+      console.log("gay");
+      this.fetchStaffTeamSchedule();
+      
+    } else {
+      this.fetchManageTeamSchedule();
+
+    }
+
   },
 
   computed: {
@@ -158,6 +172,16 @@ export default {
   },
 
   methods: {
+    fetchUserRole() {
+    return axios.get(`http://localhost:5001/user/${this.staffId}`)
+      .then(response => {
+        this.userRole = response.data.Role; // Set the userRole based on response
+      })
+      .catch(error => {
+        console.error("Failed to fetch user role:", error);
+        throw error; // Re-throw the error to catch it in created()
+      });
+  },
     fetchOwnSchedule() {
       axios
         .get(`http://localhost:5002/schedule/personal/${this.staffId}`)
@@ -170,9 +194,9 @@ export default {
         });
     },
     
-    fetchTeamMembers() {
+    fetchStaffTeamMembers() {
       this.homeStaff = [];
-      this.schedule.forEach((schedule) => {
+      this.scheduleStaff.forEach((schedule) => {
         axios
           .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
           .then((response) => {
@@ -187,20 +211,18 @@ export default {
           });
       });
     },
-    
     fetchReportingManager() {
       axios
         .get(`http://localhost:5001/user/${this.staffId}`)
         .then((response) => {
           this.reportingManager = response.data.Reporting_Manager;
-          this.fetchTeamSchedule();
+          this.fetchStaffTeamSchedule();
         })
         .catch((error) => {
           console.error("Error fetching Reporting Manager:", error);
         });
     },
-    
-    fetchTeamSchedule() {
+    fetchStaffTeamSchedule() {
       let params = {
         type: "Team",
         Reporting_Manager: this.reportingManager,
@@ -211,17 +233,52 @@ export default {
       axios
         .get(`http://localhost:6003/aggregateSchedule`, { params: params })
         .then((response) => {
-          this.schedule = response.data;
-          this.fetchTeamMembers();
+          this.scheduleStaff = response.data;
+          this.fetchStaffTeamMembers();
         })
         .catch((error) => {
           console.error("Error fetching team schedule:", error);
         });
     },
 
-    fetchUserSchedule() {
-      console.log('Fetching user schedule for Staff ID:', this.staffId);
-    },
+    fetchManageTeamMembers() {
+        this.scheduleManage.forEach((schedule) => {
+          axios
+            .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
+            .then((response) => {
+              this.staff.push(response.data);
+              // get all teams
+              if (!this.teams.includes(response.data.Position)) {
+                this.teams.push(response.data.Position);
+              }
+            })
+            .catch((error) => {
+              console.error("Error fetching Reporting Manager:", error);
+            });
+        });
+      },
+    
+    fetchManageTeamSchedule() {
+        let params = {
+          type: "Team",
+          Reporting_Manager: this.staffId,
+          start_date: `${this.currentDate.getFullYear()}-${
+            this.currentDate.getMonth() + 1
+          }-${this.currentDate.getDate()}`,
+          end_date: `${this.currentDate.getFullYear()}-${
+            this.currentDate.getMonth() + 1
+          }-${this.currentDate.getDate()}`,
+        };
+        
+        axios .get(`http://localhost:6003/aggregateSchedule`, { params: params })
+        .then((response) => {
+          this.scheduleManage = response.data;
+          this.fetchManageTeamMembers();
+        })
+        .catch((error) => {
+          console.error("Error fetching team schedule:", error);
+        });
+      },
 
     selectDay(day) {
       if (this.selectedDay === day) {
@@ -230,6 +287,7 @@ export default {
         this.selectedDay = day; // Select the new day
       }
       this.fetchReportingManager();
+      this.fetchManageTeamSchedule();
     },
     
     deselectDay() {
