@@ -35,7 +35,7 @@
                       <option v-for="department in departments" :key="department" :value="department">{{ department }}</option>
                     </select>
                   </div>
-                  <div v-if="userRole===2 || userRole===1" class="form-group">
+                  <div v-if="userRole===3 || userRole===1" class="form-group" :class="{'full-width': userRole === 3}">
                     <label for="team">Team</label>
                     <select id="team" v-model="selectedTeam" class="form-control" @change="filterByTeam">
                       <option value="">All Teams</option>
@@ -71,6 +71,26 @@
                   </div>
                 </div>
               </div>
+              <!-- Section to show team schedule based on Reporting_Manager -->
+                <div v-if="selectedDay && userRole===2" class="staff-schedule mt-4">
+                  <h5 class="schedule-title">
+                    Team Schedule for {{ selectedDay }} {{ currentMonthName }},
+                    {{ currentYear }}
+                  </h5>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="card home-card">
+                        <h6>Working from Home</h6>
+                        <ul>
+                          <li v-for="staff in homeStaff" :key="staff.id">
+                            {{ staff.Staff_FName }}
+                            {{ staff.Staff_LName }} ({{ staff.Staff_ID }})
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
   </div>
 </template>
 
@@ -214,6 +234,21 @@ export default {
 </script>
 
 <style scoped>
+.full-width {
+  width: 100%; /* Expand to full width */
+}
+
+.filter-controls.full-width {
+  justify-content: flex-start; /* Prevent misalignment */
+}
+
+.filter-controls .form-group.full-width {
+  width: 100%; /* Ensure full width for form-group */
+}
+
+.filter-controls select {
+  width: 100%; /* Ensure select element is also full width */
+}
 .calendar-container {
   display: flex;
   justify-content: space-between;
