@@ -42,16 +42,23 @@
           </div>
         </div>
 
-        <div v-if="selectedDay && (userRole === 3 || userRole === 1)" class="staff-schedule mt-4">
+        <div v-if="selectedDay" class="staff-schedule mt-4">
           <h5 class="schedule-title">Staff Schedule for {{ selectedDay }} {{ currentMonthName }}, {{ currentYear }}</h5>
           <div class="row">
             <div class="col-md-6 mb-3 full-width">
               <div class="card home-card">
                 <h6>Working from Home</h6>
                 <ul class="staff-list">
-                  <li v-if="userRole === 2" v-for="staff in homeStaff" :key="staff.id">
-                    {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }})
-                  </li>
+                  <div v-if="userRole===2">
+                    <li  v-for="staff in homeStaff" :key="staff.id">
+                      {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }})
+                    </li>
+                  </div>
+                  <div v-if="userRole===3">
+                    <li v-for="staff in staffManage" :key="staff.id">
+                      {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }})
+                    </li>
+                  </div>
                 </ul>
               </div>
             </div>
@@ -63,36 +70,9 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
 import axios from "axios";
 
-export default {
-  // setup() {
-  //   const userRole = ref(null);
-  //   const staffID = ref(null);
-
-  //   const fetchUserRole = async () => {
-  //     try {
-  //       staffID.value = JSON.parse(sessionStorage.getItem('staffID'));
-  //       const response = await fetch(`http://localhost:5001/user/${staffID.value}`, {
-  //         method: 'GET',
-  //         headers: { 'Content-Type': 'application/json' },
-  //       });
-
-  //       const data = await response.json();
-  //       userRole.value = data.Role;
-  //     } catch (error) {
-  //       console.error('Failed to fetch user role:', error);
-  //     }
-  //   };
-
-  //   onMounted(() => {
-  //     fetchUserRole();
-  //   });
-
-  //   return { userRole, staffID };
-  // },
-
+export default { 
   data() {
     return {
       currentDate: new Date(),
@@ -105,7 +85,7 @@ export default {
       scheduleManage: [],
       homeStaff: [],
       teams: [],
-      staff: [],
+      staffManage: [],
       selectedDepartment: '',
       selectedTeam: '',
       scheduleType: '', // Define this according to your application logic
@@ -220,37 +200,37 @@ export default {
         .get(`http://localhost:5001/user/${this.staffId}`)
         .then((response) => {
           this.reportingManager = response.data.Reporting_Manager;
-          this.fetchStaffTeamSchedule();
+          // this.fetchStaffTeamSchedule();
         })
         .catch((error) => {
           console.error("Error fetching Reporting Manager:", error);
         });
     },
-    fetchStaffTeamSchedule() {
-      let params = {
-        type: "Team",
-        Reporting_Manager: this.reportingManager,
-        start_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
-        end_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
-      };
-
-      axios
-        .get(`http://localhost:6003/aggregateSchedule`, { params: params })
-        .then((response) => {
-          this.scheduleStaff = response.data;
-          this.fetchStaffTeamMembers();
-        })
-        .catch((error) => {
-          console.error("Error fetching team schedule:", error);
-        });
+    async fetchStaffTeamSchedule() {
+      try {
+        const params = {
+          type: "Team",
+          staffId: sessionStorage.getItem('staffID'),
+          Reporting_Manager: this.reportingManager,
+          start_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
+          end_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
+        };
+        
+        const response = await axios.get(`http://localhost:6003/aggregateSchedule`, { params });
+        this.scheduleStaff = response.data;
+        this.fetchStaffTeamMembers();
+      } catch (error) {
+        console.error("Error fetching team schedule:", error);
+      }
     },
 
     fetchManageTeamMembers() {
+      this.staffManage = [];
         this.scheduleManage.forEach((schedule) => {
           axios
             .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
             .then((response) => {
-              this.staff.push(response.data);
+              this.staffManage.push(response.data);
               // get all teams
               if (!this.teams.includes(response.data.Position)) {
                 this.teams.push(response.data.Position);
@@ -262,9 +242,10 @@ export default {
         });
       },
     
-    fetchManageTeamSchedule() {
+      async fetchManageTeamSchedule() {
         let params = {
           type: "Team",
+          staffId: sessionStorage.getItem('staffID'),
           Reporting_Manager: this.staffId,
           start_date: `${this.currentDate.getFullYear()}-${
             this.currentDate.getMonth() + 1
@@ -273,16 +254,18 @@ export default {
             this.currentDate.getMonth() + 1
           }-${this.currentDate.getDate()}`,
         };
-        
-        axios .get(`http://localhost:6003/aggregateSchedule`, { params: params })
-        .then((response) => {
+
+        try {
+          
+          const response = await axios.get(`http://localhost:6003/aggregateSchedule`, { params: params });
           this.scheduleManage = response.data;
-          this.fetchManageTeamMembers();
-        })
-        .catch((error) => {
+          
+          await this.fetchManageTeamMembers(); // Wait for the team members to be fetched
+        } catch (error) {
           console.error("Error fetching team schedule:", error);
-        });
+        }
       },
+
 
     selectDay(day) {
       if (this.selectedDay === day) {
@@ -291,7 +274,11 @@ export default {
         this.selectedDay = day; // Select the new day
       }
       this.fetchReportingManager();
-      this.fetchManageTeamSchedule();
+      if (this.userRole === 2) {
+        this.fetchStaffTeamSchedule();
+      } else {
+        this.fetchManageTeamSchedule();
+      }
     },
     
     deselectDay() {
