@@ -12,17 +12,44 @@
       </div>
       <div class="calendar-grid p-2">
         <div class="calendar-day fw-bold text-center" v-for="day in daysOfWeek" :key="day">{{ day }}</div>
-        <div v-for="(day, index) in daysInMonth" :key="index" class="calendar-cell text-center"
-          @click.stop="selectDay(day)" :class="{
+        <div
+          v-for="(day, index) in daysInMonth"
+          :key="index"
+          class="calendar-cell text-center"
+          @click.stop="selectDay(day)"
+          :class="{
             'empty-day': day === '',
             'selected-day': day === selectedDay,
-            'today': isToday(day)
-          }">
+            today: isToday(day),
+            active: this.ownSchedule.some((e) => {
+              const scheduleDate = new Date(e.Date);
+              const currentDay = new Date(
+                this.currentDate.getFullYear(),
+                this.currentDate.getMonth(),
+                day
+              );
+              return (
+                scheduleDate.getFullYear() === currentDay.getFullYear() &&
+                scheduleDate.getMonth() === currentDay.getMonth() &&
+                scheduleDate.getDate() === currentDay.getDate()
+              );
+            }),
+          }"
+
+        >
           <span v-if="day">{{ day }}</span>
+        </div>
+      </div>
+      <!-- Legend -->
+      <div class="legend">
+        <div class="legend-item">
+          <div class="wfh-color"></div>
+          <span class="legend-text">WFH</span>
         </div>
       </div>
     </div>
 
+    <!-- Team or personal schedule section -->
     <div v-if="scheduleType === 'team'" class="staff-schedule-container">
       <div class="filter-controls d-flex flex-column mb-4">
         <div class="filter-controls d-flex mb-4">
@@ -49,12 +76,12 @@
               <div class="card home-card">
                 <h6>Working from Home</h6>
                 <ul class="staff-list">
-                  <div v-if="userRole===2">
-                    <li  v-for="staff in homeStaff" :key="staff.id">
+                  <div v-if="userRole === 2">
+                    <li v-for="staff in homeStaff" :key="staff.id">
                       {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }})
                     </li>
                   </div>
-                  <div v-if="userRole===3">
+                  <div v-if="userRole === 3">
                     <li v-for="staff in staffManage" :key="staff.id">
                       {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }}) - {{ staff.Position }}
                     </li>
@@ -68,7 +95,6 @@
     </div>
   </div>
 </template>
-
 <script>
 import axios from "axios";
 
@@ -377,6 +403,9 @@ export default {
   font-weight: bold;
   border-radius: 8px;
   border: 1px solid #0d6efd;
+}
+.calendar-cell.active {
+  background-color: #b6c6fd;
 }
 
 .calendar-cell.today.selected-day {
