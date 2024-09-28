@@ -29,9 +29,27 @@
             'empty-day': day === '',
             'selected-day': day === selectedDay,
             today: isToday(day),
+            active: this.ownSchedule.some((e) => {
+              return (
+                new Date(e.Date).toISOString().substring(0, 10) ==
+                new Date(
+                  this.currentDate.getFullYear(),
+                  this.currentDate.getMonth(),
+                  day + 1
+                )
+                  .toISOString()
+                  .substring(0, 10)
+              );
+            }),
           }"
         >
           <span v-if="day">{{ day }}</span>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="wfh-color"></div>
+          <span class="legend-text">WFH</span>
         </div>
       </div>
     </div>
@@ -64,7 +82,28 @@
             </ul>
           </div>
         </div>
+        <!-- <div class="col-md-6">
+          <div class="card office-card">
+            <h6>My Upcoming Schedule</h6>
+            <ul>
+              <li v-for="staff in officeStaff" :key="staff.id">
+                {{ staff.name }}
+              </li>
+            </ul>
+          </div>
+        </div> -->
       </div>
+      <!-- <div class="col-md-6">
+        <div class="card home-card">
+          <div class="legend">
+            Legend:
+            <div class="legend-item">
+              <div class="wfh-color"></div>
+              <span class="legend-text">WFH</span>
+            </div>
+          </div>
+        </div>
+      </div> -->
     </div>
   </div>
 </template>
@@ -141,21 +180,50 @@ export default {
         .then((response) => {
           console.log(response.data);
           this.ownSchedule = response.data;
+
+          console.log(
+            "check date: ",
+            this.ownSchedule.some((e) => {
+              console.log(
+                new Date(e.Date).toISOString().substring(0, 10),
+                "schedule"
+              );
+              console.log(
+                new Date(
+                  this.currentDate.getFullYear(),
+                  this.currentDate.getMonth(),
+                  28 + 1
+                )
+                  .toISOString()
+                  .substring(0, 10)
+              );
+              return (
+                new Date(e.Date).toISOString().substring(0, 10) ==
+                new Date(
+                  this.currentDate.getFullYear(),
+                  this.currentDate.getMonth(),
+                  28 + 1
+                )
+                  .toISOString()
+                  .substring(0, 10)
+              );
+            })
+          );
         })
         .catch((error) => {
           console.error("Error fetching own Schedule:", error);
         });
     },
     fetchTeamMembers() {
-      console.log(this.schedule);
+      // console.log(this.schedule);
       this.homeStaff = [];
 
       this.schedule.forEach((schedule) => {
-        console.log(schedule.Staff_ID);
+        // console.log(schedule.Staff_ID);
         axios
           .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
           .then((response) => {
-            console.log(response.data);
+            // console.log(response.data);
             this.homeStaff.push(response.data);
           })
           .catch((error) => {
@@ -199,7 +267,7 @@ export default {
         .then((response) => {
           // this.officeStaff = response.data.officeStaff;
           this.schedule = response.data;
-          console.log(response.data);
+          // console.log(response.data);
           this.fetchTeamMembers();
         })
         .catch((error) => {
@@ -244,6 +312,31 @@ export default {
 </script>
 
 <style scoped>
+.legend {
+  display: flex;
+  flex-direction: column;
+}
+
+.legend-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.legend .wfh-color {
+  width: 20px;
+  height: 20px;
+  background-color: #b6c6fd;
+}
+
+.legend-text {
+  margin: 8px 8px;
+}
+
+.calendar-cell.active {
+  background-color: #b6c6fd;
+}
+
 .calendar-container {
   display: flex;
   justify-content: space-between;
