@@ -1,7 +1,7 @@
 <template>
-  <div class="calendar-container">
+  <div class="calendar-container" @click="deselectDay">
     <!-- Calendar Section -->
-    <div class="calendar card shadow-sm" @click="deselectDay">
+    <div class="calendar card shadow-sm" >
       <div class="calendar-header d-flex justify-content-between align-items-center p-3">
         <button class="btn btn-outline-primary" @click.stop="previousMonth">
           <i class="bi bi-arrow-left-circle"></i> Previous
