@@ -77,17 +77,17 @@
                 <h6>Working from Home</h6>
                 <ul class="staff-list">
                   <div v-if="userRole === 2">
-                    <li v-for="staff in staffs" :key="staff.id">
+                    <li v-for="staff in filteredStaffWorkingFromHome" :key="staff.id">
                       {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }})
                     </li>
                   </div>
                   <div v-if="userRole === 3">
-                    <li v-for="staff in staffs" :key="staff.id">
+                    <li v-for="staff in filteredStaffWorkingFromHome" :key="staff.id">
                       {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }}) - {{ staff.Position }}
                     </li>
                   </div>
                   <div v-if="userRole === 1">
-                    <li v-for="staff in staffs" :key="staff.id">
+                    <li v-for="staff in filteredStaffWorkingFromHome" :key="staff.id">
                       {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }}) - {{ staff.Position }}
                     </li>
                   </div>
@@ -122,8 +122,7 @@ export default {
       selectedDepartment: '',
       selectedTeam: '',
       scheduleType: '', // Define this according to your application logic
-      // selectedFilter: 'Personal Team',
-      // filter: ['Personal Team', 'Personal Department'],
+      filteredStaffWorkingFromHome: [],
     };
   },
   
@@ -144,7 +143,7 @@ export default {
       this.fetchUserDept();
       this.fetchOwnSchedule(); 
       this.selectToday(); // Automatically select today's date
-      
+      this.filterStaff();
       
       // Wait for reportingManager to be set before checking userRole
       if (this.userRole === 2) {
@@ -356,25 +355,39 @@ export default {
         });
       },
       
+      // filterByDepartment() {
+      //   if (this.selectedDepartment === this.userDept) {
+      //     this.staffsDept = [];
+      //     this.fetchbyOwnDept();
+      //   }
+      // },
+      // filterByTeam() {
+      //   // Ensure `selectedTeam` is set before filtering
+      //   if (!this.selectedTeam) {
+      //     console.error("No team selected.");
+      //     return;
+      //   }
+      //   // this.staffs = [];
+      //   this.staffs = this.staffs.filter(staff => staff.Position === this.selectedTeam);
+      //   this.fetchManageTeamSchedule();
+      //   // Log the filtered staff to see the result
+      //   console.log("Filtered Staffs by Team:", this.staffs);
+      // },
       filterByDepartment() {
-        if (this.selectedDepartment === this.userDept) {
-          this.staffsDept = [];
-          this.fetchbyOwnDept();
-        }
+        this.filterStaff();
       },
       filterByTeam() {
-        // Ensure `selectedTeam` is set before filtering
-        if (!this.selectedTeam) {
-          console.error("No team selected.");
-          return;
-        }
-        this.staffs = [];
-        this.staffs = this.staffs.filter(staff => staff.Position === this.selectedTeam);
-        this.fetchManageTeamSchedule();
-        // Log the filtered staff to see the result
-        console.log("Filtered Staffs by Team:", this.staffs);
+        this.filterStaff();
       },
-
+      filterStaff() {
+        // Filter staff based on selected department and team
+        this.filteredStaffWorkingFromHome = this.staffs.filter((staff) => {
+          return (
+            (!this.selectedDepartment || staff.Dept === this.selectedDepartment) &&
+            (!this.selectedTeam || staff.Position === this.selectedTeam)
+          );
+        });
+      },
 
       fetchAllMembers(){
       this.staffs = [];
@@ -414,35 +427,51 @@ export default {
 
 
     selectDay(day) {
-      if (this.selectedDay === day) {
-        this.selectedDay = null; // Deselect if the day is already selected
-      } else {
-        this.selectedDay = day; // Select the new day
-      }
-      
-      if (this.userRole === 2) {
-        this.fetchReportingManager();
-        this.fetchStaffTeamSchedule();
-      } else if (this.userRole === 3) {
-        this.fetchbyOwnDept();
-        this.fetchManageTeamSchedule();
-      } else if (this.userRole === 1) {
-        this.fetchALLSchedule();
-      }
+      console.log(this.filteredStaffWorkingFromHome);
+        if (this.selectedDay === day) {
+            console.log(`Deselecting day: ${day}`);
+            this.deselectDay(); // Call deselectDay if the same day is selected
+        } else {
+            console.log(`Selecting day: ${day}`);
+            this.selectedDay = day; // Select the new day
+            this.filterStaff(); // Filter staff based on the selected day
+
+            // Fetch the new schedule based on user role
+            this.updateScheduleBasedOnRole();
+        }
     },
     
     deselectDay() {
-      this.selectedDay = null; // Deselect day
+        console.log('Deselecting day and clearing schedule');
+        this.selectedDay = null; // Deselect day
+        this.filteredStaffWorkingFromHome = []; // Clear the schedule when no day is selected
+        console.log(this.filteredStaffWorkingFromHome);
     },
-    
+
+    updateScheduleBasedOnRole() {
+        console.log(`Fetching schedule for user role: ${this.userRole}`);
+        // Fetch schedule based on user role
+        if (this.userRole === 2) {
+            this.fetchReportingManager().then(() => {
+                this.fetchStaffTeamSchedule();
+            });
+        } else if (this.userRole === 3) {
+            this.fetchbyOwnDept().then(() => {
+                this.fetchManageTeamSchedule();
+            });
+        } else if (this.userRole === 1) {
+            this.fetchALLSchedule();
+        }
+    },
+
     nextMonth() {
       this.currentDate = new Date(this.currentYear, this.currentMonth + 1, 1);
-      this.selectedDay = null; // Deselect day when month changes
+      this.deselectDay(); // Deselect day when month changes
     },
     
     previousMonth() {
       this.currentDate = new Date(this.currentYear, this.currentMonth - 1, 1);
-      this.selectedDay = null; // Deselect day when month changes
+      this.deselectDay(); // Deselect day when month changes
     },
     
     isToday(day) {
@@ -456,6 +485,7 @@ export default {
     
     selectToday() {
       this.selectedDay = this.currentDate.getDate(); // Automatically select today
+      this.filterStaff();
     },
   },
 };
