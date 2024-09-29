@@ -418,8 +418,6 @@ export default {
         // Fetch the new schedule based on user role
         this.updateScheduleBasedOnRole();
         this.filterStaff(); // Filter staff based on the selected day
-
-        
       }
     },
     
