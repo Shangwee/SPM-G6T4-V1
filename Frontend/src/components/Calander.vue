@@ -372,23 +372,23 @@ export default {
         });
       },
 
-    //   fetchAllMembers(){
-    //   this.staffs = [];
-    //   this.schedule.forEach((schedule) => {
-    //       axios
-    //         .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
-    //         .then((response) => {
-    //           this.staffs.push(response.data);
-    //           // get all teams
-    //           if (!this.teams.includes(response.data.Position)) {
-    //             this.teams.push(response.data.Position);
-    //           }
-    //         })
-    //         .catch((error) => {
-    //           console.error("Error fetching Reporting Manager:", error);
-    //         });
-    //   });
-    // },
+      fetchAllMembers(){
+      this.staffs = [];
+      this.schedule.forEach((schedule) => {
+          axios
+            .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
+            .then((response) => {
+              this.staffs.push(response.data);
+              // get all teams
+              if (!this.teams.includes(response.data.Position)) {
+                this.teams.push(response.data.Position);
+              }
+            })
+            .catch((error) => {
+              console.error("Error fetching Reporting Manager:", error);
+            });
+      });
+    },
 
     fetchALLSchedule(){
       let params = {
@@ -401,10 +401,10 @@ export default {
         .get(`http://localhost:6003/aggregateSchedule`, { params })
         .then((response) => {
           this.schedule = response.data;
-          // this.fetchAllMembers();
+          this.fetchAllMembers();
           console.log(response.data);
-          this.staffs.push(response.data[0]);   
-          console.log(this.staffs);    
+          // this.staffs.push(response.data[0]);   
+          // console.log(this.staffs);    
           this.staffsDept.push(response.data);
           for (const staff in response.data) {
             if (!this.teams.includes(response.data[staff].Position)) {
