@@ -354,7 +354,7 @@ export default {
             .catch((error) => {
               console.error("Error fetching Reporting Manager:", error);
             });
-            console.log(this.staffsDept);
+            // console.log(this.staffsDept);
         });
       },
 
@@ -431,13 +431,13 @@ export default {
     updateScheduleBasedOnRole() {
       // Fetch schedule based on user role
       if (this.userRole === 2) {
-        this.fetchReportingManager().then(() => {
-          this.fetchStaffTeamSchedule();
-        });
+        this.fetchReportingManager();
+        this.fetchStaffTeamSchedule();
+        
       } else if (this.userRole === 3) {
-        this.fetchbyOwnDept().then(() => {
-          this.fetchManageTeamSchedule();
-        });
+        this.fetchbyOwnDept();
+        this.fetchManageTeamSchedule();
+        
       } else if (this.userRole === 1) {
         this.fetchbyOwnDept();
         this.fetchALLSchedule();
