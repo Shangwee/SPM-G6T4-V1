@@ -122,6 +122,8 @@ export default {
       selectedDepartment: '',
       selectedTeam: '',
       scheduleType: '', // Define this according to your application logic
+      // selectedFilter: 'Personal Team',
+      // filter: ['Personal Team', 'Personal Department'],
       filteredStaffWorkingFromHome: [],
     };
   },
@@ -427,51 +429,42 @@ export default {
 
 
     selectDay(day) {
-      console.log(this.filteredStaffWorkingFromHome);
-        if (this.selectedDay === day) {
-            console.log(`Deselecting day: ${day}`);
-            this.deselectDay(); // Call deselectDay if the same day is selected
-        } else {
-            console.log(`Selecting day: ${day}`);
-            this.selectedDay = day; // Select the new day
-            this.filterStaff(); // Filter staff based on the selected day
+      if (this.selectedDay === day) {
+        this.deselectDay();
+      } else {
+        this.selectedDay = day; // Select the new day
+      }
 
-            // Fetch the new schedule based on user role
-            this.updateScheduleBasedOnRole();
-        }
+      this.filterStaff();
+
+      // Fetch the new schedule based on user role
+      if (this.userRole === 2) {
+        this.fetchReportingManager().then(() => {
+          this.fetchStaffTeamSchedule();
+        });
+      } else if (this.userRole === 3) {
+        this.fetchbyOwnDept().then(() => {
+          this.fetchManageTeamSchedule();
+        });
+      } else if (this.userRole === 1) {
+        this.fetchALLSchedule();
+      }
     },
+
     
     deselectDay() {
-        console.log('Deselecting day and clearing schedule');
-        this.selectedDay = null; // Deselect day
-        this.filteredStaffWorkingFromHome = []; // Clear the schedule when no day is selected
-        console.log(this.filteredStaffWorkingFromHome);
+      this.selectedDay = null; // Deselect day
+      this.filteredStaffWorkingFromHome = [];
     },
-
-    updateScheduleBasedOnRole() {
-        console.log(`Fetching schedule for user role: ${this.userRole}`);
-        // Fetch schedule based on user role
-        if (this.userRole === 2) {
-            this.fetchReportingManager().then(() => {
-                this.fetchStaffTeamSchedule();
-            });
-        } else if (this.userRole === 3) {
-            this.fetchbyOwnDept().then(() => {
-                this.fetchManageTeamSchedule();
-            });
-        } else if (this.userRole === 1) {
-            this.fetchALLSchedule();
-        }
-    },
-
+    
     nextMonth() {
       this.currentDate = new Date(this.currentYear, this.currentMonth + 1, 1);
-      this.deselectDay(); // Deselect day when month changes
+      this.selectedDay = null; // Deselect day when month changes
     },
     
     previousMonth() {
       this.currentDate = new Date(this.currentYear, this.currentMonth - 1, 1);
-      this.deselectDay(); // Deselect day when month changes
+      this.selectedDay = null; // Deselect day when month changes
     },
     
     isToday(day) {
