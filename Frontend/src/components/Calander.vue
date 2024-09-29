@@ -34,9 +34,7 @@
                 scheduleDate.getDate() === currentDay.getDate()
               );
             }),
-          }"
-
-        >
+          }">
           <span v-if="day">{{ day }}</span>
         </div>
       </div>
@@ -156,7 +154,7 @@ export default {
         this.fetchbyOwnDept();
         this.fetchManageTeamSchedule();
       } else if (this.userRole === 1) {
-        this.fetchbyOwnDept();
+        // this.fetchbyOwnDept();
         this.fetchALLSchedule();
       }
     } catch (error) {
@@ -439,7 +437,7 @@ export default {
         this.fetchManageTeamSchedule();
         
       } else if (this.userRole === 1) {
-        this.fetchbyOwnDept();
+        // this.fetchbyOwnDept();
         this.fetchALLSchedule();
       }
     },
