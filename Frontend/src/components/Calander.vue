@@ -53,17 +53,17 @@
     <div v-if="scheduleType === 'team'" class="staff-schedule-container">
       <div class="filter-controls d-flex flex-column mb-4">
         <div v-if="userRole === 3 || userRole === 1" class="filter-controls d-flex mb-4">
-          <div v-if="userRole === 1" class="form-group mr-2" style="flex: 1;">
+          <div v-if="userRole === 1 || userRole === 3" class="form-group mr-2" style="flex: 1;">
             <label for="department">Department</label>
             <select id="department" v-model="selectedDepartment" class="form-control" @change="filterByDepartment">
-              <option value="">All Departments</option>
+              <option value="">Select Department</option>
               <option v-for="department in depts" :key="department" :value="department">{{ department }}</option>
             </select>
           </div>
           <div v-if="userRole === 3 || userRole === 1" class="form-group" :class="{'full-width': userRole === 3}" style="flex: 1;">
             <label for="team">Team</label>
             <select id="team" v-model="selectedTeam" class="form-control" @change="filterByTeam">
-              <option value="">All Teams</option>
+              <option value="">Select Teams</option>
               <option v-for="team in teams" :key="team" :value="team">{{ team }}</option>
             </select>
           </div>
@@ -77,17 +77,17 @@
                 <h6>Working from Home</h6>
                 <ul class="staff-list">
                   <div v-if="userRole === 2">
-                    <li v-for="staff in homeStaff" :key="staff.id">
+                    <li v-for="staff in staffs" :key="staff.id">
                       {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }})
                     </li>
                   </div>
                   <div v-if="userRole === 3">
-                    <li v-for="staff in staffManage" :key="staff.id">
+                    <li v-for="staff in staffs" :key="staff.id">
                       {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }}) - {{ staff.Position }}
                     </li>
                   </div>
                   <div v-if="userRole === 1">
-                    <li v-for="staff in staffManageDept" :key="staff.id">
+                    <li v-for="staff in staffs" :key="staff.id">
                       {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }}) - {{ staff.Position }}
                     </li>
                   </div>
@@ -113,17 +113,17 @@ export default {
       userRole: null,
       userDept: null,
       ownSchedule: [],
-      scheduleStaff: [],
-      scheduleManage: [],
-      homeStaff: [],
-      staffManage: [],
+      schedule: [],
+      staffs:[],
       teams: [],
       depts: [],
-      staffManageDept: [],
-      scheduleManageDept: [],
+      scheduleDept: [],
+      staffsDept: [],
       selectedDepartment: '',
       selectedTeam: '',
       scheduleType: '', // Define this according to your application logic
+      // selectedFilter: 'Personal Team',
+      // filter: ['Personal Team', 'Personal Department'],
     };
   },
   
@@ -140,7 +140,7 @@ export default {
 
   if (this.staffId) {
     try {
-      await this.fetchUserRole(); // Wait for user role to be fetched
+      this.fetchUserRole(); // Wait for user role to be fetched
       this.fetchUserDept();
       this.fetchOwnSchedule(); 
       this.selectToday(); // Automatically select today's date
@@ -150,11 +150,12 @@ export default {
       if (this.userRole === 2) {
         console.log("Fetching staff team schedule for user role 2");
         this.fetchReportingManager(); // Fetch Reporting_Manager for the logged-in staff
-        await this.fetchStaffTeamSchedule();
+        this.fetchStaffTeamSchedule();
       } else if (this.userRole === 3) {
-        await this.fetchManageTeamSchedule();
+        this.fetchbyOwnDept();
+        this.fetchManageTeamSchedule();
       } else if (this.userRole === 1) {
-        await this.fetchManageDeptSchedule();
+        this.fetchALLSchedule();
       }
     } catch (error) {
       console.error("Error in created lifecycle:", error);
@@ -228,12 +229,12 @@ export default {
     },
     
     fetchStaffTeamMembers() {
-      this.homeStaff = [];
-      this.scheduleStaff.forEach((schedule) => {
+      this.staffs = [];
+      this.schedule.forEach((schedule) => {
         axios
           .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
           .then((response) => {
-            this.homeStaff.push(response.data);
+            this.staffs.push(response.data);
             // get all teams
             if (!this.teams.includes(response.data.Position)) {
               this.teams.push(response.data.Position);
@@ -266,7 +267,7 @@ export default {
         };
         
         const response = await axios.get(`http://localhost:6003/aggregateSchedule`, { params });
-        this.scheduleStaff = response.data;
+        this.schedule = response.data;
         this.fetchStaffTeamMembers();
       } catch (error) {
         console.error("Error fetching team schedule:", error);
@@ -274,13 +275,13 @@ export default {
     },
 
     fetchManageTeamMembers() {
-      this.staffManage = [];
-        this.scheduleManage.forEach((schedule) => {
+      this.staffs = [];
+        this.schedule.forEach((schedule) => {
           axios
             .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
             .then((response) => {
               
-              this.staffManage.push(response.data);
+              this.staffs.push(response.data);
               // get all teams
               if (!this.teams.includes(response.data.Position)) {
                 this.teams.push(response.data.Position);
@@ -289,7 +290,7 @@ export default {
             .catch((error) => {
               console.error("Error fetching Reporting Manager:", error);
             });
-            console.log(this.staffManage);
+            console.log(this.staffs);
         });
       },
     
@@ -306,7 +307,7 @@ export default {
           
           const response = await axios.get(`http://localhost:6003/aggregateSchedule`, { params: params });
           console.log("Team schedule response:", response.data);
-          this.scheduleManage = response.data;
+          this.schedule = response.data;
           
           await this.fetchManageTeamMembers(); // Wait for the team members to be fetched
         } catch (error) {
@@ -314,47 +315,102 @@ export default {
         }
       },
 
+
+
+      fetchbyOwnDept() {
+        let params = {
+          type: "Dept",
+          dept: this.userDept,
+          start_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
+          end_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
+        };
+        axios .get(`http://localhost:6003/aggregateSchedule`, { params: params })
+        .then((response) => {
+          this.scheduleDept = response.data;
+          this.fetchManageDeptMembers();
+        })
+        .catch((error) => {
+          console.error("Error fetching team schedule:", error);
+        });
+      },
+
+
+
       fetchManageDeptMembers() {
-      this.staffManageDept = [];
-        this.scheduleManageDept.forEach((schedule) => {
+      this.staffsDept = [];
+        this.scheduleDept.forEach((schedule) => {
           axios
             .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
             .then((response) => {
               
-              this.staffManageDept.push(response.data);
-              // get all teams
-              if (!this.depts.includes(response.data.Position)) {
-                this.depts.push(response.data.Position);
+              this.staffsDept.push(response.data);
+              // get all depts
+              if (!this.depts.includes(response.data.Dept)) {
+                this.depts.push(response.data.Dept);
               }
             })
             .catch((error) => {
               console.error("Error fetching Reporting Manager:", error);
             });
-            console.log(this.staffManageDept);
+            console.log(this.staffsDept);
         });
       },
       
-      async fetchManageDeptSchedule() {
-        let params = {
-          type: "Dept",
-          // staffId: sessionStorage.getItem('staffID'),
-          // Reporting_Manager: parseInt(this.staffId, 10),
-          department: this.userDept,
-          start_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
-          end_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
-        };
-        console.log("Fetching manage dept schedule with params:", params);
-        try {
-          
-          const response = await axios.get(`http://localhost:6003/aggregateSchedule`, { params: params });
-          console.log("Dept schedule response:", response.data);
-          this.scheduleManageDept = response.data;
-          
-          await this.fetchManageTeamMembers(); // Wait for the team members to be fetched
-        } catch (error) {
-          console.error("Error fetching dept schedule:", error);
+      filterByDepartment() {
+        if (this.selectedDepartment === this.userDept) {
+          this.staffsDept = [];
+          this.fetchbyOwnDept();
         }
       },
+      filterByTeam() {
+        // Ensure `selectedTeam` is set before filtering
+        if (!this.selectedTeam) {
+          console.error("No team selected.");
+          return;
+        }
+        this.staffs = [];
+        this.staffs = this.staffs.filter(staff => staff.Position === this.selectedTeam);
+        this.fetchManageTeamSchedule();
+        // Log the filtered staff to see the result
+        console.log("Filtered Staffs by Team:", this.staffs);
+      },
+
+
+      fetchAllMembers(){
+      this.staffs = [];
+      this.schedule.forEach((schedule) => {
+          axios
+            .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
+            .then((response) => {
+              this.staffs.push(response.data);
+              // get all teams
+              if (!this.teams.includes(response.data.Position)) {
+                this.teams.push(response.data.Position);
+              }
+            })
+            .catch((error) => {
+              console.error("Error fetching Reporting Manager:", error);
+            });
+      });
+    },
+
+    fetchALLSchedule(){
+      let params = {
+        type: "All",
+        staff_id: this.staffId,
+        start_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
+        end_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
+      };
+      axios
+        .get(`http://localhost:6003/aggregateSchedule`, { params })
+        .then((response) => {
+          this.schedule = response.data;
+          this.fetchAllMembers();
+        })
+        .catch((error) => {
+          console.error("Error fetching schedule:", error);
+        });
+    },
 
 
     selectDay(day) {
@@ -368,9 +424,10 @@ export default {
         this.fetchReportingManager();
         this.fetchStaffTeamSchedule();
       } else if (this.userRole === 3) {
+        this.fetchbyOwnDept();
         this.fetchManageTeamSchedule();
-      } else {
-        this.fetchManageDeptSchedule();
+      } else if (this.userRole === 1) {
+        this.fetchALLSchedule();
       }
     },
     
