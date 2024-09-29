@@ -145,7 +145,7 @@ export default {
       this.fetchUserDept();
       this.fetchOwnSchedule(); 
       this.selectToday(); // Automatically select today's date
-      this.filterStaff();
+      // this.filterStaff();
       
       // Wait for reportingManager to be set before checking userRole
       if (this.userRole === 2) {
@@ -356,25 +356,7 @@ export default {
             console.log(this.staffsDept);
         });
       },
-      
-      // filterByDepartment() {
-      //   if (this.selectedDepartment === this.userDept) {
-      //     this.staffsDept = [];
-      //     this.fetchbyOwnDept();
-      //   }
-      // },
-      // filterByTeam() {
-      //   // Ensure `selectedTeam` is set before filtering
-      //   if (!this.selectedTeam) {
-      //     console.error("No team selected.");
-      //     return;
-      //   }
-      //   // this.staffs = [];
-      //   this.staffs = this.staffs.filter(staff => staff.Position === this.selectedTeam);
-      //   this.fetchManageTeamSchedule();
-      //   // Log the filtered staff to see the result
-      //   console.log("Filtered Staffs by Team:", this.staffs);
-      // },
+
       filterByDepartment() {
         this.filterStaff();
       },
@@ -430,14 +412,23 @@ export default {
 
     selectDay(day) {
       if (this.selectedDay === day) {
-        this.deselectDay();
+        this.deselectDay(); // Call deselectDay if the same day is selected
       } else {
         this.selectedDay = day; // Select the new day
+        // Fetch the new schedule based on user role
+        this.updateScheduleBasedOnRole();
+        this.filterStaff(); // Filter staff based on the selected day
+
+        
       }
+    },
+    
+    deselectDay() {
+      this.selectedDay = null; // Deselect day
+    },
 
-      this.filterStaff();
-
-      // Fetch the new schedule based on user role
+    updateScheduleBasedOnRole() {
+      // Fetch schedule based on user role
       if (this.userRole === 2) {
         this.fetchReportingManager().then(() => {
           this.fetchStaffTeamSchedule();
@@ -451,20 +442,14 @@ export default {
       }
     },
 
-    
-    deselectDay() {
-      this.selectedDay = null; // Deselect day
-      this.filteredStaffWorkingFromHome = [];
-    },
-    
     nextMonth() {
       this.currentDate = new Date(this.currentYear, this.currentMonth + 1, 1);
-      this.selectedDay = null; // Deselect day when month changes
+      this.deselectDay(); // Deselect day when month changes
     },
     
     previousMonth() {
       this.currentDate = new Date(this.currentYear, this.currentMonth - 1, 1);
-      this.selectedDay = null; // Deselect day when month changes
+      this.deselectDay(); // Deselect day when month changes
     },
     
     isToday(day) {
