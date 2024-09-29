@@ -85,7 +85,7 @@
                     </li>
                   </div>
                   <div v-if="userRole === 1">
-                    <li v-for="staff in filteredStaffWorkingFromHome" :key="staff.id">
+                    <li v-for="staff in filteredStaffWorkingFromHome">
                       {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }}) - {{ staff.Position }}
                     </li>
                   </div>
@@ -372,23 +372,23 @@ export default {
         });
       },
 
-      fetchAllMembers(){
-      this.staffs = [];
-      this.schedule.forEach((schedule) => {
-          axios
-            .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
-            .then((response) => {
-              this.staffs.push(response.data);
-              // get all teams
-              if (!this.teams.includes(response.data.Position)) {
-                this.teams.push(response.data.Position);
-              }
-            })
-            .catch((error) => {
-              console.error("Error fetching Reporting Manager:", error);
-            });
-      });
-    },
+    //   fetchAllMembers(){
+    //   this.staffs = [];
+    //   this.schedule.forEach((schedule) => {
+    //       axios
+    //         .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
+    //         .then((response) => {
+    //           this.staffs.push(response.data);
+    //           // get all teams
+    //           if (!this.teams.includes(response.data.Position)) {
+    //             this.teams.push(response.data.Position);
+    //           }
+    //         })
+    //         .catch((error) => {
+    //           console.error("Error fetching Reporting Manager:", error);
+    //         });
+    //   });
+    // },
 
     fetchALLSchedule(){
       let params = {
@@ -401,7 +401,20 @@ export default {
         .get(`http://localhost:6003/aggregateSchedule`, { params })
         .then((response) => {
           this.schedule = response.data;
-          this.fetchAllMembers();
+          // this.fetchAllMembers();
+          console.log(response.data);
+          this.staffs.push(response.data[0]);   
+          console.log(this.staffs);    
+          this.staffsDept.push(response.data);
+          for (const staff in response.data) {
+            if (!this.teams.includes(response.data[staff].Position)) {
+                this.teams.push(response.data[staff].Position);
+              }
+            if (!this.depts.includes(response.data[staff].Dept)) {
+              this.depts.push(response.data[staff].Dept);
+            }
+          }
+          console.log(this.depts);
         })
         .catch((error) => {
           console.error("Error fetching schedule:", error);
