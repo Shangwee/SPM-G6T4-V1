@@ -44,7 +44,7 @@
       <div v-if="scheduleType==='team'" class="legend">
         <div class="legend-item">
           <div class="wfh-color"></div>
-          <span class="legend-text">WFH</span>
+          <span class="legend-text">Personal WFH</span>
         </div>
       </div>
     </div>
