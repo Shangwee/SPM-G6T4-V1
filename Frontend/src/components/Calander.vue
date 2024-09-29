@@ -156,6 +156,7 @@ export default {
         this.fetchbyOwnDept();
         this.fetchManageTeamSchedule();
       } else if (this.userRole === 1) {
+        this.fetchbyOwnDept();
         this.fetchALLSchedule();
       }
     } catch (error) {
@@ -415,6 +416,7 @@ export default {
         this.deselectDay(); // Call deselectDay if the same day is selected
       } else {
         this.selectedDay = day; // Select the new day
+        this.filteredStaffWorkingFromHome = [];
         // Fetch the new schedule based on user role
         this.updateScheduleBasedOnRole();
         this.filterStaff(); // Filter staff based on the selected day
@@ -423,6 +425,7 @@ export default {
     
     deselectDay() {
       this.selectedDay = null; // Deselect day
+      this.filteredStaffWorkingFromHome = [];
     },
 
     updateScheduleBasedOnRole() {
@@ -436,6 +439,7 @@ export default {
           this.fetchManageTeamSchedule();
         });
       } else if (this.userRole === 1) {
+        this.fetchbyOwnDept();
         this.fetchALLSchedule();
       }
     },
