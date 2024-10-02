@@ -1,5 +1,4 @@
 from flask import Flask, request,jsonify
-from os import environ
 import requests
 from datetime import datetime
 from flask_cors import CORS

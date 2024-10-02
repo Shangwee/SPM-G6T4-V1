@@ -5,6 +5,19 @@ services:
 # Complex microservice 
 
   #################################
+  # FlexibleArrangement: The FlexibleArrangement microservice
+  #################################
+  FlexibleArrangement:
+    build:
+      context: ./FlexibleArrangement
+      dockerfile: Dockerfile
+    image: spm/flexiblearrangement:1.0
+    restart: always
+    ports: ["6001:6001"]
+    environment:
+      PYTHONUNBUFFERED: 1
+
+  #################################
   # ManageRequest: The ManageRequest microservice
   #################################
   ManageRequest:

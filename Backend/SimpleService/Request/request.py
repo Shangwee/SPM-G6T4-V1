@@ -225,6 +225,36 @@ def update_request(Request_ID):
         return jsonify({'message': 'Request updated successfully!'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+# ** update a request by id (update date, comments)
+@app.route('/request/update/byuser/<int:Request_ID>', methods=['PUT'])
+def update_request_by_user(Request_ID):
+    data = request.get_json()
+
+    conn = mysql.connector.connect(**db_config)
+    cursor = conn.cursor(dictionary=True)
+
+    Date = data['Date']
+    Comments = data['Comments']
+
+    # ** validate date format
+    if not validate_date(Date):
+        return jsonify({'error': 'Invalid date format. Please use YYYY-MM-DD'}), 400
+
+    try:
+        query = ("UPDATE Request SET Date = %s, Comments = %s WHERE Request_ID = %s")
+        values = (Date, Comments, Request_ID)
+
+        cursor.execute(query, values)
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({'message': 'Request updated successfully!'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # ** delete a request by id
 @app.route('/request/delete/<int:Request_ID>', methods=['DELETE'])
