@@ -27,7 +27,7 @@ def get_request():
     # ** Extract the parameters from the query string
     Employee_ID = request.args.get('Employee_ID')
     Approver_ID = request.args.get('Approver_ID')
-    Status = request.args.get('Status')
+    Status = request.args.get('status')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
@@ -73,7 +73,7 @@ def get_request_by_employee_id(Employee_ID):
     values = (Employee_ID,)
 
      # ** Extract the parameters from the query string
-    Status = request.args.get('Status')
+    Status = request.args.get('status')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
@@ -113,7 +113,7 @@ def get_request_by_approver_id(Approver_ID):
 
     # ** Extract the parameters from the query string
     Employee_ID = request.args.get('Employee_ID')
-    Status = request.args.get('Status')
+    Status = request.args.get('status')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
@@ -163,7 +163,6 @@ def get_request_by_id(Request_ID):
     conn.close()
 
     return jsonify(request), 200
-
 
 # ** create a request
 @app.route('/request/create/', methods=['POST'])
@@ -225,6 +224,36 @@ def update_request(Request_ID):
         return jsonify({'message': 'Request updated successfully!'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+# ** update a request by id (update date, comments)
+@app.route('/request/update/byuser/<int:Request_ID>', methods=['PUT'])
+def update_request_by_user(Request_ID):
+    data = request.get_json()
+
+    conn = mysql.connector.connect(**db_config)
+    cursor = conn.cursor(dictionary=True)
+
+    Date = data['Date']
+    Comments = data['Comments']
+
+    # ** validate date format
+    if not validate_date(Date):
+        return jsonify({'error': 'Invalid date format. Please use YYYY-MM-DD'}), 400
+
+    try:
+        query = ("UPDATE Request SET Date = %s, Comments = %s WHERE Request_ID = %s")
+        values = (Date, Comments, Request_ID)
+
+        cursor.execute(query, values)
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({'message': 'Request updated successfully!'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # ** delete a request by id
 @app.route('/request/delete/<int:Request_ID>', methods=['DELETE'])
@@ -244,7 +273,6 @@ def delete_request(Request_ID):
 
     return jsonify({'message': 'Request deleted successfully!'}), 200
 
-
 # ** check if request exists by employee id and date
 def check_if_request_exists_by_employee_id_date(employee_id, date):
     conn = mysql.connector.connect(**db_config)
@@ -260,7 +288,6 @@ def check_if_request_exists_by_employee_id_date(employee_id, date):
     conn.close()
 
     return request
-
 
 # ** Utility function to validate date format
 def validate_date(date_string):
