@@ -57,21 +57,7 @@ def get_users():
         cursor.close()
         conn.close()
 
-        count_query = 'SELECT COUNT(*) FROM Employee WHERE 1=1'
-        if dept:
-            count_query += f" AND Dept = '{dept}'"
-        if position:
-            count_query += f" AND Position = '{position}'"
-        if country:
-            count_query += f" AND Country = '{country}'"
-        if role:
-            count_query += f" AND Role = {role}"
-        if Reporting_Manager:
-            count_query += f" AND Reporting_Manager = {Reporting_Manager}"
-
-        total_count = get_count_by_query(count_query)
-
-        return jsonify({'total_count': total_count, 'users': users}), 200
+        return jsonify(users), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -146,21 +132,6 @@ def get_departments():
         return jsonify(departments), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
-# ** counting the number of users based on the query without pagination
-def get_count_by_query(query):
-    conn = mysql.connector.connect(**db_config)
-    cursor = conn.cursor(dictionary=True)
-
-    cursor.execute(query)
-
-    # ** Fetch the count
-    count = cursor.fetchone()[0]
-
-    # ** close the cursor and connection
-    cursor.close()
-    conn.close()
-    return count
 
 
 if __name__ == '__main__':
