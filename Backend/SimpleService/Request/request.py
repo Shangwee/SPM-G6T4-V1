@@ -27,7 +27,7 @@ def get_request():
     # ** Extract the parameters from the query string
     Employee_ID = request.args.get('Employee_ID')
     Approver_ID = request.args.get('Approver_ID')
-    Status = request.args.get('Status')
+    Status = request.args.get('status')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
@@ -73,7 +73,7 @@ def get_request_by_employee_id(Employee_ID):
     values = (Employee_ID,)
 
      # ** Extract the parameters from the query string
-    Status = request.args.get('Status')
+    Status = request.args.get('status')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
@@ -113,7 +113,7 @@ def get_request_by_approver_id(Approver_ID):
 
     # ** Extract the parameters from the query string
     Employee_ID = request.args.get('Employee_ID')
-    Status = request.args.get('Status')
+    Status = request.args.get('status')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
@@ -163,7 +163,6 @@ def get_request_by_id(Request_ID):
     conn.close()
 
     return jsonify(request), 200
-
 
 # ** create a request
 @app.route('/request/create/', methods=['POST'])
@@ -274,7 +273,6 @@ def delete_request(Request_ID):
 
     return jsonify({'message': 'Request deleted successfully!'}), 200
 
-
 # ** check if request exists by employee id and date
 def check_if_request_exists_by_employee_id_date(employee_id, date):
     conn = mysql.connector.connect(**db_config)
@@ -290,7 +288,6 @@ def check_if_request_exists_by_employee_id_date(employee_id, date):
     conn.close()
 
     return request
-
 
 # ** Utility function to validate date format
 def validate_date(date_string):

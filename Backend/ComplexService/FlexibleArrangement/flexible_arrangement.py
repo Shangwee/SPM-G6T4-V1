@@ -39,8 +39,7 @@ def create_request():
             'Status': 0
         })
 
-        if create_request.status_code == 200:
-            return jsonify({'message': 'Request created successfully'}), 200
+        return jsonify(create_request), 200
     else:
         return jsonify({'error': 'Failed to retrieve staff information'}), 500
 
@@ -79,6 +78,7 @@ def update_request():
 
             # update comments with the new comments with  "Updated from {Previous_Date}: " prefix
             new_comments = f"Updated from {previous_date}: {comments}"
+            
             # update the request
             update_request = requests.put(f"{REQUEST_SERVICE_URL}/request/update/byuser/{request_id}", json={
                 'Date': date,
@@ -91,7 +91,7 @@ def update_request():
             return jsonify({'error': 'Request is not pending, need to create a new request'}), 400
 
 # withdraw request for flexible arrangement
-@app.route('/flexibleArrangement/withdrawRequest', methods=['PUT'])
+@app.route('/flexibleArrangement/withdrawRequest', methods=['DELETE'])
 def withdraw_request():
     # retrieve staff_id and request_id from the request body
     data = request.get_json()
@@ -116,6 +116,10 @@ def withdraw_request():
         if formatted_date < now.strftime('%Y-%m-%d'):
             return jsonify({'error': 'Cannot withdraw request, date has passed'}), 400
         
+        # check if the staff_id matches the staff_id in the request
+        if staff_id != retrieve_staff_id:
+            return jsonify({'error': 'You are not allowed to withdraw this request'}), 401
+        
         # check if the request is pending
         if status == 0:
             # withdraw the request
@@ -125,6 +129,8 @@ def withdraw_request():
                 return jsonify({'message': 'Request withdrawn successfully'}), 200
         else:
             return jsonify({'error': 'Request is not pending, cannot be withdrawn'}), 400
+    else:
+        return jsonify({'error': 'Failed to retrieve request'}), 500
 
 # ** retrieve own requests
 @app.route('/flexibleArrangement/ownRequests/<int:staff_id>', methods=['GET'])
@@ -139,15 +145,19 @@ def own_requests(staff_id):
     page_size = request.args.get('page_size')
 
     # retrieve own requests
-    query_string = f"/request/employee/{staff_id}"
+    query_params = []
     if status:
-        query_string += f"?status={status}"
+        query_params.append(f"status={status}")
     if page and page_size:
-        query_string += f"&page={page}&page_size={page_size}"
+        query_params.append(f"page={page}&page_size={page_size}")
     if start_date:
-        query_string += f"&start_date={start_date}"
+        query_params.append(f"start_date={start_date}")
     if end_date:
-        query_string += f"&end_date={end_date}"
+        query_params.append(f"end_date={end_date}")
+
+    query_string = f"/request/employee/{staff_id}"
+    if query_params:
+        query_string += "?" + "&".join(query_params)
 
     retrieve_requests = requests.get(f"{REQUEST_SERVICE_URL}{query_string}")
 
@@ -170,18 +180,21 @@ def approval_requests(staff_id):
     page_size = request.args.get('page_size')
 
     # retrieve approval requests
-    query_string = f"/request/approver/{staff_id}"
-
+    query_params = []
     if Employee_ID:
-        query_string += f"?Employee_ID={Employee_ID}"
+        query_params.append(f"Employee_ID={Employee_ID}")
     if status:
-        query_string += f"&status={status}"
+        query_params.append(f"status={status}")
     if page and page_size:
-        query_string += f"&page={page}&page_size={page_size}"
+        query_params.append(f"page={page}&page_size={page_size}")
     if start_date:
-        query_string += f"&start_date={start_date}"
+        query_params.append(f"start_date={start_date}")
     if end_date:
-        query_string += f"&end_date={end_date}"
+        query_params.append(f"end_date={end_date}")
+
+    query_string = f"/request/approver/{staff_id}"
+    if query_params:
+        query_string += "?" + "&".join(query_params)
 
     retrieve_requests = requests.get(f"{REQUEST_SERVICE_URL}{query_string}")
 
@@ -208,9 +221,9 @@ def approval_requests(staff_id):
 def validate_minimum_date(date):
     date = datetime.strptime(date, '%Y-%m-%d')
     now = datetime.now()
-    if date < now.strftime('%Y-%m-%d'):
+    if date < now:
         return False
-    return
+    return True
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=6001, debug=True)
