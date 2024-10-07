@@ -73,14 +73,17 @@ const confirmApplyWorkFromHome = async () => {
     }
 
     if (reason.value.trim() !== '') {
+        // Construct the date string in YYYY-MM-DD format
+        const dateToSend = `${currentDate.value.getFullYear()}-${String(currentDate.value.getMonth() + 1).padStart(2, '0')}-${String(dayToConfirm.value).padStart(2, '0')}`;
+
         try {
             const response = await axios.post('http://localhost:6001/flexibleArrangement/createRequest', {
                 staff_id: staffId,
-                date: dayToConfirm.value,
-                comments: reason.value,
+                date: dateToSend, // Use the constructed date string
+                reason: reason.value,
             });
 
-            if (response.status === 200) {
+            if (response.status == 201) {
                 alert('Work-from-home application successful!');
                 showForm.value = false; // Hide the form after confirmation
             } else {
@@ -94,6 +97,7 @@ const confirmApplyWorkFromHome = async () => {
         alert('Please enter a reason for working from home.');
     }
 };
+
 
 const cancelWorkFromHome = () => {
   showForm.value = false; // Hide the form
