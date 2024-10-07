@@ -56,31 +56,40 @@ const isToday = (day) => {
   );
 };
 
-// Updated function to include Axios
-const applyForWorkFromHome = async (day, reason) => {
-  try {
-    const response = await axios.post('http://localhost:6001/flexibleArrangement/createRequest', {
-      date: day,
-      reason: reason,
-      user_id: 'your_user_id', // Adjust based on your setup
-    });
-    
-    if (response.status === 200) {
-      alert('Work-from-home application successful!');
-    } else {
-      alert('Something went wrong, please try again.');
-    }
-  } catch (error) {
-    console.error(error);
-    alert('Error: Unable to apply for work from home.');
-  }
+// Function to show the form when the plus button is clicked
+const applyForWorkFromHome = (day) => {
+  dayToConfirm.value = day; // Set the day to confirm
+  showForm.value = true; // Show the WFH form
+  reason.value = ''; // Clear the reason input
 };
 
-const confirmApplyWorkFromHome = () => {
+// Function to send the POST request
+const confirmApplyWorkFromHome = async () => {
+  const staffId = sessionStorage.getItem('staffID'); // Retrieve the staff ID
+
+  if (!staffId) {
+    alert('Error: Staff ID is missing');
+    return;
+  }
+
   if (reason.value.trim() !== '') {
-    // Call applyForWorkFromHome when the user confirms the form
-    applyForWorkFromHome(dayToConfirm.value, reason.value);
-    showForm.value = false; // Hide the form after confirmation
+    try {
+      const response = await axios.post('http://localhost:6001/flexibleArrangement/createRequest', {
+        staff_id: staffId,
+        date: dayToConfirm.value,
+        comments: reason.value, // Send reason for WFH
+      });
+
+      if (response.status === 200) {
+        alert('Work-from-home application successful!');
+        showForm.value = false; // Hide the form after confirmation
+      } else {
+        alert('Something went wrong, please try again.');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Error: Unable to apply for work from home.');
+    }
   } else {
     alert('Please enter a reason for working from home.');
   }
@@ -89,6 +98,7 @@ const confirmApplyWorkFromHome = () => {
 const cancelWorkFromHome = () => {
   showForm.value = false; // Hide the form
 };
+
 </script>
 
 
@@ -124,7 +134,6 @@ const cancelWorkFromHome = () => {
                   class="calendar-cell text-center"
                   @mouseover="hoveredDay = day"
                   @mouseleave="hoveredDay = null"
-                  @click="selectDay(day)"
                   :class="{
                     'empty-day': day === '',
                     'selected-day': day === selectedDay,
