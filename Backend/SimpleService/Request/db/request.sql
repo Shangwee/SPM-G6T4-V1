@@ -7,7 +7,7 @@ CREATE TABLE Request (
     Employee_ID INT NOT NULL,
     Approver_ID INT NOT NULL,
     Date DATE NOT NULL,
-    Comments TEXT(100) NULL,
+    Reason TEXT(100) NULL,
     Status INT NOT NULL DEFAULT 0 -- 0: Pending, 1: Approved, 2: Rejected
 );
 
