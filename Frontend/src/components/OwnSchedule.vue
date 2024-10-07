@@ -65,34 +65,34 @@ const applyForWorkFromHome = (day) => {
 
 // Function to send the POST request
 const confirmApplyWorkFromHome = async () => {
-  const staffId = sessionStorage.getItem('staffID'); // Retrieve the staff ID
+    const staffId = sessionStorage.getItem('staffID');
 
-  if (!staffId) {
-    alert('Error: Staff ID is missing');
-    return;
-  }
-
-  if (reason.value.trim() !== '') {
-    try {
-      const response = await axios.post('http://localhost:6001/flexibleArrangement/createRequest', {
-        staff_id: staffId,
-        date: dayToConfirm.value,
-        comments: reason.value, // Send reason for WFH
-      });
-
-      if (response.status === 200) {
-        alert('Work-from-home application successful!');
-        showForm.value = false; // Hide the form after confirmation
-      } else {
-        alert('Something went wrong, please try again.');
-      }
-    } catch (error) {
-      console.error(error);
-      alert('Error: Unable to apply for work from home.');
+    if (!staffId) {
+        alert('Error: Staff ID is missing');
+        return;
     }
-  } else {
-    alert('Please enter a reason for working from home.');
-  }
+
+    if (reason.value.trim() !== '') {
+        try {
+            const response = await axios.post('http://localhost:6001/flexibleArrangement/createRequest', {
+                staff_id: staffId,
+                date: dayToConfirm.value,
+                comments: reason.value,
+            });
+
+            if (response.status === 200) {
+                alert('Work-from-home application successful!');
+                showForm.value = false; // Hide the form after confirmation
+            } else {
+                alert('Something went wrong, please try again.');
+            }
+        } catch (error) {
+            console.error('Error details:', error.response ? error.response.data : error.message);
+            alert('Error: Unable to apply for work from home. Please check the console for more details.');
+        }
+    } else {
+        alert('Please enter a reason for working from home.');
+    }
 };
 
 const cancelWorkFromHome = () => {
@@ -119,7 +119,8 @@ const cancelWorkFromHome = () => {
                 <button class="btn btn-outline-primary" @click="previousMonth">
                   <i class="bi bi-arrow-left-circle"></i> Previous
                 </button>
-                <h4 class="m-0">{{ currentDate.toLocaleString('default', { month: 'long' }) }} {{ currentDate.getFullYear() }}</h4>
+                <h4 class="m-0">{{ currentDate.toLocaleString('default', { month: 'long' }) }} {{
+                  currentDate.getFullYear() }}</h4>
                 <button class="btn btn-outline-primary" @click="nextMonth">
                   Next <i class="bi bi-arrow-right-circle"></i>
                 </button>
@@ -128,22 +129,17 @@ const cancelWorkFromHome = () => {
               <!-- Calendar Grid -->
               <div class="calendar-grid p-2">
                 <div class="calendar-day fw-bold text-center" v-for="day in daysOfWeek" :key="day">{{ day }}</div>
-                <div
-                  v-for="(day, index) in daysInMonth"
-                  :key="index"
-                  class="calendar-cell text-center"
-                  @mouseover="hoveredDay = day"
-                  @mouseleave="hoveredDay = null"
-                  :class="{
+                <div v-for="(day, index) in daysInMonth" :key="index" class="calendar-cell text-center"
+                  @mouseover="hoveredDay = day" @mouseleave="hoveredDay = null" :class="{
                     'empty-day': day === '',
                     'selected-day': day === selectedDay,
                     today: isToday(day),
-                  }"
-                >
+                  }">
                   <span v-if="day">{{ day }}</span>
 
                   <!-- "+" Button appears on hover -->
-                  <button v-if="hoveredDay === day && day !== ''" class="apply-btn" @click.stop="applyForWorkFromHome(day)">+</button>
+                  <button v-if="hoveredDay === day && day !== ''" class="apply-btn"
+                    @click.stop="applyForWorkFromHome(day)">+</button>
                 </div>
               </div>
             </div>
@@ -182,18 +178,23 @@ const cancelWorkFromHome = () => {
 }
 
 .calendar-container {
-  flex: 3; /* Adjust the flex ratio of the calendar */
+  flex: 3;
+  /* Adjust the flex ratio of the calendar */
   max-width: 1000px;
   margin: 0 auto;
 }
+
 .wfh-form {
-  flex: 1; /* This controls the form's proportion relative to the calendar */
+  flex: 1;
+  /* This controls the form's proportion relative to the calendar */
   padding: 10px;
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  width: 100px; /* Adjust this value to change the form's width. You can try values like 70%, 50%, or set a fixed width (e.g., 300px) */
-  margin-left: 20px; /* This adds space between the calendar and the form */
+  width: 100px;
+  /* Adjust this value to change the form's width. You can try values like 70%, 50%, or set a fixed width (e.g., 300px) */
+  margin-left: 20px;
+  /* This adds space between the calendar and the form */
 }
 
 .calendar {
@@ -204,7 +205,8 @@ const cancelWorkFromHome = () => {
 
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr); /* 7 columns for the 7 days of the week */
+  grid-template-columns: repeat(7, 1fr);
+  /* 7 columns for the 7 days of the week */
   gap: 1px;
   width: 100%;
 }
