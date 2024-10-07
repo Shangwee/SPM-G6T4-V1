@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import NavBar from "./NavBar.vue";
+import axios from 'axios'; // Import Axios
 
 // Track selected date and form visibility
 const selectedDay = ref(null);
@@ -55,17 +56,30 @@ const isToday = (day) => {
   );
 };
 
-const applyForWorkFromHome = (day) => {
-  if (day) {
-    dayToConfirm.value = day;
-    showForm.value = true; // Show the WFH form
-    reason.value = ''; // Clear the reason input
+// Updated function to include Axios
+const applyForWorkFromHome = async (day, reason) => {
+  try {
+    const response = await axios.post('http://localhost:6001/flexibleArrangement/createRequest', {
+      date: day,
+      reason: reason,
+      user_id: 'your_user_id', // Adjust based on your setup
+    });
+    
+    if (response.status === 200) {
+      alert('Work-from-home application successful!');
+    } else {
+      alert('Something went wrong, please try again.');
+    }
+  } catch (error) {
+    console.error(error);
+    alert('Error: Unable to apply for work from home.');
   }
 };
 
 const confirmApplyWorkFromHome = () => {
   if (reason.value.trim() !== '') {
-    alert(`You have successfully applied for work-from-home on ${dayToConfirm.value} ${currentDate.value.toLocaleString('default', { month: 'long' })} with reason: ${reason.value}`);
+    // Call applyForWorkFromHome when the user confirms the form
+    applyForWorkFromHome(dayToConfirm.value, reason.value);
     showForm.value = false; // Hide the form after confirmation
   } else {
     alert('Please enter a reason for working from home.');
@@ -76,6 +90,7 @@ const cancelWorkFromHome = () => {
   showForm.value = false; // Hide the form
 };
 </script>
+
 
 <template>
   <div>
