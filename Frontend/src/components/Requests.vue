@@ -48,6 +48,7 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 
 const requests = ref([]);
+const enrichedRequests = ref([]); // New variable for enriched requests
 const filteredRequests = ref([]);
 
 // Get Staff ID from session storage
@@ -58,7 +59,8 @@ const fetchRequests = async () => {
   try {
     const response = await axios.get(`http://localhost:5003/request/approver/${staffId}`);
     requests.value = response.data;
-    filteredRequests.value = await enrichRequestsWithUserDetails(requests.value); // Enrich requests with user details
+    enrichedRequests.value = await enrichRequestsWithUserDetails(requests.value); // Enrich requests with user details
+    filterRequests('All'); // Set initial filter to show all requests
   } catch (error) {
     console.error('Error fetching requests:', error);
   }
@@ -91,11 +93,12 @@ onMounted(() => {
   fetchRequests();
 });
 
+// Filter requests based on status
 const filterRequests = (status) => {
   if (status === 'All') {
-    filteredRequests.value = requests.value;
+    filteredRequests.value = enrichedRequests.value; // Use enriched requests for filtering
   } else {
-    filteredRequests.value = requests.value.filter(request => request.Status === status);
+    filteredRequests.value = enrichedRequests.value.filter(request => request.Status === status);
   }
 };
 
