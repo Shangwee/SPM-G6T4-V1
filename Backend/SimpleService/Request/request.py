@@ -22,7 +22,7 @@ def get_request():
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor(dictionary=True)
 
-    query = ("SELECT Request_ID, Employee_ID, Approver_ID, Date, Comments, Status FROM Request where 1=1")
+    query = ("SELECT Request_ID, Employee_ID, Approver_ID, Date, Reason, Status FROM Request where 1=1")
 
     # ** Extract the parameters from the query string
     Employee_ID = request.args.get('Employee_ID')
@@ -69,7 +69,7 @@ def get_request_by_employee_id(Employee_ID):
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor(dictionary=True)
 
-    query = ("SELECT Request_ID, Employee_ID, Approver_ID, Date, Comments, Status FROM Request WHERE Employee_ID = %s")
+    query = ("SELECT Request_ID, Employee_ID, Approver_ID, Date, Reason, Status FROM Request WHERE Employee_ID = %s")
     values = (Employee_ID,)
 
      # ** Extract the parameters from the query string
@@ -108,7 +108,7 @@ def get_request_by_approver_id(Approver_ID):
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor(dictionary=True)
 
-    query = ("SELECT Request_ID, Employee_ID, Approver_ID, Date, Comments, Status FROM Request WHERE Approver_ID = %s")
+    query = ("SELECT Request_ID, Employee_ID, Approver_ID, Date, Reason, Status FROM Request WHERE Approver_ID = %s")
     values = (Approver_ID,)
 
     # ** Extract the parameters from the query string
@@ -152,7 +152,7 @@ def get_request_by_id(Request_ID):
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor(dictionary=True)
 
-    query = ("SELECT Request_ID, Employee_ID, Approver_ID, Date, Comments, Status FROM Request WHERE Request_ID = %s")
+    query = ("SELECT Request_ID, Employee_ID, Approver_ID, Date, Reason, Status FROM Request WHERE Request_ID = %s")
     values = (Request_ID,)
 
     cursor.execute(query, values)
@@ -174,7 +174,7 @@ def create_request():
 
     Employee_ID = data['Employee_ID']
     Approver_ID = data['Approver_ID']
-    Comments = data['Comments']
+    Reason = data['Reason']
     Status = 0
     Date = data['Date']
 
@@ -189,8 +189,8 @@ def create_request():
         return jsonify({'message': 'Request already exists'}), 409
 
     try:
-        query = ("INSERT INTO Request (Employee_ID, Approver_ID, Date, Comments, Status) VALUES (%s, %s, %s, %s, %s)")
-        values = (Employee_ID, Approver_ID, Date, Comments, Status)
+        query = ("INSERT INTO Request (Employee_ID, Approver_ID, Date, Reason, Status) VALUES (%s, %s, %s, %s, %s)")
+        values = (Employee_ID, Approver_ID, Date, Reason, Status)
         cursor.execute(query, values)
 
         conn.commit()
@@ -225,7 +225,7 @@ def update_request(Request_ID):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
-# ** update a request by id (update date, comments)
+# ** update a request by id (update date, Reason)
 @app.route('/request/update/byuser/<int:Request_ID>', methods=['PUT'])
 def update_request_by_user(Request_ID):
     data = request.get_json()
@@ -234,15 +234,15 @@ def update_request_by_user(Request_ID):
     cursor = conn.cursor(dictionary=True)
 
     Date = data['Date']
-    Comments = data['Comments']
+    Reason = data['Reason']
 
     # ** validate date format
     if not validate_date(Date):
         return jsonify({'error': 'Invalid date format. Please use YYYY-MM-DD'}), 400
 
     try:
-        query = ("UPDATE Request SET Date = %s, Comments = %s WHERE Request_ID = %s")
-        values = (Date, Comments, Request_ID)
+        query = ("UPDATE Request SET Date = %s, Reason = %s WHERE Request_ID = %s")
+        values = (Date, Reason, Request_ID)
 
         cursor.execute(query, values)
 

@@ -14,11 +14,11 @@ REQUEST_SERVICE_URL = "http://host.docker.internal:5003"
 # create request for flexible arrangement
 @app.route('/flexibleArrangement/createRequest', methods=['POST'])
 def create_request():
-    # retrieve staff_id, Date and comments from the request body
+    # retrieve staff_id, Date and reason from the request body
     data = request.get_json()
     staff_id = data['staff_id']
     date = data['date']
-    comments = data['comments']
+    Reason = data['reason']
 
     # validate the date
     if not validate_minimum_date(date):
@@ -35,23 +35,25 @@ def create_request():
             'Employee_ID': staff_id,
             'Approver_ID': reporting_manager,
             'Date': date,
-            'Comments': comments,
+            'Reason': Reason,
             'Status': 0
         })
 
-        return jsonify(create_request), 200
+        if create_request.status_code == 201:
+            print(create_request.json(), "Created JSON")
+            return jsonify({'message': 'Request created successfully'}), 201
     else:
         return jsonify({'error': 'Failed to retrieve staff information'}), 500
 
 # update request for flexible arrangement
 @app.route('/flexibleArrangement/updateRequest', methods=['PUT'])
 def update_request():
-    # retrieve staff_id, request_id, date and comments from the request body
+    # retrieve staff_id, request_id, date and reason from the request body
     data = request.get_json()
     staff_id = data['staff_id']
     request_id = data['request_id']
     date = data['date']
-    comments = data['comments']
+    Reason = data['reason']
 
     # validate the date
     if not validate_minimum_date(date):
@@ -76,13 +78,13 @@ def update_request():
             date_object = datetime.strptime(Date, '%a, %d %b %Y %H:%M:%S %Z')
             previous_date = date_object.strftime('%Y-%m-%d')
 
-            # update comments with the new comments with  "Updated from {Previous_Date}: " prefix
-            new_comments = f"Updated from {previous_date}: {comments}"
+            # update reason with the new reason with  "Updated from {Previous_Date}: " prefix
+            new_reason = f"Updated from {previous_date}: {Reason}"
             
             # update the request
             update_request = requests.put(f"{REQUEST_SERVICE_URL}/request/update/byuser/{request_id}", json={
                 'Date': date,
-                'Comments': new_comments
+                'Reason': new_reason
             })
 
             if update_request.status_code == 200:
