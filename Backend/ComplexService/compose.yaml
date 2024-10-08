@@ -31,6 +31,18 @@ services:
       PYTHONUNBUFFERED: 1 
 
   #################################
+  # ManageRequest test: testing the ManageRequest microservice
+  #################################
+  ManageRequest_test:
+    build:
+      context: ./ManageRequest
+      dockerfile: Dockerfile
+    image: spm/managerequest_test:1.0
+    depends_on:
+      - ManageRequest
+    command: /bin/sh -c "sleep 20 && python -m unittest manage_request_test.py"
+
+  #################################
   # ScheduleAggregation: The ScheduleAggregation microservice
   #################################
   ScheduleAggregation:
