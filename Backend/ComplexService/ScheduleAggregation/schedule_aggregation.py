@@ -65,38 +65,76 @@ def aggregate_schedules():
     if schedule_type == 'Team':
         if not reporting_manager:
             return jsonify({'error': 'Reporting Manager is required for team-based aggregation'}), 400
-        schedules = get_schedules_by_team(reporting_manager, start_date, end_date)
+        staff_ids = get_staff_ids_by_team(reporting_manager)
+        schedules = get_schedules_by_staff_ids(staff_ids, start_date, end_date)
 
     elif schedule_type == 'Dept':
         if not dept:
             return jsonify({'error': 'Department is required for department-based aggregation'}), 400
-        schedules = get_schedules_by_department(dept, start_date, end_date)
+        staff_ids = get_staff_ids_by_department(dept)
+        schedules = get_schedules_by_staff_ids(staff_ids, start_date, end_date)
 
     elif schedule_type == 'All':
         # Validate role for "All" type schedules: Only allow HR and Directors
         if not validate_position(position):
             return jsonify({'error': 'Unauthorized access: Only HR or Directors can access all schedules'}), 403
         schedules = get_all_schedules(start_date, end_date)
-        # get all members from accounts microservice
-        for schedule in schedules:
-            staff_id = schedule['Staff_ID']
+
+    # Initialize lists to collect original and augmented schedules
+    original_schedules = []   # This will store the original schedules
+    augmented_schedules = []  # This will store the schedules after augmentation with user data
+
+    # Loop through the original schedules to augment them
+    for schedule in schedules:
+        original_schedules.append(schedule.copy())  # Store the original schedule
+
+        staff_id = schedule['Staff_ID']
+        try:
             response = requests.get(f"{ACCOUNTS_SERVICE_URL}/user/{staff_id}")
             response.raise_for_status()
             user_data = response.json()
-            schedule['Staff_FName'] = user_data['Staff_FName']
-            schedule['Staff_LName'] = user_data['Staff_LName']
-            schedule['Dept'] = user_data['Dept']
-            schedule['Email'] = user_data['Email']
-            schedule['Position'] = user_data['Position']
-            schedule['Country'] = user_data['Country']
-            schedule['Role'] = user_data['Role']
-            schedule['Reporting_Manager'] = user_data['Reporting_Manager']
-        # combine the schedules with the members
 
-    else:
-        return jsonify({'error': 'Invalid schedule type'}), 400
+            # Augment schedule data with user info
+            augmented_schedule = schedule.copy()  # Create a copy to augment
+            augmented_schedule.update({
+                'Staff_FName': user_data.get('Staff_FName', 'Unknown'),
+                'Staff_LName': user_data.get('Staff_LName', 'Unknown'),
+                'Dept': user_data.get('Dept', 'Unknown'),
+                'Email': user_data.get('Email', 'Unknown'),
+                'Position': user_data.get('Position', 'Unknown'),
+                'Country': user_data.get('Country', 'Unknown'),
+                'Role': user_data.get('Role', 'Unknown'),
+                'Reporting_Manager': user_data.get('Reporting_Manager', 'Unknown')
+            })
 
-    return jsonify(schedules), 200
+            augmented_schedules.append(augmented_schedule)
+
+        except requests.exceptions.RequestException as e:
+            print(f"Error retrieving user data for Staff_ID {staff_id}: {e}")
+            # Handle error by appending the original schedule without augmentation
+            augmented_schedules.append(schedule.copy())
+
+    # Combine the original and augmented schedules for comparison
+    combined_response = {
+        "original_schedules": original_schedules,
+        "augmented_schedules": augmented_schedules
+    }
+
+    # Return the combined response
+    return jsonify(combined_response), 200
+
+
+
+# Helper function to get schedules by staff IDs
+def get_schedules_by_staff_ids(staff_ids, start_date, end_date):
+    try:
+        # Fetch schedules based on staff IDs with optional date filtering
+        response = requests.get(f"{SCHEDULE_SERVICE_URL}/schedule/organisation?staff_ids={','.join(map(str, staff_ids))}&start_date={start_date}&end_date={end_date}")
+        print(response.text)  # Log the response body
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        return {'error': f'Failed to retrieve schedules: {str(e)}'}
 
 # Helper function to validate user position (only allow HR and Directors)
 def validate_position(position):
@@ -110,6 +148,7 @@ def get_user_position(staff_id):
     try:
         # Call the accounts microservice to get user details
         response = requests.get(f"{ACCOUNTS_SERVICE_URL}/user/{staff_id}")
+        print(response.text)  # Log the response body
         response.raise_for_status()  # Will raise an HTTPError for bad responses
         
         user_data = response.json()
@@ -123,28 +162,46 @@ def get_user_position(staff_id):
         print(f"Error retrieving user position for staff_id {staff_id}: {e}")
         return None
 
-# Helper function to get schedules by department with date filtering
-def get_schedules_by_department(department, start_date, end_date):
+# Helper function to get staff IDs by department
+def get_staff_ids_by_department(department):
     try:
-        response = requests.get(f"{SCHEDULE_SERVICE_URL}/schedule/dept/{department}?start_date={start_date}&end_date={end_date}")
+        response = requests.get(f"{ACCOUNTS_SERVICE_URL}/users?dept={department}")
+        print(response.text)  # Log the response body
         response.raise_for_status()
-        return response.json()
+        
+        # Assuming the response is a list of users
+        users = response.json()
+        
+        # Extract staff IDs from the list
+        staff_ids = [user['Staff_ID'] for user in users]
+        return staff_ids
     except requests.exceptions.RequestException as e:
-        return {'error': f'Failed to retrieve department schedules: {str(e)}'}
+        print(f"Error retrieving staff IDs for department {department}: {e}")
+        return []
 
-# Helper function to get schedules by team with date filtering
-def get_schedules_by_team(reporting_manager, start_date, end_date):
+
+# Helper function to get staff IDs by team (reporting manager)
+def get_staff_ids_by_team(reporting_manager):
     try:
-        response = requests.get(f"{SCHEDULE_SERVICE_URL}/schedule/team/{reporting_manager}?start_date={start_date}&end_date={end_date}")
+        response = requests.get(f"{ACCOUNTS_SERVICE_URL}/users?Reporting_Manager={reporting_manager}")
+        print(response.text)  # Log the response body
         response.raise_for_status()
-        return response.json()
+        
+        # Assuming the response is a list of users
+        users = response.json()
+        
+        # Extract staff IDs from the list
+        staff_ids = [user['Staff_ID'] for user in users]
+        return staff_ids
     except requests.exceptions.RequestException as e:
-        return {'error': f'Failed to retrieve team schedules: {str(e)}'}
+        print(f"Error retrieving staff IDs for team {reporting_manager}: {e}")
+        return []
 
 # Helper function to get all schedules with date filtering
 def get_all_schedules(start_date, end_date):
     try:
         response = requests.get(f"{SCHEDULE_SERVICE_URL}/schedule/organisation?start_date={start_date}&end_date={end_date}")
+        print(response.text)  # Log the response body
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
