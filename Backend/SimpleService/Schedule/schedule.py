@@ -98,6 +98,30 @@ def get_schedules():
     schedules = execute_query(query, parameters)
     return jsonify(schedules), 200
 
+# Delete schedule by schedule_ID
+@app.route('/schedule/delete/<int:schedule_id>', methods=['DELETE'])
+def delete_schedule(schedule_id):
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+
+        # Checking if the schedule exists
+        cursor.execute("SELECT * FROM Schedule WHERE Schedule_ID = %s", (schedule_id,))
+        result = cursor.fetchone()
+        
+        if not result:
+            return jsonify({'error': 'Schedule not found'}), 404
+
+        # Delete the schedule
+        cursor.execute("DELETE FROM Schedule WHERE Schedule_ID = %s", (schedule_id,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({'message': f'Schedule {schedule_id} deleted successfully'}), 200
+    except mysql.connector.Error as err:
+        return jsonify({'error': str(err)}), 500
+
 
 # Get schedule by staff_id with optional date filtering
 @app.route('/schedule/personal/<int:staff_id>', methods=['GET'])
