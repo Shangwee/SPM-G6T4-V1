@@ -1,4 +1,4 @@
-<template>
+<template> 
   <div>
     <div class="container mt-3 pt-5">
       <div class="d-flex justify-content-center mb-4">
@@ -14,6 +14,7 @@
             <tr>
               <th>Request ID</th>
               <th>Employee ID</th>
+              <th>Employee Name</th> <!-- Updated Header -->
               <th>Request Date</th>
               <th>Reason</th>
               <th>Status</th>
@@ -24,6 +25,7 @@
             <tr v-for="request in filteredRequests" :key="request.Request_ID">
               <td>{{ request.Request_ID }}</td>
               <td>{{ request.Employee_ID }}</td>
+              <td>{{ request.employeeName }}</td> <!-- Display User Name -->
               <td>{{ request.Date }}</td>
               <td>{{ request.Reason }}</td>
               <td>
@@ -51,14 +53,38 @@ const filteredRequests = ref([]);
 // Get Staff ID from session storage
 const staffId = sessionStorage.getItem('staffID');
 
+// Fetch requests for the approver
 const fetchRequests = async () => {
   try {
-    const response = await axios.get(`http://localhost:5003/request/approver/${staffId}`); // Use the approver ID
+    const response = await axios.get(`http://localhost:5003/request/approver/${staffId}`);
     requests.value = response.data;
-    filteredRequests.value = requests.value; // Initially, show all requests
+    filteredRequests.value = await enrichRequestsWithUserDetails(requests.value); // Enrich requests with user details
   } catch (error) {
     console.error('Error fetching requests:', error);
   }
+};
+
+// Fetch user details for each request
+const enrichRequestsWithUserDetails = async (requests) => {
+  const enrichedRequests = await Promise.all(requests.map(async (request) => {
+    try {
+      const userResponse = await axios.get(`http://localhost:5001/user/${request.Employee_ID}`);
+      const user = userResponse.data;
+      return {
+        ...request,
+        employeeName: `${user.Staff_FName} ${user.Staff_LName}`, // Combine first and last name
+        position: user.Position,
+        team: user.Dept,
+      };
+    } catch (error) {
+      console.error('Error fetching user details for request:', request.Request_ID, error);
+      return {
+        ...request,
+        employeeName: 'Unknown', // Fallback in case of error
+      };
+    }
+  }));
+  return enrichedRequests;
 };
 
 onMounted(() => {
