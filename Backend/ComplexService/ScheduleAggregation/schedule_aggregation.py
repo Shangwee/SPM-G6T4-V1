@@ -191,22 +191,6 @@ def get_staff_ids_by_department(department):
         print(f"Error retrieving staff IDs for department {department}: {e}")
         return []
 
-# Helper function to get schedules by staff_ids under reporting manager (reporting manager)
-def get_schedules_by_department(staff_ids,start_date,end_date, reporting_manager):
-    try:
-        # Convert list of staff_ids into a comma-separated string so that can pass as param
-        staff_ids = ','.join(map(str, staff_ids))
-        response = requests.get(f"{SCHEDULE_SERVICE_URL}/schedule/team?staff_ids={staff_ids}&start_date={start_date}&end_date={end_date}")
-        print(response.text)  # Log the response body
-        response.raise_for_status()
-
-        schedules = response.json()  
-        
-        return schedules
-    except requests.exceptions.RequestException as e:
-        print(f"Error retrieving schedule for team {reporting_manager}: {e}")
-        return []
-
 
 # Helper function to get staff IDs by team (reporting manager)
 def get_staff_ids_by_team(reporting_manager):
