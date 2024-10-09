@@ -32,8 +32,8 @@
                 <span :class="statusBadgeClass(request.Status)">{{ getStatusText(request.Status) }}</span>
               </td>
               <td class="text-center">
-                <button v-if="request.Status === 0" @click="updateStatus(request.Request_ID, 1)" class="btn btn-success btn-sm mx-1">Approve</button>
-                <button v-if="request.Status === 0" @click="updateStatus(request.Request_ID, 2)" class="btn btn-danger btn-sm mx-1">Reject</button>
+                <button v-if="request.Status === 0" @click="updateStatus(request.Request_ID, 1, request.Approver_ID)" class="btn btn-success btn-sm mx-1">Approve</button>
+                <button v-if="request.Status === 0" @click="updateStatus(request.Request_ID, 2, request.Approver_ID)" class="btn btn-danger btn-sm mx-1">Reject</button>
               </td>
             </tr>
           </tbody>
@@ -53,7 +53,7 @@ const filteredRequests = ref([]);
 // Get Staff ID from session storage
 const staffId = sessionStorage.getItem('staffID');
 
-// Fetch requests for the approver using the Flask API
+// Fetch requests for the approver
 const fetchRequests = async () => {
   try {
     const response = await axios.get(`http://localhost:6001/flexibleArrangement/approvalRequests/${staffId}`);
@@ -79,7 +79,7 @@ const getStatusText = (status) => {
 // Filter requests based on status
 const filterRequests = (status) => {
   if (status === 'All') {
-    filteredRequests.value = requests.value;
+    filteredRequests.value = requests.value; // Use enriched requests for filtering
   } else {
     filteredRequests.value = requests.value.filter(request => getStatusText(request.Status) === status);
   }
@@ -93,34 +93,35 @@ const statusBadgeClass = (status) => {
   return 'badge bg-secondary'; // Unknown status
 };
 
-// Update status of a request using the Flask API
-const updateStatus = async (requestId, newStatus) => {
+const updateStatus = async (requestId, newStatus, approverId) => {
   try {
-    // Decide whether to approve or reject based on newStatus value
-    const url = newStatus === 1 
-      ? `http://localhost:6002/manageRequest/accept` // Accept the request
-      : `http://localhost:6002/manageRequest/reject`; // Reject the request
-
-    // Make the POST request with the staffId and requestId
-    console.log('staffId:', staffId, 'requestId:', requestId);
-    const response = await axios.post(url, { 
-      staff_id: staffId, 
-      request_id: requestId 
-    });
-
-    // If the status update was successful, refresh the request list
-    if (response.status === 200) {
-      await fetchRequests(); // Refresh the requests after updating
+    if (newStatus == 1) {
+      await axios.post(`http://localhost:6002/manageRequest/accept`, 
+      {
+      "staff_id": approverId, 
+      "request_id" :requestId
+      })
+      .then((response) => {
+        console.log(response.data);
+      })
+      ;
     } else {
-      console.error('Error updating status:', response.data.error);
+      await axios.post(`http://localhost:6002/manageRequest/reject`, 
+      {
+      "staff_id": approverId, 
+      "request_id" :requestId
+      })
+      .then((response) => {
+        console.log(response.data);
+      });
     }
+
+    await fetchRequests(); // Refresh the list of requests
   } catch (error) {
     console.error('Error updating status:', error);
   }
 };
-
 </script>
-
 
 <style>   
 /* Adjust margin-top for the container to avoid affecting navbar */
