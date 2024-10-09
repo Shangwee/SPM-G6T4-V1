@@ -3,7 +3,7 @@ import requests
 
 class TestRequestAPI(unittest.TestCase):
     def setUp(self):
-        self.API_URL = "http://localhost:5003"
+        self.API_URL = "http://host.docker.internal:5003"
     
     def test_get_requests(self):
         response = requests.get(self.API_URL + "/request")
