@@ -27,7 +27,7 @@ def get_request():
     # ** Extract the parameters from the query string
     Employee_ID = request.args.get('Employee_ID')
     Approver_ID = request.args.get('Approver_ID')
-    Status = request.args.get('status')
+    Status = request.args.get('Status')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
@@ -37,11 +37,11 @@ def get_request():
 
 
     if Employee_ID:
-        query += " AND Employee_ID = {Employee_ID}"
+        query += f" AND Employee_ID = {Employee_ID}"
     if Approver_ID:
-        query += " AND Approver_ID = {Approver_ID}"
+        query += f" AND Approver_ID = {Approver_ID}"
     if Status:
-        query += " AND Status = {Status}"
+        query += f" AND Status = {Status}"
 
     if (start_date and not validate_date(start_date)) or (end_date and not validate_date(end_date)):
         return jsonify({'error': 'Invalid date format, use YYYY-MM-DD'}), 400
@@ -165,7 +165,7 @@ def get_request_by_id(Request_ID):
     return jsonify(request), 200
 
 # ** create a request
-@app.route('/request/create/', methods=['POST'])
+@app.route('/request/create', methods=['POST'])
 def create_request():
     data  = request.get_json()
 
@@ -311,4 +311,4 @@ def apply_date_filters(query, parameters, start_date, end_date):
     return query, parameters
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port="5000", debug=True)
