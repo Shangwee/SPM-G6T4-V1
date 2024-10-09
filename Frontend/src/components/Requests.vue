@@ -103,6 +103,7 @@ const updateStatus = async (requestId, newStatus) => {
 
     // Make the POST request with the staffId and requestId
     console.log('staffId:', staffId, 'requestId:', requestId);
+    console.log(staffId) 
     const response = await axios.post(url, { 
       staff_id: staffId, 
       request_id: requestId 

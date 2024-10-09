@@ -101,7 +101,7 @@ def create_app():
                         return jsonify({'error': 'Failed to add the request to the schedule'}), 500
         
         # if the user is not allowed to accept the request
-        return jsonify({'error': 'You are not allowed to reject this request'}), 401
+        return jsonify({'error': 'You are not allowed to accept this request'}), 401
 
     def check_staff_role(staff_id):
         Employee = requests.get(f"{ACCOUNTS_SERVICE_URL}/user/{staff_id}")
