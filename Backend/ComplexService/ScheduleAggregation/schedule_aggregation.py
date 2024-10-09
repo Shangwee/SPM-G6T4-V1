@@ -1,5 +1,6 @@
 import requests
 import mysql.connector
+import json
 from flask import Flask, request, jsonify
 from os import environ
 from flask_cors import CORS
@@ -9,7 +10,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Microservice URL configurations
-# TODO:Change this later 
+# TODO:Filter by staff id (not done and not working)
 ACCOUNTS_SERVICE_URL = "http://host.docker.internal:5001"
 SCHEDULE_SERVICE_URL = "http://host.docker.internal:5002"
 
@@ -52,7 +53,7 @@ def aggregate_schedules():
     staff_id = request.args.get('staff_id')   # Get login user info
     position = get_user_position(staff_id)    # Getting user position
     dept = request.args.get('dept')           # Optional, for dept aggregation
-    reporting_manager = request.args.get('Reporting_Manager')  # Optional, for team
+    reporting_manager = request.args.get('reporting_manager')  # Optional, for team
     start_date = request.args.get('start_date')  # Date or Date_range (default to current month)
     end_date = request.args.get('end_date')
 
@@ -84,15 +85,27 @@ def aggregate_schedules():
     original_schedules = []   # This will store the original schedules
     augmented_schedules = []  # This will store the schedules after augmentation with user data
 
+    # Check if schedules exist
+    if not schedules or len(schedules) == 0:
+        return jsonify({"error": "No schedules found"}), 404
+
     # Loop through the original schedules to augment them
     for schedule in schedules:
+        if not isinstance(schedule, dict):
+            print(f"Unexpected schedule format: {schedule}, type: {type(schedule)}")
+            continue  # Skip invalid schedules
+
         original_schedules.append(schedule.copy())  # Store the original schedule
 
         staff_id = schedule['Staff_ID']
         try:
+            print(f"Fetching data for Staff_ID: {staff_id}")  # Debugging print statement
             response = requests.get(f"{ACCOUNTS_SERVICE_URL}/user/{staff_id}")
             response.raise_for_status()
             user_data = response.json()
+
+            if not user_data:
+                print(f"No user data found for Staff_ID: {staff_id}")  # Debugging print
 
             # Augment schedule data with user info
             augmented_schedule = schedule.copy()  # Create a copy to augment
@@ -120,23 +133,22 @@ def aggregate_schedules():
         "augmented_schedules": augmented_schedules
     }
 
-    # Return the combined response
+    # Return the combined response  
     return jsonify(combined_response), 200
 
 
+# # Helper function to get schedules by staff IDs #TODO: Keep or delete idk see how
+# def get_schedules_by_staff_ids(staff_ids, start_date, end_date):
+#     try:
+#         # Fetch schedules based on staff IDs with optional date filtering
+#         response = requests.get(f"{SCHEDULE_SERVICE_URL}/schedule/personal?staff_ids={','.join(map(str, staff_ids))}&start_date={start_date}&end_date={end_date}")
+#         print(response.text)  # Log the response body
+#         response.raise_for_status()
+#         return response.json()
+#     except requests.exceptions.RequestException as e:
+#         return {'error': f'Failed to retrieve schedules: {str(e)}'}
 
-# Helper function to get schedules by staff IDs
-def get_schedules_by_staff_ids(staff_ids, start_date, end_date):
-    try:
-        # Fetch schedules based on staff IDs with optional date filtering
-        response = requests.get(f"{SCHEDULE_SERVICE_URL}/schedule/organisation?staff_ids={','.join(map(str, staff_ids))}&start_date={start_date}&end_date={end_date}")
-        print(response.text)  # Log the response body
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        return {'error': f'Failed to retrieve schedules: {str(e)}'}
-
-# Helper function to validate user position (only allow HR and Directors)
+# Helper function to validate user position for viewing all schedules (only allow HR and Directors)
 def validate_position(position):
     # Check if the user's position is "HR Team" or "Director"
     if position == 'HR Team' or position == 'Director' or position == "MD":
@@ -179,6 +191,22 @@ def get_staff_ids_by_department(department):
         print(f"Error retrieving staff IDs for department {department}: {e}")
         return []
 
+# Helper function to get schedules by staff_ids under reporting manager (reporting manager)
+def get_schedules_by_department(staff_ids,start_date,end_date, reporting_manager):
+    try:
+        # Convert list of staff_ids into a comma-separated string so that can pass as param
+        staff_ids = ','.join(map(str, staff_ids))
+        response = requests.get(f"{SCHEDULE_SERVICE_URL}/schedule/team?staff_ids={staff_ids}&start_date={start_date}&end_date={end_date}")
+        print(response.text)  # Log the response body
+        response.raise_for_status()
+
+        schedules = response.json()  
+        
+        return schedules
+    except requests.exceptions.RequestException as e:
+        print(f"Error retrieving schedule for team {reporting_manager}: {e}")
+        return []
+
 
 # Helper function to get staff IDs by team (reporting manager)
 def get_staff_ids_by_team(reporting_manager):
@@ -192,9 +220,28 @@ def get_staff_ids_by_team(reporting_manager):
         
         # Extract staff IDs from the list
         staff_ids = [user['Staff_ID'] for user in users]
+        print(f"Staff ids are {staff_ids} ")
         return staff_ids
     except requests.exceptions.RequestException as e:
         print(f"Error retrieving staff IDs for team {reporting_manager}: {e}")
+        return []
+    
+
+
+# Helper function to get schedules by staff_ids under reporting manager (reporting manager)
+def get_schedules_by_staff_ids(staff_ids,start_date,end_date):
+    try:
+        # Convert list of staff_ids into a comma-separated string so that can pass as param
+        staff_ids = ','.join(map(str, staff_ids))
+        response = requests.get(f"{SCHEDULE_SERVICE_URL}/schedule/group?staff_ids={staff_ids}&start_date={start_date}&end_date={end_date}")
+        print(response.text)  # Log the response body
+        response.raise_for_status()
+
+        schedules = response.json()  
+        
+        return schedules
+    except requests.exceptions.RequestException as e:
+        print(f"Error retrieving schedule")
         return []
 
 # Helper function to get all schedules with date filtering

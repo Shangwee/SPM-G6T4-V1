@@ -52,7 +52,7 @@ def execute_query(query, parameters=()):
 def get_schedules():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
-    # staff_ids = request.args.getlist('staff_ids')
+    staff_ids = request.args.getlist('staff_ids')
 
     # Validate dates if provided
     if (start_date and not validate_date(start_date)) or (end_date and not validate_date(end_date)):
@@ -61,11 +61,11 @@ def get_schedules():
     query = "SELECT * FROM Schedule WHERE 1=1"
 
     # Filter by staff IDs if provided #TODO: NOT WORKING PROPERLY, fix later
-    # if staff_ids:
-    #     query += " AND Staff_ID IN (%s)" % ','.join(['%s'] * len(staff_ids))
-    #     parameters = tuple(staff_ids)
-    # else:
-    #     parameters = ()
+    if staff_ids:
+        query += " AND Staff_ID IN (%s)" % ','.join(['%s'] * len(staff_ids))
+        parameters = tuple(staff_ids)
+    else:
+        parameters = ()
 
     # Apply date filters
     query, parameters = apply_date_filters(query, parameters, start_date, end_date)
@@ -113,12 +113,16 @@ def get_department_schedule():
     return jsonify(schedules), 200
 
 
-# Get schedules by team based on passed staff IDs (updated)
-@app.route('/schedule/team', methods=['GET'])
+# Get schedules based on passed staff IDs 
+@app.route('/schedule/group', methods=['GET'])
 def get_team_schedule():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
-    staff_ids = request.args.getlist('staff_ids')  # Passed in as a list of staff IDs
+    staff_ids = request.args.get('staff_ids')  # Passed in as a list of staff IDs
+
+    # Split staff_ids by comma and strip whitespace
+    staff_ids = request.args.get('staff_ids', '').split(',')
+    staff_ids = [staff_id.strip() for staff_id in staff_ids if staff_id.strip()]  # Remove empty IDs
 
     if not staff_ids:
         return jsonify({'error': 'No staff IDs provided'}), 400
