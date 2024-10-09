@@ -25,7 +25,7 @@
             <tr v-for="request in filteredRequests" :key="request.Request_ID">
               <td>{{ request.Request_ID }}</td>
               <td>{{ request.Employee_ID }}</td>
-              <td>{{ request.employeeName }}</td>
+              <td>{{ request.Staff_FName }} {{ request.Staff_LName }}</td>
               <td>{{ request.Date }}</td>
               <td>{{ request.Reason }}</td>
               <td>
@@ -48,45 +48,20 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 
 const requests = ref([]);
-const enrichedRequests = ref([]); // Variable for enriched requests
 const filteredRequests = ref([]);
 
 // Get Staff ID from session storage
 const staffId = sessionStorage.getItem('staffID');
 
-// Fetch requests for the approver
+// Fetch requests for the approver using the Flask API
 const fetchRequests = async () => {
   try {
-    const response = await axios.get(`http://localhost:5003/request/approver/${staffId}`);
+    const response = await axios.get(`http://localhost:6001/flexibleArrangement/approvalRequests/${staffId}`);
     requests.value = response.data;
-    enrichedRequests.value = await enrichRequestsWithUserDetails(requests.value); // Enrich requests with user details
     filterRequests('All'); // Set initial filter to show all requests
   } catch (error) {
     console.error('Error fetching requests:', error);
   }
-};
-
-// Fetch user details for each request
-const enrichRequestsWithUserDetails = async (requests) => {
-  const enrichedRequests = await Promise.all(requests.map(async (request) => {
-    try {
-      const userResponse = await axios.get(`http://localhost:5001/user/${request.Employee_ID}`);
-      const user = userResponse.data;
-      return {
-        ...request,
-        employeeName: `${user.Staff_FName} ${user.Staff_LName}`, // Combine first and last name
-        position: user.Position,
-        team: user.Dept,
-      };
-    } catch (error) {
-      console.error('Error fetching user details for request:', request.Request_ID, error);
-      return {
-        ...request,
-        employeeName: 'Unknown', // Fallback in case of error
-      };
-    }
-  }));
-  return enrichedRequests;
 };
 
 onMounted(() => {
@@ -104,9 +79,9 @@ const getStatusText = (status) => {
 // Filter requests based on status
 const filterRequests = (status) => {
   if (status === 'All') {
-    filteredRequests.value = enrichedRequests.value; // Use enriched requests for filtering
+    filteredRequests.value = requests.value;
   } else {
-    filteredRequests.value = enrichedRequests.value.filter(request => getStatusText(request.Status) === status);
+    filteredRequests.value = requests.value.filter(request => getStatusText(request.Status) === status);
   }
 };
 
@@ -118,16 +93,34 @@ const statusBadgeClass = (status) => {
   return 'badge bg-secondary'; // Unknown status
 };
 
+// Update status of a request using the Flask API
 const updateStatus = async (requestId, newStatus) => {
   try {
-    await axios.put(`http://localhost:5003/request/update/${requestId}`, { Status: newStatus });
-    // Refresh the requests after updating
-    await fetchRequests();
+    // Decide whether to approve or reject based on newStatus value
+    const url = newStatus === 1 
+      ? `http://localhost:6002/manageRequest/accept` // Accept the request
+      : `http://localhost:6002/manageRequest/reject`; // Reject the request
+
+    // Make the POST request with the staffId and requestId
+    console.log('staffId:', staffId, 'requestId:', requestId);
+    const response = await axios.post(url, { 
+      staff_id: staffId, 
+      request_id: requestId 
+    });
+
+    // If the status update was successful, refresh the request list
+    if (response.status === 200) {
+      await fetchRequests(); // Refresh the requests after updating
+    } else {
+      console.error('Error updating status:', response.data.error);
+    }
   } catch (error) {
     console.error('Error updating status:', error);
   }
 };
+
 </script>
+
 
 <style>   
 /* Adjust margin-top for the container to avoid affecting navbar */
