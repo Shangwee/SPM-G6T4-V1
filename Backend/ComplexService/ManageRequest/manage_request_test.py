@@ -1,5 +1,4 @@
 import unittest
-from flask import Flask, jsonify
 import flask_testing
 import requests
 from manage_request import create_app

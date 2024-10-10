@@ -100,7 +100,10 @@ def get_request_by_employee_id(Employee_ID):
     cursor.close()
     conn.close()
 
-    return jsonify(requests), 200
+    if not requests:
+        return jsonify({'message': 'No requests found'}), 404
+    else:
+        return jsonify(requests), 200
 
 # ** get all requests by approver id (add filters)
 @app.route('/request/approver/<int:Approver_ID>', methods=['GET'])
@@ -144,7 +147,10 @@ def get_request_by_approver_id(Approver_ID):
     cursor.close()
     conn.close()
 
-    return jsonify(requests), 200
+    if not requests:
+        return jsonify({'message': 'No requests found'}), 404
+    else:
+        return jsonify(requests), 200
 
 # ** get request by id (add filters)
 @app.route('/request/<int:Request_ID>', methods=['GET'])
@@ -162,7 +168,10 @@ def get_request_by_id(Request_ID):
     cursor.close()
     conn.close()
 
-    return jsonify(request), 200
+    if not request:
+        return jsonify({'message': 'Request not found'}), 404
+    else:
+        return jsonify(request), 200
 
 # ** create a request
 @app.route('/request/create', methods=['POST'])

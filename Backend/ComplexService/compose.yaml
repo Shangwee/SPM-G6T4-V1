@@ -18,6 +18,18 @@ services:
       PYTHONUNBUFFERED: 1
 
   #################################
+  # FlexibleArrangement test: testing the FlexibleArrangement microservice
+  #################################
+  FlexibleArrangement_test:
+    build:
+      context: ./FlexibleArrangement
+      dockerfile: Dockerfile
+    image: spm/flexiblearrangement_test:1.0
+    depends_on:
+      - FlexibleArrangement
+    command: /bin/sh -c "sleep 10 && python -m unittest flexible_arrangement_test.py"
+
+  #################################
   # ManageRequest: The ManageRequest microservice
   #################################
   ManageRequest:
