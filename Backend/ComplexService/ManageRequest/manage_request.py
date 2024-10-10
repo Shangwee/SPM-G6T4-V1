@@ -28,9 +28,6 @@ def create_app():
             if retrieve_request.status_code == 200:
                 retrieve_request = retrieve_request.json()
 
-                if retrieve_request is None: 
-                    return jsonify({'error': 'Failed to retrieve the request'}), 500
-
                 approver_id = retrieve_request['Approver_ID']
 
                 # check if status is pending
@@ -51,7 +48,8 @@ def create_app():
                     return jsonify({'message': 'Request rejected successfully'}), 200
                 else:
                     return jsonify({'error': 'Failed to reject the request'}), 500
-        
+            else:
+                return jsonify({'error': 'Failed to retrieve the request'}), 500
         # if the user is not allowed to reject the request
         return jsonify({'error': 'You are not allowed to reject this request'}), 401
 
@@ -70,9 +68,6 @@ def create_app():
 
             if retrieve_request.status_code == 200:
                 retrieve_request = retrieve_request.json()
-
-                if retrieve_request is None: 
-                    return jsonify({'error': 'Failed to retrieve the request'}), 500
 
                 approver_id = retrieve_request['Approver_ID']
 
@@ -99,7 +94,8 @@ def create_app():
                         return jsonify({'message': 'Request accepted and added to schedule'}), 200
                     else:
                         return jsonify({'error': 'Failed to add the request to the schedule'}), 500
-        
+            else:
+                return jsonify({'error': 'Failed to retrieve the request'}), 500
         # if the user is not allowed to accept the request
         return jsonify({'error': 'You are not allowed to accept this request'}), 401
 
