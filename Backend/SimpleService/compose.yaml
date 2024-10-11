@@ -21,12 +21,13 @@ services:
     volumes:
       - ./Account/db/account.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
       - ./Account/employee.csv:/var/lib/mysql-files/employee.csv # Mount the file
+
   #################################
   # Account: The Account microservice
   #################################
   account:
     build: ./Account
-    image: spm/account:1.0
+    image: gcr.io/spmprojecttest/account:1.0  # Updated for GCR
     restart: always
     ports: [5001:5001]
     depends_on:
@@ -38,12 +39,13 @@ services:
       DB_PASSWORD: root
       DB_NAME: account
       DB_PORT: 3306
+
   #################################
   # Account test: testing the Account microservice
   #################################
   account_test:
     build: ./Account
-    image: spm/account_test:1.0
+    image: gcr.io/spmprojecttest/account_test:1.0  # Updated for GCR
     depends_on:
       account_db:
         condition: service_healthy
@@ -62,7 +64,7 @@ services:
   #################################
   schedule:
     build: ./Schedule
-    image: spm/schedule:1.0
+    image: gcr.io/spmprojecttest/schedule:1.0  # Updated for GCR
     restart: always
     ports: [5002:5000]
     depends_on:
@@ -73,6 +75,7 @@ services:
       DB_PASSWORD: root
       DB_NAME: db
       DB_PORT: 3306
+
   #################################
   # Schedule SQL Database
   #################################
@@ -92,7 +95,7 @@ services:
   #################################
   request:
     build: ./Request
-    image: spm/request:1.0
+    image: gcr.io/spmprojecttest/request:1.0  # Updated for GCR
     restart: always
     ports: [5003:5000]
     depends_on:
@@ -104,6 +107,7 @@ services:
       DB_PASSWORD: root
       DB_NAME: db
       DB_PORT: 3306
+
   #################################
   # Request SQL Database
   #################################
@@ -122,12 +126,13 @@ services:
     volumes:
       - ./Request/db/request.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
       - ./Request/request.csv:/var/lib/mysql-files/request.csv # Mount the file
+
   #################################
   # Request test: testing the Request microservice
   #################################
   request_test:
     build: ./Request
-    image: spm/request_test:1.0
+    image: gcr.io/spmprojecttest/request_test:1.0  # Updated for GCR
     depends_on:
       request_db:
         condition: service_healthy

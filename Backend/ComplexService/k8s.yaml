@@ -1,0 +1,128 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flexiblearrangement-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flexiblearrangement
+  template:
+    metadata:
+      labels:
+        app: flexiblearrangement
+    spec:
+      containers:
+        - name: flexiblearrangement
+          image: gcr.io/spmprojecttest/flexiblearrangement:1.0
+          ports:
+            - containerPort: 6001
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flexiblearrangement-service
+spec:
+  selector:
+    app: flexiblearrangement
+  ports:
+    - protocol: TCP
+      port: 6001
+      targetPort: 6001
+  type: LoadBalancer  # Optional: Use NodePort if not using a cloud provider
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: managerequest-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: managerequest
+  template:
+    metadata:
+      labels:
+        app: managerequest
+    spec:
+      containers:
+        - name: managerequest
+          image: gcr.io/spmprojecttest/managerequest:1.0
+          ports:
+            - containerPort: 6002
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: managerequest-service
+spec:
+  selector:
+    app: managerequest
+  ports:
+    - protocol: TCP
+      port: 6002
+      targetPort: 6002
+  type: LoadBalancer  # Optional: Use NodePort if not using a cloud provider
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: managerequest-test-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: managerequest-test
+  template:
+    metadata:
+      labels:
+        app: managerequest-test
+    spec:
+      containers:
+        - name: managerequest-test
+          image: gcr.io/spmprojecttest/managerequest_test:1.0
+          command: ["/bin/sh", "-c", "sleep 20 && python -m unittest manage_request_test.py"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scheduleaggregation-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scheduleaggregation
+  template:
+    metadata:
+      labels:
+        app: scheduleaggregation
+    spec:
+      containers:
+        - name: scheduleaggregation
+          image: gcr.io/spmprojecttest/scheduleaggregation:1.0
+          ports:
+            - containerPort: 6003
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scheduleaggregation-service
+spec:
+  selector:
+    app: scheduleaggregation
+  ports:
+    - protocol: TCP
+      port: 6003
+      targetPort: 6003
+  type: LoadBalancer  # Optional: Use NodePort if not using a cloud provider
