@@ -1,0 +1,134 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: spmprojecttest
+---
+# Persistent Volume for Request DB
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: request-disk-pv
+spec:
+  capacity:
+    storage: 500Gi # Set to match the actual size of request-disk
+  accessModes:
+    - ReadWriteOnce
+  gcePersistentDisk:
+    pdName: request-disk
+    fsType: ext4
+  persistentVolumeReclaimPolicy: Retain
+
+---
+# Persistent Volume Claim for Request DB
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: request-disk-pvc
+  namespace: spmprojecttest
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# Deployment for Request DB
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: request-db
+  namespace: spmprojecttest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: request-db
+  template:
+    metadata:
+      labels:
+        app: request-db
+    spec:
+      containers:
+        - name: request-db
+          image: mysql:latest
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "root"
+            - name: MYSQL_DATABASE
+              value: "db"
+          volumeMounts:
+            - name: request-sql-volume
+              mountPath: /docker-entrypoint-initdb.d
+            - name: request-csv-volume
+              mountPath: /var/lib/mysql-files
+      volumes:
+        - name: request-sql-volume
+          persistentVolumeClaim:
+            claimName: my-disk-pvc # Reference to the correct PVC
+        - name: request-csv-volume
+          persistentVolumeClaim:
+            claimName: my-disk-pvc # Reference to the correct PVC
+---
+# Service for Request DB
+apiVersion: v1
+kind: Service
+metadata:
+  name: request-db
+  namespace: spmprojecttest
+spec:
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+  selector:
+    app: request-db
+---
+# Deployment for Request Microservice
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: request
+  namespace: spmprojecttest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: request
+  template:
+    metadata:
+      labels:
+        app: request
+    spec:
+      containers:
+        - name: request
+          image: gcr.io/spmprojecttest/request:1.0
+          ports:
+            - containerPort: 5000
+          env:
+            - name: DB_HOST
+              value: request-db
+            - name: DB_USER
+              value: root
+            - name: DB_PASSWORD
+              value: root
+            - name: DB_NAME
+              value: db
+            - name: DB_PORT
+              value: "3306"
+---
+# Service for Request Microservice
+apiVersion: v1
+kind: Service
+metadata:
+  name: request
+  namespace: spmprojecttest
+spec:
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+  selector:
+    app: request
