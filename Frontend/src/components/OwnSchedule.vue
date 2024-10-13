@@ -175,10 +175,13 @@ const fetchWfhDates = async () => {
     return;
   }
 
-  try {
-    const response = await axios.get(`http://localhost:6001/flexibleArrangement/ownRequests/${staffId}`);
+  const url = `http://localhost:6001/flexibleArrangement/ownRequests/${staffId}`;
 
-    if (response.status === 200) {
+  try {
+    const response = await axios.get(url);
+
+    // Check if response is 200 and contains data
+    if (response.status === 200 && response.data.length > 0) {
       wfhDates.value = response.data.map(req => {
         const parsedDate = new Date(req.Date);
         const formattedDate = `${parsedDate.getFullYear()}-${String(parsedDate.getMonth() + 1).padStart(2, '0')}-${String(parsedDate.getDate()).padStart(2, '0')}`;
@@ -188,12 +191,21 @@ const fetchWfhDates = async () => {
           request_id: req.Request_ID // Store the request ID for withdrawal
         };
       });
+      console.log('WFH Dates:', wfhDates.value);
     } else {
+      // If no data, clear the wfhDates array
       wfhDates.value = [];
+      console.log('No WFH requests found');
     }
   } catch (error) {
-    console.error('Error fetching WFH dates:', error);
-    alert('Error: Unable to fetch WFH dates.');
+    if (error.response && error.response.status === 404) {
+      // Handle 404 error for no requests found
+      wfhDates.value = [];
+      console.log('No WFH requests found');
+    } else {
+      console.error('Error fetching WFH dates:', error);
+      alert('Error: Unable to fetch WFH dates.');
+    }
   }
 };
 
@@ -289,7 +301,7 @@ onMounted(fetchWfhDates);
 
           <!-- Options popup for WFH request -->
           <div v-if="showOptionsPopup" class="options-popup">
-            <p>Select an action for WFH Request on {{ dayToWithdraw }}:</p>
+            <p>Select an action for WFH Request:</p>
             <div class="form-actions">
               <button class="btn btn-primary" @click="changeWfhDate">Change WFH Date</button>
               <button class="btn btn-danger" @click="withdrawWorkFromHome">Delete WFH Request</button>
@@ -298,7 +310,7 @@ onMounted(fetchWfhDates);
 
           <!-- Confirmation popup for withdrawing WFH request -->
           <div v-if="showWithdrawConfirmation" class="withdraw-confirmation">
-            <p>Confirm to Withdraw WFH Request for {{ dayToWithdraw }}?</p>
+            <p>Confirm to Withdraw WFH Request?</p>
             <div class="form-actions">
               <button class="btn btn-primary" @click="confirmWithdraw">Confirm</button>
               <button class="btn btn-secondary" @click="showWithdrawConfirmation = false">Cancel</button>
@@ -547,4 +559,3 @@ onMounted(fetchWfhDates);
   margin-top: 10px;
 }
 </style>
-
