@@ -83,39 +83,39 @@ const applyForWorkFromHome = (day) => {
   reason.value = ''; // Clear the reason input
 };
 
-// Function to send the POST request for WFH
-const confirmApplyWorkFromHome = async () => {
+// Function to withdraw a WFH request
+const withdrawWorkFromHome = async (day) => {
   const staffId = sessionStorage.getItem('staffID');
+  const dateToWithdraw = `${currentDate.value.getFullYear()}-${String(currentDate.value.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-  if (!staffId) {
-    alert('Error: Staff ID is missing');
+  // Find the pending request for the selected day
+  const pendingRequest = wfhDates.value.find(wfh => wfh.date === dateToWithdraw && wfh.status === 0);
+
+  if (!pendingRequest) {
+    alert('No pending request to withdraw');
     return;
   }
 
-  if (reason.value.trim() !== '') {
-    // Construct the date string in YYYY-MM-DD format
-    const dateToSend = `${currentDate.value.getFullYear()}-${String(currentDate.value.getMonth() + 1).padStart(2, '0')}-${String(dayToConfirm.value).padStart(2, '0')}`;
+  const requestId = pendingRequest.request_id;
 
-    try {
-      const response = await axios.post('http://localhost:6001/flexibleArrangement/createRequest', {
-        staff_id: staffId,
-        date: dateToSend, // Use the constructed date string
-        reason: reason.value,
-      });
+  // Add debug logs
+  console.log('staffId:', staffId);  // Check if staffId is being fetched correctly
+  console.log('requestId:', requestId);  // Check if requestId is being fetched correctly
 
-      if (response.status == 201) {
-        alert('Work-from-home application successful!');
-        showForm.value = false; // Hide the form after confirmation
-        fetchWfhDates(); // Update the WFH dates after submission
-      } else {
-        alert('Something went wrong, please try again.');
-      }
-    } catch (error) {
-      console.error('Error details:', error.response ? error.response.data : error.message);
-      alert('Error: Unable to apply for work from home. Please check the console for more details.');
+  try {
+    const response = await axios.delete('http://localhost:6001/flexibleArrangement/withdrawRequest', {
+      data: { staff_id: staffId, request_id: requestId }
+    });
+
+    if (response.status == 200) {
+      alert('Request withdrawn successfully!');
+      fetchWfhDates(); // Refresh the WFH dates
+    } else {
+      alert('Something went wrong, please try again.');
     }
-  } else {
-    alert('Please enter a reason for working from home.');
+  } catch (error) {
+    console.error('Error details:', error.response ? error.response.data : error.message);
+    alert('Error: Unable to withdraw request. Please check the console for more details.');
   }
 };
 
@@ -137,7 +137,8 @@ const fetchWfhDates = async () => {
         const formattedDate = `${parsedDate.getFullYear()}-${String(parsedDate.getMonth() + 1).padStart(2, '0')}-${String(parsedDate.getDate()).padStart(2, '0')}`;
         return {
           date: formattedDate,
-          status: req.Status // Storing the status
+          status: req.Status,
+          request_id: req.Request_ID // Store the request ID for withdrawal
         };
       });
 
@@ -203,8 +204,25 @@ onMounted(fetchWfhDates);
                   <button v-if="hoveredDay === day && day !== ''" class="apply-btn"
                     @click.stop="applyForWorkFromHome(day)">+</button>
 
+                  <!-- Withdraw button for pending WFH request -->
+                  <button v-if="getWfhDayStatus(day) === 0" class="withdraw-btn"
+                    @click.stop="withdrawWorkFromHome(day)">Withdraw</button>
+
                   <!-- WFH icon or badge, shown only for days with requests (status 0, 1, or 2) -->
                   <i v-if="isWfhDay(day)" class="bi bi-house-fill wfh-icon"></i> <!-- Show house icon only for WFH days -->
+                </div>
+              </div>
+
+              <!-- Legend for WFH status inside the calendar -->
+              <div class="calendar-legend mt-3 p-2 d-flex justify-content-around">
+                <div class="legend-item">
+                  <span class="legend-box pending"></span> Pending
+                </div>
+                <div class="legend-item">
+                  <span class="legend-box approved"></span> Approved
+                </div>
+                <div class="legend-item">
+                  <span class="legend-box rejected"></span> Rejected
                 </div>
               </div>
             </div>
@@ -336,6 +354,20 @@ onMounted(fetchWfhDates);
   cursor: pointer;
 }
 
+/* Withdraw button styles */
+.withdraw-btn {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 5px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
 .wfh-icon {
   position: absolute;
   bottom: 5px;
@@ -375,5 +407,67 @@ onMounted(fetchWfhDates);
   background-color: #6c757d;
   color: white;
   border: none;
+}
+
+/* Adjusting the flex container to align items side by side */
+.calendar-form-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 20px;
+}
+
+/* Calendar styling */
+.calendar {
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Legend styles inside the calendar with flexbox for side-by-side alignment */
+.calendar-legend {
+  background-color: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+  padding: 10px;
+  text-align: left;
+  display: flex;
+  justify-content: space-around; /* Side-by-side layout */
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+}
+
+.legend-box {
+  width: 20px;
+  height: 20px;
+  margin-right: 5px;
+  border-radius: 3px;
+}
+
+.legend-box.pending {
+  background-color: #e2e3e5; /* Grey for pending */
+}
+
+.legend-box.approved {
+  background-color: #d1ffd1; /* Green for approved */
+}
+
+.legend-box.rejected {
+  background-color: #ffd1d1; /* Light red for rejected */
+}
+
+/* WFH Form styles */
+.wfh-form {
+  flex: 1;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  margin-left: 20px;
 }
 </style>
