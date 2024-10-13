@@ -119,7 +119,7 @@ def withdraw_request():
             return jsonify({'error': 'Cannot withdraw request, date has passed'}), 400
         
         # check if the staff_id matches the staff_id in the request
-        if str(staff_id) != str(retrieve_staff_id):
+        if staff_id != retrieve_staff_id:
             return jsonify({'error': 'You are not allowed to withdraw this request'}), 401
         
         # check if the request is pending
