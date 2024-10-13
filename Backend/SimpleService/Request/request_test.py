@@ -97,7 +97,8 @@ class TestRequestAPI(unittest.TestCase):
         self.assertEqual(response.json(), expected_response)
 
     def test_update_request(self):
-        id = 1
+        id = len(requests.get(self.API_URL + "/request").json()) - 1
+
         status = 1
         response = requests.put(self.API_URL + "/request/update/{}?Status={}".format(id, status))
         self.assertEqual(response.status_code, 200)
@@ -107,7 +108,8 @@ class TestRequestAPI(unittest.TestCase):
         self.assertEqual(response.json(), expected_response)
 
     def test_update_request_by_user(self):
-        id = 1
+        id = len(requests.get(self.API_URL + "/request").json()) - 1
+
         obj = {
             "Date": "2024-11-29",
             "Reason": "Update Request - WFH on November 29th"
@@ -121,7 +123,8 @@ class TestRequestAPI(unittest.TestCase):
 
 
     def test_delete_request(self):
-        id = 18
+        id = len(requests.get(self.API_URL + "/request").json()) - 1
+
         response = requests.delete(self.API_URL + "/request/delete/{}".format(id))
         self.assertEqual(response.status_code, 200)
 
