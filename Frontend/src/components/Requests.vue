@@ -34,6 +34,7 @@
               <td class="text-center">
                 <button v-if="request.Status === 0" @click="updateStatus(request.Request_ID, 1)" class="btn btn-success btn-sm mx-1">Approve</button>
                 <button v-if="request.Status === 0" @click="updateStatus(request.Request_ID, 2)" class="btn btn-danger btn-sm mx-1">Reject</button>
+                <button v-if="request.Status === 1" @click="checkWithdrawEligibility(request.Request_ID, request.Date)" class="btn btn-warning btn-sm mx-1">Withdraw</button>
               </td>
             </tr>
           </tbody>
@@ -102,8 +103,8 @@ const updateStatus = async (requestId, newStatus) => {
       : `http://localhost:6002/manageRequest/reject`; // Reject the request
 
     // Make the POST request with the staffId and requestId
-    console.log('staffId:', staffId, 'requestId:', requestId);
-    console.log(staffId) 
+    // console.log('staffId:', staffId, 'requestId:', requestId);
+    // console.log(staffId) 
     const response = await axios.post(url, { 
       staff_id: parseInt(staffId), 
       request_id: requestId 
@@ -119,6 +120,51 @@ const updateStatus = async (requestId, newStatus) => {
     console.error('Error updating status:', error);
   }
 };
+const withdrawRequest = async (requestId) => {
+  try {
+    // Get staffId from sessionStorage
+    const staffId = sessionStorage.getItem('staffID');
+    console.log(staffId);
+    // Make DELETE request to the backend
+    const response = await axios.delete('', {
+      data: {
+        staff_id: parseInt(staffId), 
+        request_id: requestId,
+      }
+    });
+    
+    if (response.status === 200) {
+      // Success, refresh the request list
+      await fetchRequests();
+      console.log('Request withdrawn successfully');
+    } else {
+      console.error('Error withdrawing request:', response.data.error);
+    }
+  } catch (error) {
+    console.error('Error withdrawing request:', error);
+  }
+};
+const checkWithdrawEligibility = (requestId, requestDate) => {
+  // Parse the request date into a Date object
+  const requestDateObject = new Date(requestDate);
+  const now = new Date();
+
+  // Calculate the difference in milliseconds
+  const diffInMilliseconds = requestDateObject - now;
+
+  // Convert the difference to hours
+  const diffInHours = diffInMilliseconds / (1000 * 60 * 60);
+
+  // Check if the request date is at least 24 hours in the future
+  if (diffInHours >= 24) {
+    // If eligible, proceed with the withdrawal
+    withdrawRequest(requestId);
+  } else {
+    // Otherwise, show an error message
+    alert("Cannot withdraw request. The request must be at least 24 hours in the future.");
+  }
+};
+
 
 </script>
 
