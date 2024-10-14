@@ -27,7 +27,7 @@ def get_request():
     # ** Extract the parameters from the query string
     Employee_ID = request.args.get('Employee_ID')
     Approver_ID = request.args.get('Approver_ID')
-    Status = request.args.get('status')
+    Status = request.args.get('Status')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
@@ -37,11 +37,11 @@ def get_request():
 
 
     if Employee_ID:
-        query += " AND Employee_ID = {Employee_ID}"
+        query += f" AND Employee_ID = {Employee_ID}"
     if Approver_ID:
-        query += " AND Approver_ID = {Approver_ID}"
+        query += f" AND Approver_ID = {Approver_ID}"
     if Status:
-        query += " AND Status = {Status}"
+        query += f" AND Status = {Status}"
 
     if (start_date and not validate_date(start_date)) or (end_date and not validate_date(end_date)):
         return jsonify({'error': 'Invalid date format, use YYYY-MM-DD'}), 400
@@ -100,7 +100,10 @@ def get_request_by_employee_id(Employee_ID):
     cursor.close()
     conn.close()
 
-    return jsonify(requests), 200
+    if not requests:
+        return jsonify({'message': 'No requests found'}), 404
+    else:
+        return jsonify(requests), 200
 
 # ** get all requests by approver id (add filters)
 @app.route('/request/approver/<int:Approver_ID>', methods=['GET'])
@@ -144,7 +147,10 @@ def get_request_by_approver_id(Approver_ID):
     cursor.close()
     conn.close()
 
-    return jsonify(requests), 200
+    if not requests:
+        return jsonify({'message': 'No requests found'}), 404
+    else:
+        return jsonify(requests), 200
 
 # ** get request by id (add filters)
 @app.route('/request/<int:Request_ID>', methods=['GET'])
@@ -162,10 +168,13 @@ def get_request_by_id(Request_ID):
     cursor.close()
     conn.close()
 
-    return jsonify(request), 200
+    if not request:
+        return jsonify({'message': 'Request not found'}), 404
+    else:
+        return jsonify(request), 200
 
 # ** create a request
-@app.route('/request/create/', methods=['POST'])
+@app.route('/request/create', methods=['POST'])
 def create_request():
     data  = request.get_json()
 
@@ -311,4 +320,4 @@ def apply_date_filters(query, parameters, start_date, end_date):
     return query, parameters
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port="5000", debug=True)
