@@ -86,9 +86,37 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: db
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - ./Schedule/db/schedule.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
       - ./Schedule/schedule.csv:/var/lib/mysql-files/schedule.csv # Mount the file
+
+
+
+ #################################
+  # Service_Test: Testing for scheduke microservice
+  #################################
+  schedule_test:
+    build: ./Schedule
+    image: gcr.io/spmprojecttest/schedule_test:1.0
+    depends_on:
+      schedule_db:
+        condition: service_healthy
+      schedule:
+        condition: service_started
+    environment:
+      DB_HOST: schedule_db
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: db
+      DB_PORT: 3306
+    command: /bin/sh -c "sleep 20 && python -m unittest schedule_test.py"  
+
+  
 
   #################################
   # Request: The Request microservice
@@ -140,7 +168,7 @@ services:
         condition: service_started
     environment:
       DB_HOST: request_db
-      DB_USER: root
+      DB_USER: rootn
       DB_PASSWORD: root
       DB_NAME: db
       DB_PORT: 3306
