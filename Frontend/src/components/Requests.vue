@@ -34,7 +34,7 @@
               <td class="text-center">
                 <button v-if="request.Status === 0" @click="updateStatus(request.Request_ID, 1)" class="btn btn-success btn-sm mx-1">Approve</button>
                 <button v-if="request.Status === 0" @click="updateStatus(request.Request_ID, 2)" class="btn btn-danger btn-sm mx-1">Reject</button>
-                <button v-if="request.Status === 1" @click="checkWithdrawEligibility(request.Request_ID, request.Date)" class="btn btn-warning btn-sm mx-1">Withdraw</button>
+                <button v-if="canWithdraw(request.Date) && request.Status === 1" @click="withdrawRequest(request.Request_ID)" class="btn btn-warning btn-sm mx-1">Withdraw</button>
               </td>
             </tr>
           </tbody>
@@ -144,7 +144,7 @@ const withdrawRequest = async (requestId) => {
     console.error('Error withdrawing request:', error);
   }
 };
-const checkWithdrawEligibility = (requestId, requestDate) => {
+const canWithdraw = (requestDate) => {
   // Parse the request date into a Date object
   const requestDateObject = new Date(requestDate);
   const now = new Date();
@@ -155,14 +155,8 @@ const checkWithdrawEligibility = (requestId, requestDate) => {
   // Convert the difference to hours
   const diffInHours = diffInMilliseconds / (1000 * 60 * 60);
 
-  // Check if the request date is at least 24 hours in the future
-  if (diffInHours >= 24) {
-    // If eligible, proceed with the withdrawal
-    withdrawRequest(requestId);
-  } else {
-    // Otherwise, show an error message
-    alert("Cannot withdraw request. The request must be at least 24 hours in the future.");
-  }
+  // Return true if the date is at least 24 hours in the future
+  return diffInHours >= 24;
 };
 
 
