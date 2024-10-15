@@ -111,31 +111,31 @@ def create_app():
             # retrieve the request from the request service
             retrieve_request = requests.get(f"{REQUEST_SERVICE_URL}/request/{request_id}")
 
-            approver_id = retrieve_request['Approver_ID']
+            if retrieve_request.status_code == 200:
+                retrieve_data = retrieve_request.json()
+                approver_id = retrieve_data['Approver_ID']
+                status = retrieve_data['Status']
 
-            status = retrieve_request['Status']
-
-            # check if the user is allowed to withdraw the request
-            if approver_id == staff_id:
-                if status == 1:
-                    # update status to rejected
-                    update_status = requests.put(f"{REQUEST_SERVICE_URL}/request/update/{request_id}?Status=2")
-                    if update_status.status_code == 200:
-                        # delete the request from the schedule
-                        delete_schedule = requests.delete(f"{SCHEDULE_SERVICE_URL}/schedule/{request_id}")
-                        if delete_schedule.status_code == 200:
-                            return jsonify({'message': 'Request withdrawn successfully'}), 200
+                # check if the user is allowed to withdraw the request
+                if approver_id == staff_id:
+                    if status == 1:
+                        # update status to rejected
+                        update_status = requests.put(f"{REQUEST_SERVICE_URL}/request/update/{request_id}?Status=2")
+                        if update_status.status_code == 200:
+                            # delete the request from the schedule
+                            delete_schedule = requests.delete(f"{SCHEDULE_SERVICE_URL}/schedule/delete/request/{request_id}")
+                            if delete_schedule.status_code == 200:
+                                return jsonify({'message': 'Request withdrawn successfully'}), 200
+                            else:
+                                return jsonify({'error': 'Failed to withdraw the request'}), 500
+                        else:
+                            return jsonify({'error': 'Failed to withdraw the request'}), 500
                     else:
-                        return jsonify({'error': 'Failed to withdraw the request'}), 500
+                        return jsonify({'error': 'You are not allowed to withdraw this request'}), 401
                 else:
                     return jsonify({'error': 'You are not allowed to withdraw this request'}), 401
             else:
-                return jsonify({'error': 'You are not allowed to withdraw this request'}), 401
-
-            if retrieve_request.status_code == 200:
-                retrieve_request = retrieve_request.json()
-            else:
-                return jsonify(retrieve_request.json), 404
+                return jsonify({'error': 'Failed to retrieve the request'}), 500
         else:
             return jsonify({'error': 'You are not allowed to withdraw this request'}), 401
 
