@@ -122,22 +122,18 @@ const updateStatus = async (requestId, newStatus) => {
 };
 const withdrawRequest = async (requestId) => {
   try {
-    // Get staffId from sessionStorage
     const staffId = sessionStorage.getItem('staffID');
-    console.log(staffId);
-    // Make DELETE request to the backend
-    const response = await axios.delete('', {
-      data: {
-        staff_id: parseInt(staffId), 
-        request_id: requestId,
-      }
-    });
     
+    const response = await axios.post('http://localhost:6002/manageRequest/withdraw', {
+      staff_id: parseInt(staffId), 
+      request_id: requestId
+    });
+
     if (response.status === 200) {
-      // Success, refresh the request list
-      await fetchRequests();
+      await fetchRequests(); // Refresh the request list
       console.log('Request withdrawn successfully');
     } else {
+      alert(response.data.error);
       console.error('Error withdrawing request:', response.data.error);
     }
   } catch (error) {
