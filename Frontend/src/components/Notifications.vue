@@ -7,8 +7,7 @@ import NotificationComponent from "./NotificationComponent.vue";
     <div class="d-flex justify-content-center align-items-center vh-100">
       <div>
         <NavBar></NavBar>
-        <div class="container mt-5 pt-5">
-          <h3 class="text-center" style="margin-top: -200px;">Notifications</h3>
+        <div class="position-absolute top-0 end-0 p-3" style="margin-top: 80px;">
           <NotificationComponent></NotificationComponent>
         </div>
       </div>
@@ -24,7 +23,6 @@ export default {
   },
 
   methods: {
-    
   },
   components: {
     NavBar,

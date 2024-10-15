@@ -12,6 +12,7 @@
     "axios": "^1.7.7",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
+    "bootstrap-vue": "^2.23.1",
     "socket.io-client": "^4.8.0",
     "vue": "^3.4.15",
     "vue-router": "^4.3.0"
