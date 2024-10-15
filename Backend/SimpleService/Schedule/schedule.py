@@ -17,32 +17,114 @@ db_config = {
 }
 
 
+# Create new schedule (Create) TODO:Change date to use current datetime. need some logic to standardise the time set for various timezones
+@app.route('/schedule', methods=['POST'])
+def create_schedule():
+    data = request.get_json()
+    
+    staff_id = data.get("staff_id")
+    request_id = data.get("request_id")
+    date = data.get("date") 
+
+    if not staff_id or not request_id or not date or not validate_date_range(date,date):
+        return jsonify({'error': 'Please provide valid staff_id, request_id, and date (YYYY-MM-DD)'}), 400
+    
+    #check if the staff_id and request_id exist in the database
+    if check_staff_request_exists(staff_id, request_id):
+        return jsonify({'error': 'Schedule already exists'}), 409
+    
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO Schedule (Staff_ID, Request_ID, Date)
+            VALUES (%s, %s, %s)
+        ''', (staff_id, request_id, date))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({'message': 'Schedule created successfully'}), 201
+    except mysql.connector.IntegrityError:
+        return jsonify({'message': 'Schedule already exists'}), 409
+
+
+# Delete schedule by schedule_ID
+@app.route('/schedule/delete/<int:schedule_id>', methods=['DELETE'])
+def delete_schedule(schedule_id):
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+
+        # Checking if the schedule exists
+        cursor.execute("SELECT * FROM Schedule WHERE Schedule_ID = %s", (schedule_id,))
+        result = cursor.fetchone()
+        
+        if not result:
+            return jsonify({'error': 'Schedule not found'}), 404
+
+        # Delete the schedule
+        cursor.execute("DELETE FROM Schedule WHERE Schedule_ID = %s", (schedule_id,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({'message': f'Schedule {schedule_id} deleted successfully'}), 200
+    except mysql.connector.Error as err:
+        return jsonify({'error': str(err)}), 500
+
+# delete schedule by request_id
+@app.route('/schedule/delete/request/<int:request_id>', methods=['DELETE'])
+def delete_schedule_by_request_id(request_id):
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+
+        # Checking if the schedule exists
+        cursor.execute("SELECT * FROM Schedule WHERE Request_ID = %s", (request_id,))
+        result = cursor.fetchone()
+        
+        if not result:
+            return jsonify({'error': 'Schedule not found'}), 404
+
+        # Delete the schedule
+        cursor.execute("DELETE FROM Schedule WHERE Request_ID = %s", (request_id,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({'message': f'Schedule for request {request_id} deleted successfully'}), 200
+    except mysql.connector.Error as err:
+        return jsonify({'error': str(err)}), 500
+
+
 # Get all schedules with optional date filtering
 @app.route('/schedule/organisation', methods=['GET'])
 def get_schedules():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
-    staff_ids = request.args.getlist('staff_ids')
 
-    # Validate dates if provided
-    if (start_date and not validate_date(start_date)) or (end_date and not validate_date(end_date)):
-        return jsonify({'error': 'Invalid date format, use YYYY-MM-DD'}), 400
+    # Validate date range
+    error, status_code = validate_date_range(start_date, end_date)
+    if error:
+        return jsonify(error), status_code
 
     query = "SELECT * FROM Schedule WHERE 1=1"
+    parameters = []
 
-    # Filter by staff IDs if provided #TODO: NOT WORKING PROPERLY, fix later
-    if staff_ids:
-        query += " AND Staff_ID IN (%s)" % ','.join(['%s'] * len(staff_ids))
-        parameters = tuple(staff_ids)
-    else:
-        parameters = ()
+    # Apply date filters if provided
+    if start_date or end_date:
+        query, parameters = apply_date_filters(query, parameters, start_date, end_date)
 
-    # Apply date filters
-    query, parameters = apply_date_filters(query, parameters, start_date, end_date)
+    # Debugging: Log the final query and parameters
+    print(f"Final Query: {query}")
+    print(f"Parameters: {parameters}")
 
     # Execute query and return results
-    schedules = execute_query(query, parameters)
+    schedules = execute_query(query, tuple(parameters))  # Ensure parameters are passed as tuple
     return jsonify(schedules), 200
+
 
 
 # Get schedule by staff_id with optional date filtering 
@@ -51,8 +133,10 @@ def get_own_schedule(staff_id):
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
-    if (start_date and not validate_date(start_date)) or (end_date and not validate_date(end_date)):
-        return jsonify({'error': 'Invalid date format, use YYYY-MM-DD'}), 400
+    # Validate date range
+    error, status_code = validate_date_range(start_date, end_date)
+    if error:
+        return jsonify(error), status_code
 
     query = "SELECT * FROM Schedule WHERE Staff_ID = %s"
     parameters = (staff_id,)
@@ -60,7 +144,6 @@ def get_own_schedule(staff_id):
 
     schedules = execute_query(query, parameters)
     return jsonify(schedules), 200
-
 
 
 # Get schedules based on passed staff IDs 
@@ -77,8 +160,10 @@ def get_team_schedule():
     if not staff_ids:
         return jsonify({'error': 'No staff IDs provided'}), 400
 
-    if (start_date and not validate_date(start_date)) or (end_date and not validate_date(end_date)):
-        return jsonify({'error': 'Invalid date format, use YYYY-MM-DD'}), 400
+    # Validate date range
+    error, status_code = validate_date_range(start_date, end_date)
+    if error:
+        return jsonify(error), status_code
 
     query = "SELECT * FROM Schedule WHERE Staff_ID IN (%s)" % ','.join(['%s'] * len(staff_ids))
     parameters = tuple(staff_ids)
@@ -101,13 +186,29 @@ def check_staff_request_exists(staff_id, request_id):
 
     return result
 
-# Utility function to validate date format
-def validate_date(date_string):
-    try:
-        datetime.strptime(date_string, '%Y-%m-%d')
-        return True
-    except ValueError:
-        return False
+# Utility function to validate date format and check if start_date is after end_date
+def validate_date_range(start_date, end_date):
+    if start_date and end_date:
+        try:
+            start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+            end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+            if start_dt > end_dt:
+                return {'error': 'Invalid date range: start date is after end date'}, 400
+        except ValueError:
+            return {'error': 'Invalid date format, use YYYY-MM-DD'}, 400
+    elif start_date:
+        try:
+            datetime.strptime(start_date, '%Y-%m-%d')
+        except ValueError:
+            return {'error': 'Invalid start date format, use YYYY-MM-DD'}, 400
+    elif end_date:
+        try:
+            datetime.strptime(end_date, '%Y-%m-%d')
+        except ValueError:
+            return {'error': 'Invalid end date format, use YYYY-MM-DD'}, 400
+
+    return None, None  # If everything is valid
+
 
 # Utility function to apply date filters to a query
 def apply_date_filters(query, parameters, start_date, end_date):

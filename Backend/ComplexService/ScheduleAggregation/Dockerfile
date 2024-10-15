@@ -3,4 +3,5 @@ WORKDIR /usr/src/app
 COPY requirements.txt ./
 RUN python -m pip install --no-cache-dir -r requirements.txt
 COPY ./schedule_aggregation.py .
+COPY ./schedule_aggregation_test.py .
 CMD [ "python", "./schedule_aggregation.py" ]
