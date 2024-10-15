@@ -74,7 +74,29 @@ def delete_schedule(schedule_id):
     except mysql.connector.Error as err:
         return jsonify({'error': str(err)}), 500
 
+# delete schedule by request_id
+@app.route('/schedule/delete/request/<int:request_id>', methods=['DELETE'])
+def delete_schedule_by_request_id(request_id):
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
 
+        # Checking if the schedule exists
+        cursor.execute("SELECT * FROM Schedule WHERE Request_ID = %s", (request_id,))
+        result = cursor.fetchone()
+        
+        if not result:
+            return jsonify({'error': 'Schedule not found'}), 404
+
+        # Delete the schedule
+        cursor.execute("DELETE FROM Schedule WHERE Request_ID = %s", (request_id,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({'message': f'Schedule for request {request_id} deleted successfully'}), 200
+    except mysql.connector.Error as err:
+        return jsonify({'error': str(err)}), 500
 
 
 # Get all schedules with optional date filtering
