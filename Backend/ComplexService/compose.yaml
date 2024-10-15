@@ -2,8 +2,6 @@ version: "3.8"
 
 services:
 
-  # Complex microservice 
-
   #################################
   # FlexibleArrangement: The FlexibleArrangement microservice
   #################################
@@ -66,3 +64,15 @@ services:
     ports: ["6003:6003"]
     environment:
       PYTHONUNBUFFERED: 1
+
+  #################################
+  # ScheduleAggregation test: testing the ScheduleAggregation microservice
+  #################################
+  ScheduleAggregation_test:
+    build:
+      context: ./ScheduleAggregation
+      dockerfile: Dockerfile
+    image: gcr.io/spmprojecttest/scheduleaggregation_test:1.0  # Updated for GCR
+    depends_on:
+      - ScheduleAggregation
+    command: /bin/sh -c "sleep 20 && python -m unittest schedule_aggregation_test.py"
