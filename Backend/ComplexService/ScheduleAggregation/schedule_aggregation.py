@@ -14,7 +14,6 @@ ACCOUNTS_SERVICE_URL = "http://host.docker.internal:5001"
 SCHEDULE_SERVICE_URL = "http://host.docker.internal:5002"
 
 # Schedule aggregation based on type (team, department, or all)
-# Schedule aggregation based on type (team, department, or all)
 @app.route('/aggregateSchedule', methods=['GET'])
 def aggregate_schedules():
     schedule_type = request.args.get('type')  # Type of schedule (team, dept, all)
