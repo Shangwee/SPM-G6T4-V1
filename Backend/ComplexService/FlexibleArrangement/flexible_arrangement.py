@@ -10,6 +10,7 @@ CORS(app)
 ACCOUNTS_SERVICE_URL = "http://host.docker.internal:5001"
 SCHEDULE_SERVICE_URL = "http://host.docker.internal:5002"
 REQUEST_SERVICE_URL = "http://host.docker.internal:5003"
+NOTIFICATION_SERVICE_URL = "http://host.docker.internal:3000"
 
 def create_app():
     app = Flask(__name__)
@@ -45,6 +46,17 @@ def create_app():
 
             if create_request.status_code == 201:
                 data = create_request.json()
+                # send notification to the reporting manager
+                try: 
+                    requests.post(f"{NOTIFICATION_SERVICE_URL}/api/notifications/create", json={
+                        "user_id": reporting_manager,
+                        "message": f"Request for flexible arrangement from {staff_info_data['Staff_FName']} {staff_info_data['Staff_LName']} on {date}",
+                        "notification_type": "Request",
+                        "request_id": data['Request_ID']
+                    })
+                except requests.exceptions.RequestException as e:
+                    return jsonify({'error': 'Failed to send notification'}), 500
+
                 return jsonify(data), 201
             elif create_request.status_code == 409:
                 return jsonify({'error': 'Request already exists'}), 409
@@ -74,6 +86,7 @@ def create_app():
             retrieve_request_data = retrieve_request.json()
             Date = retrieve_request_data['Date']
             retrieve_staff_id = retrieve_request_data['Employee_ID']
+            reporting_manager = retrieve_request_data['Approver_ID']
 
             # check if the request is pending
             if retrieve_request_data['Status'] == 0:
@@ -96,6 +109,17 @@ def create_app():
                 })
 
                 if update_request.status_code == 200:
+                    # send notification to the reporting manager
+                    try:
+                        requests.post(f"{NOTIFICATION_SERVICE_URL}/api/notifications/create", json={
+                            "user_id": reporting_manager,
+                            "message": f"Request for flexible arrangement from {retrieve_staff_id} on {date} has been updated",
+                            "notification_type": "Request",
+                            "request_id": request_id
+                        })
+                    except requests.exceptions.RequestException as e:
+                        return jsonify({'error': 'Failed to send notification'}), 500
+
                     return jsonify({'message': 'Request updated successfully'}), 200
             else:
                 return jsonify({'error': 'Request is not pending, need to create a new request'}), 400
@@ -138,6 +162,14 @@ def create_app():
                 withdraw_request = requests.delete(f"{REQUEST_SERVICE_URL}/request/delete/{request_id}")
 
                 if withdraw_request.status_code == 200:
+                    # send notification to the reporting manager
+                    notification = requests.post(f"{NOTIFICATION_SERVICE_URL}/api/notifications/create", json={
+                        "user_id": retrieve_request_data['Approver_ID'],
+                        "message": f"Request for flexible arrangement from {retrieve_request_data['Employee_ID']} on {Date} has been withdrawn",
+                        "notification_type": "Request",
+                        "request_id": request_id
+                    })
+
                     return jsonify({'message': 'Request withdrawn successfully'}), 200
             else:
                 return jsonify({'error': 'Request is not pending, cannot be withdrawn'}), 400

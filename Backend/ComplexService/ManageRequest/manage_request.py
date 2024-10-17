@@ -7,6 +7,7 @@ from flask_cors import CORS
 ACCOUNTS_SERVICE_URL = "http://host.docker.internal:5001"
 SCHEDULE_SERVICE_URL = "http://host.docker.internal:5002"
 REQUEST_SERVICE_URL = "http://host.docker.internal:5003"
+NOTIFICATION_SERVICE_URL = "http://host.docker.internal:3000"
 
 def create_app():
     app = Flask(__name__)
@@ -45,6 +46,19 @@ def create_app():
                 # reject the request
                 update_status = requests.put(f"{REQUEST_SERVICE_URL}/request/update/{request_id}?Status=2")
                 if update_status.status_code == 200:
+                    # notify the employee that the request has been rejected
+                    employee_id = retrieve_request['Employee_ID']
+                    try:
+                        notification = requests.post(f"{NOTIFICATION_SERVICE_URL}/api/notifications/create", json={
+                            "user_id": employee_id,
+                            "message": f"Your request has been rejected for request ID: {request_id}",
+                            "notification_type": "Request Rejected",
+                            "request_id": request_id
+                        })
+                    except:
+                        return jsonify({'error': 'Failed to send notification'}), 500
+
+                    # delete the request from the schedule
                     return jsonify({'message': 'Request rejected successfully'}), 200
                 else:
                     return jsonify({'error': 'Failed to reject the request'}), 500
@@ -68,7 +82,7 @@ def create_app():
 
             if retrieve_request.status_code == 200:
                 retrieve_request = retrieve_request.json()
-
+                employee_id = retrieve_request['Employee_ID']
                 approver_id = retrieve_request['Approver_ID']
 
                 # check if the user is allowed to accept the request
@@ -90,6 +104,17 @@ def create_app():
                     # add the request to the schedule
                     add_schedule = add_to_schedule(request_id)
                     if add_schedule.status_code == 201:
+                        # send notification to the employee
+                        try: 
+                            notification = requests.post(f"{NOTIFICATION_SERVICE_URL}/api/notifications/create", json={
+                                "user_id": employee_id,
+                                "message": f"Your request has been accepted and added to the schedule for request ID: {request_id}",
+                                "notification_type": "Request Accepted",
+                                "request_id": request_id
+                            })
+                        except:
+                            return jsonify({'error': 'Failed to send notification'}), 500
+
                         return jsonify({'message': 'Request accepted and added to schedule'}), 200
                     else:
                         return jsonify({'error': 'Failed to add the request to the schedule'}), 500
@@ -125,6 +150,17 @@ def create_app():
                             # delete the request from the schedule
                             delete_schedule = requests.delete(f"{SCHEDULE_SERVICE_URL}/schedule/delete/request/{request_id}")
                             if delete_schedule.status_code == 200:
+                                # notify the employee that the request has been withdrawn
+                                employee_id = retrieve_data['Employee_ID']
+                                try:
+                                    notification = requests.post(f"{NOTIFICATION_SERVICE_URL}/api/notifications/create", json={
+                                        "user_id": employee_id,
+                                        "message": f"Your request has been withdrawn for request ID: {request_id}",
+                                        "notification_type": "Request Withdrawn",
+                                        "request_id": request_id
+                                    })
+                                except:
+                                    return jsonify({'error': 'Failed to send notification'}), 500
                                 return jsonify({'message': 'Request withdrawn successfully'}), 200
                             else:
                                 return jsonify({'error': 'Failed to withdraw the request'}), 500
