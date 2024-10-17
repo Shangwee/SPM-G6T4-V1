@@ -293,7 +293,7 @@ export default {
     },
 
     fetchStaffTeamMembers() {
-      // this.staffs = [];
+      this.staffs = [];
       this.schedule.forEach((schedule) => {
         axios
           .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
