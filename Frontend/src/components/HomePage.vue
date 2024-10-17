@@ -1,107 +1,94 @@
 <script setup>
-import WelcomeItem from "./WelcomeItem.vue";
-import DocumentationIcon from "./icons/IconDocumentation.vue";
-import ToolingIcon from "./icons/IconTooling.vue";
-import CommunityIcon from "./icons/IconCommunity.vue";
 import NavBar from "./NavBar.vue";
+// Import your icons or metrics component here if necessary
 </script>
 
 <template>
   <NavBar></NavBar>
-  <div id="app" class="container border rounded-3 bg-white bg-opacity-75 p-5">
-    <div class="row">
-      <div class="col">
-        <img
-          alt="Vue logo"
-          class="logo"
-          src="../assets/home.png"
-          width="400px"
-          height="400px"
-        />
+  <div id="app" class="container dashboard-container shadow-lg">
+    <div class="dashboard">
+      <h2>Today's Office Status</h2>
+      <div class="status-card">
+        <h3>In Office:</h3>
+        <p class="count" id="inOfficeCount">12</p> <!-- Example count; replace with dynamic data -->
       </div>
-      <div class="col">
-        <div>
-          <WelcomeItem>
-            <template #icon>
-              <DocumentationIcon />
-            </template>
-            <div>
-              <h3>View Own Schedule</h3>
-              <p>
-                shit
-              </p>
-            </div>
-          </WelcomeItem>
-
-          <WelcomeItem>
-            <template #icon>
-              <ToolingIcon />
-            </template>
-            <div>
-              <h3>View Team Schedule</h3>
-              <p>
-                shit2
-              </p>
-              <br />
-            </div>
-          </WelcomeItem>
-
-          <WelcomeItem>
-            <template #icon>
-              <CommunityIcon />
-            </template>
-            <div>
-              <div><h3>Arrangements</h3></div>
-              <p>
-                shit3
-              </p>
-            </div>
-          </WelcomeItem>
-        </div>
+      <div class="status-card">
+        <h3>Working from Home:</h3>
+        <p class="count" id="wfhCount">8</p> <!-- Example count; replace with dynamic data -->
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
 .container {
-  margin-top: 150px;
-}
-header {
-  line-height: 1.5;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+  margin-top: 100px;
+  padding: 2rem;
+  font-family: 'Poppins', sans-serif;
 }
 
-@media (min-width: 1024px) {
-  header {
+.dashboard-container {
+  background: rgba(255, 255, 255, 0.9); /* Lightly transparent background */
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 800px;
+  margin: 100px auto;
+  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard {
+  text-align: center;
+}
+
+.dashboard h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1.5rem;
+}
+
+.status-card {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.status-card:hover {
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+.status-card h3 {
+  font-size: 1.2rem;
+  color: #555;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.status-card .count {
+  font-size: 2.5rem;
+  color: #3f51b5; /* Muted blue color for emphasis */
+  font-weight: 600;
+}
+
+@media (min-width: 768px) {
+  .status-card {
     display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
   }
 
-  .logo {
-    margin: 0 2rem 0 0;
+  .status-card h3 {
+    font-size: 1.2rem;
   }
 
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
+  .status-card .count {
+    font-size: 2.7rem;
   }
-  #app {
-    grid-template-columns: 1fr 1fr;
-    
-  }
-}
-.img {
-  background-image: url("../assets/94999.png");
-  overflow: hidden;
-  width: 100%;
-  height: 100%;
-  background-size: contain;
 }
 </style>

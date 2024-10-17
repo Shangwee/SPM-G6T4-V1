@@ -59,6 +59,14 @@
 }
 
 body {
+  background-image: url("./assets/background.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+body {
   overflow: hidden;
   min-height: 100vh;
   color: var(--color-text);

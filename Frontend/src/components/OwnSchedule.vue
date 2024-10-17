@@ -323,9 +323,11 @@ onMounted(fetchWfhDates);
 </template>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
 .header-container {
   margin-top: 20px;
-  padding-bottom: 10px;
+  font-family: 'Poppins', sans-serif;
 }
 
 .calendar-form-container {
@@ -333,6 +335,7 @@ onMounted(fetchWfhDates);
   justify-content: space-between;
   align-items: flex-start;
   margin-top: 20px;
+  font-family: 'Poppins', sans-serif;
 }
 
 .calendar-container {

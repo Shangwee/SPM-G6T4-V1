@@ -21,7 +21,7 @@
                 </form>
             </div>
             <div class="text-section">
-                <div class="border rounded-3 border-2 border-light p-2 bg-opacity-75 bg-white">
+                <div class="welcome-text">
                     <h2>Welcome to Work-From-Home Management System</h2>
                     <p>Enter your login details to start accessing.</p>
                 </div>
@@ -78,17 +78,20 @@ export default {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
 .full-screen-container {
     display: flex;
     justify-content: center;
-    margin-top: 200px;
+    margin-top: 150px;
+    font-family: 'Poppins', sans-serif;
 }
 
 .card-container {
     display: flex;
     width: 900px;
-    height: 500px;
-    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2);
+    height: 450px;
+    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1);
     border-radius: 20px;
     overflow: hidden;
 }
@@ -108,24 +111,66 @@ export default {
 
 .text-section {
     background-image: url('../assets/94999.png');
-    background-size: contain;
+    background-size: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.welcome-text {
+    background: rgba(255, 255, 255, 0.85);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    color: #333;
+}
+
+h2 {
+    font-weight: 600;
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+p {
+    font-weight: 400;
+    color: #555;
+}
+
+.input-group label {
+    font-weight: 500;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 5px;
 }
 
 .input-group input {
     width: 100%;
     padding: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     border: 1px solid #ddd;
-    border-radius: 4px;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #333;
+    transition: border 0.2s ease;
+}
+
+.input-group input:focus {
+    border-color: #5c6bc0;
+    outline: none;
 }
 
 button {
-    padding: 10px;
+    padding: 12px;
+    width: 100%;
     border: none;
-    border-radius: 4px;
+    border-radius: 5px;
     background-color: #5c6bc0;
     color: white;
+    font-weight: 600;
+    font-size: 16px;
     cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 button:hover {
@@ -136,10 +181,11 @@ button:hover {
 .error-popup {
     margin-top: 10px;
     padding: 10px;
-    color: white;
-    background-color: red;
-    border-radius: 4px;
+    color: #fff;
+    background-color: #f44336;
+    border-radius: 5px;
     text-align: center;
+    font-weight: 500;
     animation: fadeIn 0.5s ease-in-out;
 }
 
