@@ -59,7 +59,6 @@ def aggregate_schedules():
         print(f"Schedule service response: {schedules}")  # Output the schedule service response
 
     # Initialize lists to collect original and augmented schedules
-    original_schedules = []   # This will store the original schedules
     augmented_schedules = []  # This will store the schedules after augmentation with user data
 
     # Check if schedules exist
@@ -71,8 +70,6 @@ def aggregate_schedules():
         if not isinstance(schedule, dict):
             print(f"Unexpected schedule format: {schedule}, type: {type(schedule)}")
             continue  # Skip invalid schedules
-
-        original_schedules.append(schedule.copy())  # Store the original schedule
 
         staff_id = schedule['Staff_ID']
         try:
@@ -105,14 +102,10 @@ def aggregate_schedules():
             # Handle error by appending the original schedule without augmentation
             augmented_schedules.append(schedule.copy())
 
-    # Combine the original and augmented schedules for comparison
-    combined_response = {
-        "original_schedules": original_schedules,
-        "augmented_schedules": augmented_schedules
-    }
+
 
     # Return the combined response  
-    return jsonify(combined_response), 200
+    return jsonify(augmented_schedules), 200
 
 
 # # Helper function to get schedules by staff IDs #TODO: Keep or delete idk see how
