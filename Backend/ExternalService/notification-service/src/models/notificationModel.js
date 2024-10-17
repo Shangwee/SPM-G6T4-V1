@@ -18,8 +18,9 @@ async function createNotification(user_id, message, notification_type, request_i
 async function getNotificationsByUserId(user_id) {
     try {
         const query = `SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC`;
-        const [rows] = await pool.execute(query, [user_id]);
-        
+        const values = [user_id];
+        const [rows] = await pool.execute(query, values);
+
         return rows; // Return the list of notifications
     } catch (error) {
         console.error('Error fetching notifications for user:', error);
@@ -53,9 +54,21 @@ async function getNotificationById(notification_id) {
     }
 }
 
+// Mark all notifications as read for a specific user
+async function markAllNotificationsAsRead(user_id) {
+    try {
+        const query = `UPDATE notifications SET is_read = TRUE WHERE user_id = ?`;
+        await pool.execute(query, [user_id]);
+    } catch (error) {
+        console.error('Error marking all notifications as read:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     createNotification,
     getNotificationsByUserId,
     markNotificationAsRead,
-    getNotificationById
+    getNotificationById,
+    markAllNotificationsAsRead
 };

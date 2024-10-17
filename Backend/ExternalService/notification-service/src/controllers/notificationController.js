@@ -1,19 +1,18 @@
-const notificationQueue = require('../queues/notificationQueue');
 const notificationModel = require('../models/notificationModel');
+const { getIo } = require('../socket');
 
 // Controller to add a new notification job to the queue
 const createNotification = async (req, res) => {
     const { user_id, message, notification_type, request_id } = req.body;
 
     try {
-        // Add a job to the Bull Queue
-        await notificationQueue.add({
-            user_id,
-            message,
-            notification_type,
-            request_id
-        });
-        res.status(200).json({ message: 'Notification job added to the queue.' });
+        // Add the notification DB and Socket.io
+        await notificationModel.createNotification(user_id, message, notification_type, request_id);
+
+        // Emit real-time notification to connected clients using Socket.IO
+        const io = getIo();
+        io.emit('notification', { user_id, message, notification_type, request_id });
+        res.status(200).json({ message: 'Notification created.' });
     } catch (error) {
         console.error('Error adding notification job to the queue:', error);
         res.status(500).json({ error: 'Failed to add notification to the queue.' });
@@ -53,8 +52,23 @@ const markAsRead = async (req, res) => {
     }
 };
 
+// Controller to mark all notifications as read for a specific user
+const markAllAsRead = async (req, res) => {
+    const userId = req.params.userId;
+
+    try {
+        // Mark all notifications as read in the database
+        await notificationModel.markAllNotificationsAsRead(userId);
+        res.status(200).json({ message: 'All notifications marked as read' });
+    } catch (error) {
+        console.error('Error marking all notifications as read:', error);
+        res.status(500).json({ error: 'Failed to mark all notifications as read' });
+    }
+};
+
 module.exports = {
     createNotification,
     getUserNotifications,
     markAsRead,
+    markAllAsRead,
 };

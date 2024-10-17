@@ -8,23 +8,13 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - notification_redis
       - notification_db
     environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
       - DB_HOST=mysql
       - DB_PORT=3306
       - DB_USER=root
       - DB_PASSWORD=root
       - DB_NAME=notifications_db
-
-  notification_redis:
-    image: redis:latest
-    container_name: redis
-    restart: always
-    ports:
-      - "6379:6379"
 
   notification_db:
     image: mysql:latest

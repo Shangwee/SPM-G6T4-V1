@@ -1,5 +1,4 @@
 <script setup>
-import NotificationComponent from "./NotificationComponent.vue";
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -8,7 +7,6 @@ const activeButton = ref(null);
 const userRole = ref(null);
 const staffID = ref(null);
 const loading = ref(true); // Loading state
-const showNotifications = ref(false); // Notification state
 
 // Fetch user role from backend
 const fetchUserRole = async () => {
@@ -63,7 +61,8 @@ const handleRequests = () => {
 };
 
 const handleNotifications = () => {
-  showNotifications.value = !showNotifications.value;
+  router.push('/notifications');
+  activeButton.value = 'Notifications';
 };
 
 onMounted(() => {
@@ -104,9 +103,6 @@ onMounted(() => {
       </div>
     </div>
   </nav>
-  <div v-if="showNotifications" class="position-absolute top-0 end-0 p-3" style="margin-top: 80px;">
-      <NotificationComponent></NotificationComponent>
-  </div>
 </template>
 
 <style scoped>
