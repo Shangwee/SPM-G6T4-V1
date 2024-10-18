@@ -1,0 +1,28 @@
+CREATE DATABASE IF NOT EXISTS db;
+
+USE db;
+
+CREATE TABLE Meeting (
+    Meeting_ID INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    Created_By INT NOT NULL,
+    Date DATE NOT NULL,
+    Title TEXT(50) NULL
+);
+
+CREATE TABLE MeetingStaffs (
+    MeetingStaffs_ID INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    Meeting_ID INT NOT NULL,
+    Staff_ID INT NOT NULL
+);
+
+LOAD DATA INFILE '/var/lib/mysql-files/meeting.csv'
+INTO TABLE Meeting
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+LOAD DATA INFILE '/var/lib/mysql-files/meetingstaffs.csv'
+INTO TABLE MeetingStaffs
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
