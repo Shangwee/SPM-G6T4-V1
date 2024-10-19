@@ -50,16 +50,14 @@ def create_meeting():
 # retrieve meeting
 @app.route('/meeting', methods=['GET'])
 def get_meetings():
-    data = request.get_json()
-
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor(dictionary=True)
 
     query = ("SELECT * FROM Meeting where 1=1")
 
-    Meeting_ID = data.get('Meeting_ID')
-    Created_By = data.get('Created_By')
-    Date = data.get('Date')
+    Meeting_ID = request.args.get('Meeting_ID')
+    Created_By = request.args.get('Created_By')
+    Date = request.args.get('Date')
 
     if Meeting_ID:
         query += f" AND Meeting_ID = {Meeting_ID}"
