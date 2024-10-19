@@ -14,4 +14,7 @@ router.put('/read/:notificationId', notificationController.markAsRead);
 // Route to mark all notifications as read
 router.put('/read/all/:userId', notificationController.markAllAsRead);
 
+// Route for notification count for a specific user
+router.get('/count/:userId', notificationController.getNotificationCount);
+
 module.exports = router;

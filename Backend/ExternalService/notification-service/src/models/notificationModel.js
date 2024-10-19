@@ -65,10 +65,24 @@ async function markAllNotificationsAsRead(user_id) {
     }
 }
 
+// Count the number of unread notifications for a specific user
+async function getNotificationCount(user_id) {
+    try {
+        const query = `SELECT COUNT(*) AS count FROM notifications WHERE user_id = ? AND is_read = FALSE`;
+        const [rows] = await pool.execute(query, [user_id]);
+        
+        return rows[0].count; // Return the count of unread notifications
+    } catch (error) {
+        console.error('Error fetching unread notification count:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     createNotification,
     getNotificationsByUserId,
     markNotificationAsRead,
     getNotificationById,
-    markAllNotificationsAsRead
+    markAllNotificationsAsRead,
+    getNotificationCount
 };

@@ -1,12 +1,17 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
+import { io } from 'socket.io-client';
+import axios from "axios";
+import NotificationToasterComponent from './NotificationToasterComponent.vue';
 
 const router = useRouter();
 const activeButton = ref(null);
 const userRole = ref(null);
 const staffID = ref(null);
 const loading = ref(true); // Loading state
+const notificationCount = ref(0); // Notification count badge
+const socket = io('http://localhost:3000'); // Socket.io connection to the backend
 
 // Fetch user role from backend
 const fetchUserRole = async () => {
@@ -25,6 +30,16 @@ const fetchUserRole = async () => {
     console.error('Failed to fetch user role:', error);
   } finally {
     loading.value = false; // Set loading to false after fetching
+  }
+};
+
+const fetchNotificationCount = async () => {
+  try {
+    const response = await axios.get(`http://localhost:3000/api/notifications/count/${staffID.value}`);
+    console.log(response);
+    notificationCount.value = response.data.count;
+  } catch (error) {
+    console.error('Failed to fetch notification count:', error);
   }
 };
 
@@ -65,9 +80,27 @@ const handleNotifications = () => {
   activeButton.value = 'Notifications';
 };
 
+// Socket.io real-time notification listener
+const setupSocketListeners = () => {
+  socket.on('notification', (newNotificationCount) => {
+
+    if (newNotificationCount.user_id === staffID.value) {
+      // Increment the notification count when a new notification is received
+      notificationCount.value += 1;
+    }
+  });
+};
+
 onMounted(() => {
   fetchUserRole();
+  fetchNotificationCount();
   checkLoggedIn();
+  setupSocketListeners();
+});
+
+// Clean up socket connection on component unmount
+onBeforeUnmount(() => {
+  socket.disconnect();
 });
 
 </script>
@@ -98,11 +131,18 @@ onMounted(() => {
           <li v-if="userRole === 2" class="nav-item btn nav-link navbar-btn-hover" :class="{ 'navbar-btn-active': activeButton === 'Arrangements' }" @click="handleArrangements">Arrangements</li>
           <li v-if="userRole === 3 || userRole === 1" class="nav-item btn nav-link navbar-btn-hover" :class="{ 'navbar-btn-active': activeButton === 'Requests' }" @click="handleRequests">Requests</li>
           <li class="nav-item btn ml-3 nav-link navbar-btn" @click="handleLogin">Logout</li>
-          <li class="nav-item btn nav-link navbar-btn-hover" @click="handleNotifications">Notifications</li>
+          <li class="nav-item btn nav-link navbar-btn-hover position-relative" @click="handleNotifications">
+            Notifications
+            <span v-if="notificationCount > 0" class="badge bg-danger position-absolute top-0 start-100 translate-middle">
+              {{ notificationCount }}
+            </span>
+          </li>
         </ul>
       </div>
     </div>
   </nav>
+
+  <NotificationToasterComponent></NotificationToasterComponent>
 </template>
 
 <style scoped>
@@ -137,5 +177,11 @@ onMounted(() => {
 }
 .navbar-brand:hover {
   background-color: transparent; /* Change to the desired background color or none */
+}
+
+/* Style for notification badge */
+.badge {
+  font-size: 0.75rem;
+  padding: 0.35em 0.5em;
 }
 </style>

@@ -66,9 +66,24 @@ const markAllAsRead = async (req, res) => {
     }
 };
 
+// controller to get notification count for a specific user
+const getNotificationCount = async (req, res) => {
+    const userId = req.params.userId;
+
+    try {
+        // Fetch notification count from the database
+        const count = await notificationModel.getNotificationCount(userId);
+        res.status(200).json({ count });
+    } catch (error) {
+        console.error('Error fetching notification count:', error);
+        res.status(500).json({ error: 'Failed to fetch notification count' });
+    }
+};
+
 module.exports = {
     createNotification,
     getUserNotifications,
     markAsRead,
     markAllAsRead,
+    getNotificationCount,
 };
