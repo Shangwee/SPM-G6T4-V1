@@ -64,7 +64,9 @@ def get_meetings():
     if Created_By:
         query += f" AND Created_By = {Created_By}"
     if Date:
-        query += f" AND Date = {Date}"
+        date_object = datetime.strptime(Date, "%Y-%m-%d")
+        formatted_date = date_object.strftime("%Y-%m-%d")
+        query += f" AND Date = '{formatted_date}'"
 
     values = ()
 
