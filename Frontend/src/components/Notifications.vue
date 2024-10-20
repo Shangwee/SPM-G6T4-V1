@@ -6,11 +6,11 @@ import NotificationComponent from "./NotificationComponent.vue";
 <template>
     <div class="d-flex justify-content-center align-items-center vh-100">
       <div>
-        <NavBar></NavBar>
-        <div class="flex-grow-1 w-100">
-        <!-- Increase the size of NotificationComponent to fill height -->
-          <NotificationComponent class="notification-component h-100"></NotificationComponent>
-        </div>
+        <NavBar/>
+      </div>
+      <div class="flex-grow-1 w-100 pt-5 mt-5 ">
+      <!-- Increase the size of NotificationComponent to fill height -->
+        <NotificationComponent class="notification-component h-50"></NotificationComponent>
       </div>
     </div>
 </template>

@@ -15,11 +15,15 @@ async function createNotification(user_id, message, notification_type, request_i
 }
 
 // Retrieve notifications for a specific user
-async function getNotificationsByUserId(user_id) {
+async function getNotificationsByUserId(user_id, page, limit) {
     try {
-        const query = `SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC`;
-        const values = [user_id];
-        const [rows] = await pool.execute(query, values);
+        // Calculate the offset based on the page and limit
+        const offset = (page - 1) * limit;
+
+        const query = `SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT ` + limit + ` OFFSET ` + offset;
+
+
+        const [rows] = await pool.execute(query, [user_id]);
 
         return rows; // Return the list of notifications
     } catch (error) {
@@ -27,6 +31,7 @@ async function getNotificationsByUserId(user_id) {
         throw error;
     }
 }
+
 
 // Mark a notification as read
 async function markNotificationAsRead(notification_id) {
@@ -40,6 +45,8 @@ async function markNotificationAsRead(notification_id) {
         throw error;
     }
 }
+
+// mark a notification as read by 
 
 // Retrieve a single notification by its ID
 async function getNotificationById(notification_id) {

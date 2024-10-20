@@ -22,10 +22,12 @@ const createNotification = async (req, res) => {
 // Controller to get notifications for a specific user
 const getUserNotifications = async (req, res) => {
     const userId = req.params.userId;
-
+    let page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 5;
+    
     try {
         // Fetch notifications from the database
-        const notifications = await notificationModel.getNotificationsByUserId(userId);
+        const notifications = await notificationModel.getNotificationsByUserId(userId, page, limit);
         res.status(200).json(notifications);
     } catch (error) {
         console.error('Error fetching notifications:', error);
