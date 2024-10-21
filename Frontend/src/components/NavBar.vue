@@ -11,7 +11,7 @@ const userRole = ref(null);
 const staffID = ref(null);
 const loading = ref(true); // Loading state
 const notificationCount = ref(0); // Notification count badge
-const socket = io('http://localhost:3000'); // Socket.io connection to the backend
+const socket = io('http://localhost:5005'); // Socket.io connection to the backend
 
 // Fetch user role from backend
 const fetchUserRole = async () => {
@@ -35,7 +35,7 @@ const fetchUserRole = async () => {
 
 const fetchNotificationCount = async () => {
   try {
-    const response = await axios.get(`http://localhost:3000/api/notifications/count/${staffID.value}`);
+    const response = await axios.get(`http://localhost:5005/api/notifications/count/${staffID.value}`);
     console.log(response);
     notificationCount.value = response.data.count;
   } catch (error) {

@@ -80,23 +80,6 @@ export default {
     removeToast(id) {
       this.toasts = this.toasts.filter(toast => toast.id !== id);
     },
-    dismissNotification(id) {
-      try {
-        axios.put(`http://localhost:5005/api/notifications/read/${id}`, { is_read: true });
-        const notification = this.notifications.find(n => n.id === id);
-        if (notification) notification.is_read = true;
-      } catch (error) {
-        console.error("Error dismissing notification:", error);
-      }
-    },
-    markAllAsRead() {
-      try {
-        axios.put(`http://localhost:5005/api/notifications/read/all/${staffId}`);
-        this.notifications.forEach(notification => notification.is_read = true);
-      } catch (error) {
-        console.error("Error marking all notifications as read:", error);
-      }
-    }
   }
 };
 </script>
