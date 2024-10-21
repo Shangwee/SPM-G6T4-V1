@@ -10,7 +10,7 @@ CORS(app)
 ACCOUNTS_SERVICE_URL = "http://host.docker.internal:5001"
 SCHEDULE_SERVICE_URL = "http://host.docker.internal:5002"
 REQUEST_SERVICE_URL = "http://host.docker.internal:5003"
-NOTIFICATION_SERVICE_URL = "http://host.docker.internal:3000"
+NOTIFICATION_SERVICE_URL = "http://host.docker.internal:5005"
 
 def create_app():
     app = Flask(__name__)
