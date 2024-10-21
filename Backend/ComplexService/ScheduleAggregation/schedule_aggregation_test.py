@@ -1,67 +1,50 @@
 import unittest
 from unittest.mock import patch
-from schedule_aggregation import app, validate_date_range, get_user_position
+import json
+import os
 
-class TestScheduleAggregator(unittest.TestCase):
-
-    def setUp(self):
-        self.client = app.test_client()
-        self.client.testing = True
-
+class TestScheduleAggregation(unittest.TestCase):
     
-    @patch('schedule_aggregation.requests.get')  # <-- Correct the path here
-    def test_single_schedule(self, mock_get):
-        mock_get.return_value.json.return_value = {
-    "augmented_schedules": [
-        {
-            "Country": "Singapore",
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Dept": "Engineering",
-            "Email": "Koh.Loo@allinone.com.sg",
-            "Position": "Junior Engineers",
-            "Reporting_Manager": 151408,
-            "Request_ID": 10,
-            "Role": 2,
-            "Schedule_ID": 1,
-            "Staff_FName": "Koh",
-            "Staff_ID": 151547,
-            "Staff_LName": "Loo"
-        },
-        {
-            "Country": "Singapore",
-            "Date": "Thu, 26 Sep 2024 00:00:00 GMT",
-            "Dept": "Engineering",
-            "Email": "Koh.Loo@allinone.com.sg",
-            "Position": "Junior Engineers",
-            "Reporting_Manager": 151408,
-            "Request_ID": 12,
-            "Role": 2,
-            "Schedule_ID": 3,
-            "Staff_FName": "Koh",
-            "Staff_ID": 151547,
-            "Staff_LName": "Loo"
-        }
-    ],
-    "original_schedules": [
-        {
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Request_ID": 10,
-            "Schedule_ID": 1,
-            "Staff_ID": 151547
-        },
-        {
-            "Date": "Thu, 26 Sep 2024 00:00:00 GMT",
-            "Request_ID": 12,
-            "Schedule_ID": 3,
-            "Staff_ID": 151547
-        }
-    ]
-}
-        mock_get.return_value.status_code = 200
+    def setUp(self):
+        # Directory where mock responses are saved (current directory)
+        self.mock_data_dir = os.getcwd()
+    
+    def load_mock_response(self, filename):
+        """Helper function to load mock data from a file."""
+        file_path = os.path.join(self.mock_data_dir, filename)
+        with open(file_path, 'r') as file:
+            return json.load(file)
 
-        response = self.client.get('/aggregateSchedule?type=Single&staff_id=151547&start_date=2024-09-24&end_date=2026-09-30')
+    @patch('requests.get')
+    def test_aggregate_schedules(self, mock_get):
+        # Load mock account data
+        mock_account_response = self.load_mock_response('user_151547.json')
+        mock_schedule_response = self.load_mock_response('schedule_151547.json')
+
+        # Set side effect for the mock requests.get call
+        # When first called (account service), return mock_account_response
+        # When second called (schedule service), return mock_schedule_response
+        mock_get.side_effect = [
+            unittest.mock.Mock(status_code=200, json=lambda: mock_account_response),
+            unittest.mock.Mock(status_code=200, json=lambda: mock_schedule_response)
+        ]
+
+        # Perform the test logic, which should use the mocked responses
+        response = self.client.get('/aggregateSchedule?type=Single&staff_id=151547&start_date=2024-09-24&end_date=2024-09-24')
+
         self.assertEqual(response.status_code, 200)
-        self.assertIn('augmented_schedules', response.json)
+        data = response.get_json()
+        
+        # Validate the augmented response
+        self.assertIn('augmented_schedules', data)
+        self.assertEqual(data['augmented_schedules'][0]['Staff_FName'], 'Koh')
+        self.assertEqual(data['augmented_schedules'][0]['Email'], 'Koh.Loo@allinone.com.sg')
+
+    # More tests can be added here, loading different mock responses as needed
+
+if __name__ == '__main__':
+    unittest.main()
+
 
     # Test for "Team" type aggregation
     @patch('schedule_aggregation.requests.get')  # <-- Correct the path here

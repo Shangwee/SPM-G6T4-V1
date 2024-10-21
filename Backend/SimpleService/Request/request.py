@@ -204,10 +204,12 @@ def create_request():
 
         conn.commit()
 
+        new_request_id = cursor.lastrowid
+
         cursor.close()
         conn.close()
 
-        return jsonify({'message': 'Request created successfully!'}), 201
+        return jsonify({'message': 'Request created successfully!', 'Request_ID': new_request_id}), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
