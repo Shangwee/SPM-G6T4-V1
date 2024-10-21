@@ -1,17 +1,45 @@
+<script setup>
+import NavBar from "./NavBar.vue";
+import NotificationComponent from "./NotificationComponent.vue";
+</script>
+
 <template>
     <div class="d-flex justify-content-center align-items-center vh-100">
       <div>
-        <NavBar></NavBar>
-        <div class="container mt-5 pt-5">
-          <h3 class="text-center" style="margin-top: -200px;">Notifications</h3>
-        </div>
+        <NavBar/>
+      </div>
+      <div class="flex-grow-1 w-100 pt-5 mt-5 ">
+      <!-- Increase the size of NotificationComponent to fill height -->
+        <NotificationComponent class="notification-component h-50"></NotificationComponent>
       </div>
     </div>
-  </template>
+</template>
 
-<script setup>
-import NavBar from "./NavBar.vue";
+<script>
+export default {
+  data() {
+    return {
+
+    };
+  },
+
+  methods: {
+  },
+  components: {
+    NavBar,
+    NotificationComponent
+  },  
+};
 </script>
 
-<style>
+<style scoped>
+.notification-component {
+  width: 100%;            /* Take the full width of the parent container */
+  max-width: 900px;        /* Limit the maximum width */
+  min-height: 100vh;       /* Ensure it covers the full viewport height */
+  padding: 20px;           /* Add some padding */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Ensure content is well distributed */
+}
 </style>

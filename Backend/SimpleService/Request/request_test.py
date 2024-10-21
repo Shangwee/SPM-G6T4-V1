@@ -87,6 +87,7 @@ class TestRequestAPI(unittest.TestCase):
         response = requests.post(self.API_URL + "/request/create", json = obj)
         if (response.status_code == 201):
             expected_response = {
+                'Request_ID': 18,
                 "message": "Request created successfully!"
             }
         elif (response.status_code == 409):

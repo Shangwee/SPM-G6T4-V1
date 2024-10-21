@@ -164,7 +164,7 @@ services:
         condition: service_started
     environment:
       DB_HOST: request_db
-      DB_USER: rootn
+      DB_USER: root
       DB_PASSWORD: root
       DB_NAME: db
       DB_PORT: 3306
@@ -206,3 +206,33 @@ services:
       - ./Meeting/db/meeting.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
       - ./Meeting/meeting.csv:/var/lib/mysql-files/meeting.csv # Mount the file
       - ./Meeting/meetingstaffs.csv:/var/lib/mysql-files/meetingstaffs.csv # Mount the file
+
+  #################################
+  # notification: The Notification microservice
+  #################################
+  notification-service:
+    build: ./notification-service
+    image: gcr.io/spmprojecttest/notification-service:1.0
+    restart: always
+    ports : [5005:5005]
+    depends_on:
+      - notifications_db
+    environment:
+      DB_HOST: notifications_db
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: notifications_db
+      DB_PORT: 3306
+
+  #################################
+  # notification_db: The Notification SQL Database
+  #################################
+  notifications_db:
+    image: mysql:latest
+    restart: always
+    ports: [3305:3306]
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: notifications_db
+    volumes:
+      - ./notification-service/src/config/notification.sql:/docker-entrypoint-initdb.d/init.sql
