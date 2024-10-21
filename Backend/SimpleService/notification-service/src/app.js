@@ -24,7 +24,7 @@ app.use(cors());
 app.use('/api/notifications', notificationRoutes);
 
 // Start the server and pass `io` to the queue initializer after the server has started
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5005;
 server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });

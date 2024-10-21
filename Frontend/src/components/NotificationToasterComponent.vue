@@ -45,7 +45,7 @@ export default {
   async mounted() {
     // Fetch existing notifications from the backend API
     try {
-      const response = await axios.get("http://localhost:3000/api/notifications/user/" + staffId);
+      const response = await axios.get("http://localhost:5005/api/notifications/user/" + staffId);
       this.notifications = response.data;
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -82,7 +82,7 @@ export default {
     },
     dismissNotification(id) {
       try {
-        axios.put(`http://localhost:3000/api/notifications/read/${id}`, { is_read: true });
+        axios.put(`http://localhost:5005/api/notifications/read/${id}`, { is_read: true });
         const notification = this.notifications.find(n => n.id === id);
         if (notification) notification.is_read = true;
       } catch (error) {
@@ -91,7 +91,7 @@ export default {
     },
     markAllAsRead() {
       try {
-        axios.put(`http://localhost:3000/api/notifications/read/all/${staffId}`);
+        axios.put(`http://localhost:5005/api/notifications/read/all/${staffId}`);
         this.notifications.forEach(notification => notification.is_read = true);
       } catch (error) {
         console.error("Error marking all notifications as read:", error);
