@@ -42,6 +42,54 @@
                 scheduleDate.getDate() === currentDay.getDate()
               );
             }),
+            meeting: this.myMeetings.some((meeting) => {
+              const meetingDate = new Date(meeting.Date);
+              const currentDay = new Date(
+                this.currentDate.getFullYear(),
+                this.currentDate.getMonth(),
+                day
+              );
+
+              return (
+                meeting.meetingstaffs.some(
+                  (staff) => String(staff.Staff_ID) === this.staffId
+                ) &&
+                meetingDate.getFullYear() === currentDay.getFullYear() &&
+                meetingDate.getMonth() === currentDay.getMonth() &&
+                meetingDate.getDate() === currentDay.getDate()
+              );
+            }),
+            // conflict:
+            //   this.ownSchedule.some((e) => {
+            //     const scheduleDate = new Date(e.Date);
+            //     const currentDay = new Date(
+            //       this.currentDate.getFullYear(),
+            //       this.currentDate.getMonth(),
+            //       day
+            //     );
+            //     return (
+            //       scheduleDate.getFullYear() === currentDay.getFullYear() &&
+            //       scheduleDate.getMonth() === currentDay.getMonth() &&
+            //       scheduleDate.getDate() === currentDay.getDate()
+            //     );
+            //   }) &&
+            //   this.myMeetings.some((meeting) => {
+            //     const meetingDate = new Date(meeting.Date);
+            //     const currentDay = new Date(
+            //       this.currentDate.getFullYear(),
+            //       this.currentDate.getMonth(),
+            //       day
+            //     );
+
+            //     return (
+            //       meeting.meetingstaffs.some(
+            //         (staff) => String(staff.Staff_ID) === this.staffId
+            //       ) &&
+            //       meetingDate.getFullYear() === currentDay.getFullYear() &&
+            //       meetingDate.getMonth() === currentDay.getMonth() &&
+            //       meetingDate.getDate() === currentDay.getDate()
+            //     );
+            //   }),
           }"
         >
           <span v-if="day">{{ day }}</span>
@@ -53,11 +101,20 @@
           <div class="wfh-color"></div>
           <span class="legend-text">Personal WFH</span>
         </div>
+        <div class="legend-item">
+          <div class="meeting-color"></div>
+          <span class="legend-text">Team Meeting</span>
+        </div>
+        <!-- <div class="legend-item">
+          <div class="conflict-color"></div>
+          <span class="legend-text">Schedule Conflict</span>
+        </div> -->
       </div>
     </div>
 
     <!-- Team or personal schedule section -->
     <div v-if="scheduleType === 'team'" class="staff-schedule-container">
+      <Meeting :staffId="staffId" :selectedDate="selectedDate"></Meeting>
       <div class="filter-controls d-flex flex-column mb-4">
         <div
           v-if="userRole === 3 || userRole === 1"
@@ -154,8 +211,12 @@
 </template>
 <script>
 import axios from "axios";
+import Meeting from "./Meeting.vue";
 
 export default {
+  components: {
+    Meeting,
+  },
   data() {
     return {
       currentDate: new Date(),
@@ -177,6 +238,8 @@ export default {
       // selectedFilter: 'Personal Team',
       // filter: ['Personal Team', 'Personal Department'],
       filteredStaffWorkingFromHome: [],
+      selectedDate: "",
+      myMeetings: [],
     };
   },
 
@@ -190,6 +253,7 @@ export default {
 
   async created() {
     this.staffId = sessionStorage.getItem("staffID"); // Retrieve Staff_ID
+    // this.fetchReportingManager();
 
     if (this.staffId) {
       try {
@@ -198,6 +262,8 @@ export default {
         this.fetchOwnSchedule();
         this.selectToday(); // Automatically select today's date
         // this.filterStaff();
+
+        this.getMeetings();
 
         // Wait for reportingManager to be set before checking userRole
         if (this.userRole === 2) {
@@ -258,6 +324,20 @@ export default {
   },
 
   methods: {
+    getMeetings() {
+      let url = "http://localhost:5004/meeting";
+      let params = {
+        // Created_By: this.reportingManager,
+      };
+      return axios
+        .get(url, { params })
+        .then((r) => {
+          this.myMeetings = r.data;
+        })
+        .catch((e) => {
+          console.log(e);
+        });
+    },
     fetchUserRole() {
       return axios
         .get(`http://localhost:5001/user/${this.staffId}`)
@@ -507,6 +587,12 @@ export default {
         this.deselectDay(); // Call deselectDay if the same day is selected
       } else {
         this.selectedDay = day; // Select the new day
+        this.selectedDate = `${this.currentYear}-${this.currentMonth + 1}-${
+          this.selectedDay.toString().length == 1
+            ? "0" + this.selectedDay
+            : this.selectedDay
+        }`;
+        console.log(this.selectedDate);
         this.filteredStaffWorkingFromHome = [];
         // Fetch the new schedule based on user role
         this.updateScheduleBasedOnRole();
@@ -554,6 +640,9 @@ export default {
 
     selectToday() {
       this.selectedDay = this.currentDate.getDate(); // Automatically select today
+      this.selectedDate = `${this.currentYear}-${this.currentMonth + 1}-${
+        this.selectedDay
+      }`;
       this.filterStaff();
     },
   },
@@ -628,6 +717,15 @@ export default {
 }
 .calendar-cell.active {
   background-color: #b6c6fd;
+}
+
+.calendar-cell.meeting {
+  background-color: #ffc494;
+}
+
+.calendar-cell.conflict {
+  background-color: #ff564a;
+  color: white;
 }
 
 .calendar-cell.today.selected-day {
@@ -765,6 +863,18 @@ export default {
   width: 20px;
   height: 20px;
   background-color: #b6c6fd;
+}
+
+.legend .meeting-color {
+  width: 20px;
+  height: 20px;
+  background-color: #ffc494;
+}
+
+.legend .conflict-color {
+  width: 20px;
+  height: 20px;
+  background-color: #ff564a;
 }
 
 .legend-text {
