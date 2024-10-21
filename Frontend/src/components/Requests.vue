@@ -8,7 +8,8 @@
         <button @click="filterRequests('Rejected')" class="btn btn-outline-danger mx-2">Rejected</button>
       </div>
 
-      <div class="table-responsive">
+      <!-- Limit the height of the table and enable scrolling -->
+      <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
         <table class="table table-striped table-hover">
           <thead class="thead-dark">
             <tr>
@@ -97,20 +98,15 @@ const statusBadgeClass = (status) => {
 // Update status of a request using the Flask API
 const updateStatus = async (requestId, newStatus) => {
   try {
-    // Decide whether to approve or reject based on newStatus value
     const url = newStatus === 1 
       ? `http://localhost:6002/manageRequest/accept` // Accept the request
       : `http://localhost:6002/manageRequest/reject`; // Reject the request
 
-    // Make the POST request with the staffId and requestId
-    // console.log('staffId:', staffId, 'requestId:', requestId);
-    // console.log(staffId) 
     const response = await axios.post(url, { 
       staff_id: parseInt(staffId), 
       request_id: requestId 
     });
 
-    // If the status update was successful, refresh the request list
     if (response.status === 200) {
       await fetchRequests(); // Refresh the requests after updating
     } else {
@@ -120,6 +116,7 @@ const updateStatus = async (requestId, newStatus) => {
     console.error('Error updating status:', error);
   }
 };
+
 const withdrawRequest = async (requestId) => {
   try {
     const staffId = sessionStorage.getItem('staffID');
@@ -140,24 +137,16 @@ const withdrawRequest = async (requestId) => {
     console.error('Error withdrawing request:', error);
   }
 };
+
 const canWithdraw = (requestDate) => {
-  // Parse the request date into a Date object
   const requestDateObject = new Date(requestDate);
   const now = new Date();
-
-  // Calculate the difference in milliseconds
   const diffInMilliseconds = requestDateObject - now;
-
-  // Convert the difference to hours
   const diffInHours = diffInMilliseconds / (1000 * 60 * 60);
-
-  // Return true if the date is at least 24 hours in the future
   return diffInHours >= 24;
 };
 
-
 </script>
-
 
 <style>   
 /* Adjust margin-top for the container to avoid affecting navbar */
@@ -182,4 +171,11 @@ const canWithdraw = (requestDate) => {
 .btn {
   min-width: 100px;
 }
+
+/* Add max-height and make the table scrollable */
+.table-responsive {
+  max-height: 400px; /* You can adjust this height as needed */
+  overflow-y: auto;
+}
+
 </style>
