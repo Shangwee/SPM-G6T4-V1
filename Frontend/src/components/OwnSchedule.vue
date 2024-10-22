@@ -152,19 +152,17 @@ const confirmWithdraw = async () => {
 
 // Show options popup for pending WFH requests
 const showOptionsForWfh = (day) => {
-  dayToWithdraw.value = day; // Set the day
-  showOptionsPopup.value = true; // Show options popup
+  console.log('Day clicked:', day);  // Log the clicked day
+  dayToWithdraw.value = day;  // Set the day (could be a date)
+  console.log('Request ID (from dayToWithdraw):', dayToWithdraw.value);  // Log what request_id is being used here
+  showOptionsPopup.value = true;  // Show options popup
 };
+
 
 // Function to open confirmation popup for withdrawal
 const withdrawWorkFromHome = () => {
   showOptionsPopup.value = false; // Hide options popup
   showWithdrawConfirmation.value = true; // Show confirmation popup
-};
-
-// Function to handle changing WFH date (you can implement the logic here)
-const changeWfhDate = () => {
-  alert('Change WFH Date option clicked'); // Placeholder for changing WFH date
 };
 
 const fetchWfhDates = async () => {
@@ -212,6 +210,58 @@ const fetchWfhDates = async () => {
 const cancelWorkFromHome = () => {
   showForm.value = false; // Hide the form
 };
+
+
+const changeWfhDate = async () => {
+  const staffId = sessionStorage.getItem('staffID');  // Get staff ID from session
+  if (!staffId) {
+    alert('Error: Staff ID is missing');
+    return;
+  }
+
+  // Get the request ID (you should already have this from the WFH request that the user is trying to edit)
+  const requestId = dayToWithdraw.value; // Assuming you have requestId stored here
+
+  // Prompt the user for a new date and reason
+  const newDate = prompt('Enter a new date for WFH (YYYY-MM-DD):');
+  if (!newDate) {
+    alert('A new date is required to change the WFH request.');
+    return;
+  }
+
+  const newReason = prompt('Enter a new reason for WFH:', reason.value || '');
+  if (!newReason) {
+    alert('A reason is required.');
+    return;
+  }
+
+  try {
+    // Send the PUT request to the backend to update the WFH request
+    const response = await axios.put('http://localhost:6001/flexibleArrangement/updateRequest', {
+      staff_id: staffId,  // The staff ID stored in session
+      request_id: requestId,  // The request ID you're updating
+      date: newDate,  // New date provided by the user
+      reason: newReason  // New reason provided by the user
+    });
+
+    if (response.status === 200) {
+      alert('WFH request updated successfully!');
+      fetchWfhDates();  // Refresh WFH dates after update
+      showOptionsPopup.value = false;  // Close the options popup
+    } else {
+      alert('Something went wrong, please try again.');
+    }
+  } catch (error) {
+    console.error('Error updating WFH request:', error.response ? error.response.data : error.message);
+    alert('Error: Unable to update WFH request.');
+  }
+};
+
+
+const closePopup = () => {
+  showOptionsPopup.value = false; // Close the popup
+};
+
 
 // Fetch WFH dates when the component is mounted
 onMounted(fetchWfhDates);
@@ -301,6 +351,9 @@ onMounted(fetchWfhDates);
 
           <!-- Options popup for WFH request -->
           <div v-if="showOptionsPopup" class="options-popup">
+            <!-- Close Button (X) -->
+            <button class="close-btn" @click="closePopup">×</button>
+
             <p>Select an action for WFH Request:</p>
             <div class="form-actions">
               <button class="btn btn-primary" @click="changeWfhDate">Change WFH Date</button>
@@ -558,4 +611,20 @@ onMounted(fetchWfhDates);
   justify-content: space-around;
   margin-top: 10px;
 }
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #000;
+}
+
+.close-btn:hover {
+  color: red;
+}
+
 </style>
