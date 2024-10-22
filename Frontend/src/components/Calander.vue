@@ -671,6 +671,7 @@ export default {
   align-items: flex-start;
   height: 70vh;
   padding-bottom: 0;
+  overflow-y: auto;
 }
 
 .calendar {
