@@ -32,17 +32,29 @@ def create_meeting():
     if not validate_date(Date):
         return jsonify({'error': 'Invalid date format. Please use YYYY-MM-DD'}), 400
     
+    # Check for existing meeting with the same Created_By and Date
+    cursor.execute("SELECT * FROM Meeting WHERE Created_By = %s AND Date = %s", (Created_By, Date))
+    existing_meeting = cursor.fetchone()
+    
+    if existing_meeting:
+        return jsonify({'error': 'A meeting already exists for this user on the specified date.'}), 409
+    
     try:
         query = ("INSERT INTO Meeting (Created_By, Date, Title) VALUES (%s, %s, %s)")
         values = ( Created_By, Date, Title)
         cursor.execute(query, values)
+
+        meeting_id = cursor.lastrowid
+
+        cursor.execute("SELECT * FROM Meeting WHERE Meeting_ID = %s", (meeting_id,))
+        meeting = cursor.fetchone()
 
         conn.commit()
 
         cursor.close()
         conn.close()
 
-        return jsonify({'message': 'Meeting created successfully!'}), 201
+        return jsonify({'data': meeting,'message': 'Meeting created successfully!'}), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -110,6 +122,31 @@ def get_meetingstaffs(Meeting_ID):
     conn.close()
 
     return jsonify(meetingstaffs), 200
+
+# create meeting staff
+@app.route('/meetingstaffs', methods=['POST']) 
+def create_meetingstaff():
+    data  = request.get_json()
+
+    conn = mysql.connector.connect(**db_config)
+    cursor = conn.cursor(dictionary=True)
+
+    Meeting_ID = data['Meeting_ID']
+    Staff_ID = data['Staff_ID']
+
+    try:
+        query = ("INSERT INTO MeetingStaffs (Meeting_ID, Staff_ID) VALUES (%s, %s)")
+        values = ( Meeting_ID, Staff_ID)
+        cursor.execute(query, values)
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({'message': 'MeetingStaff created successfully!'}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # delete meeting
 @app.route('/meeting/<int:Meeting_ID>', methods=['DELETE'])
