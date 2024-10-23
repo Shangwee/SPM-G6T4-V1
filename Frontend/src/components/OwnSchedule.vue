@@ -152,17 +152,53 @@ const confirmWithdraw = async () => {
 
 // Show options popup for pending WFH requests
 const showOptionsForWfh = (day) => {
-  console.log('Day clicked:', day);  // Log the clicked day
-  dayToWithdraw.value = day;  // Set the day (could be a date)
-  console.log('Request ID (from dayToWithdraw):', dayToWithdraw.value);  // Log what request_id is being used here
-  showOptionsPopup.value = true;  // Show options popup
+  const dateString = `${currentDate.value.getFullYear()}-${String(currentDate.value.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  
+  // Find the WFH request for the selected day
+  const wfhRequest = wfhDates.value.find(wfh => wfh.date === dateString);
+
+  if (wfhRequest) {
+    dayToWithdraw.value = wfhRequest.request_id;  // Set the correct request_id for withdrawal
+    console.log('Request ID (from dayToWithdraw):', dayToWithdraw.value);  // Log the correct request_id
+    showOptionsPopup.value = true;  // Show options popup
+  } else {
+    console.error('No WFH request found for the selected day');
+  }
 };
 
+const withdrawWorkFromHome = async () => {
+  const staffId = sessionStorage.getItem('staffID');
+  const requestId = dayToWithdraw.value; // Get the request ID from the day selected
 
-// Function to open confirmation popup for withdrawal
-const withdrawWorkFromHome = () => {
-  showOptionsPopup.value = false; // Hide options popup
-  showWithdrawConfirmation.value = true; // Show confirmation popup
+  if (!staffId || !requestId) {
+    alert('Error: Staff ID or Request ID is missing');
+    return;
+  }
+
+  try {
+    // Send DELETE request to withdraw WFH request
+    const response = await axios.delete('http://localhost:6001/flexibleArrangement/withdrawRequest', {
+      headers: { 'Content-Type': 'application/json' },
+      data: {
+        staff_id: parseInt(staffId, 10), // Ensure staff_id is sent as an integer
+        request_id: requestId // Send the request_id
+      }
+    });
+
+    if (response.status === 200) {
+      alert('Request withdrawn successfully!');
+      fetchWfhDates(); // Refresh the WFH dates after successful deletion
+    } else {
+      alert('Something went wrong, please try again.');
+    }
+  } catch (error) {
+    console.error('Error withdrawing WFH request:', error.response ? error.response.data : error.message);
+    alert('Error: Unable to withdraw request. Please check the console for more details.');
+  } finally {
+    // Close both confirmation and options popup regardless of success or failure
+    showWithdrawConfirmation.value = false;
+    showOptionsPopup.value = false; // If there is another popup open, also ensure it is closed
+  }
 };
 
 const fetchWfhDates = async () => {
@@ -212,8 +248,9 @@ const cancelWorkFromHome = () => {
 };
 
 
+
 const changeWfhDate = async () => {
-  const staffId = sessionStorage.getItem('staffID');  // Get staff ID from session
+  const staffId = parseInt(sessionStorage.getItem('staffID'), 10);  // Get staff ID from session
   if (!staffId) {
     alert('Error: Staff ID is missing');
     return;
@@ -222,17 +259,47 @@ const changeWfhDate = async () => {
   // Get the request ID (you should already have this from the WFH request that the user is trying to edit)
   const requestId = dayToWithdraw.value; // Assuming you have requestId stored here
 
-  // Prompt the user for a new date and reason
-  const newDate = prompt('Enter a new date for WFH (YYYY-MM-DD):');
-  if (!newDate) {
-    alert('A new date is required to change the WFH request.');
-    return;
+  let isValidDate = false;
+  let newDate = null;
+
+  // Keep asking for a valid date until the user enters a correct one
+  while (!isValidDate) {
+    newDate = prompt('Enter a new date for WFH (YYYY-MM-DD):');
+    
+    // Check if the input is in the right format (YYYY-MM-DD)
+    const dateRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+
+    if (!newDate || !dateRegex.test(newDate)) {
+      alert('Invalid date format! Please enter a valid date in YYYY-MM-DD format (with correct month and day).');
+    } else {
+      // Check if the date is valid by trying to parse it and verifying that the month and day are within range
+      const dateInput = new Date(newDate);
+      const inputYear = dateInput.getFullYear();
+      const inputMonth = dateInput.getMonth() + 1; // getMonth() returns 0-indexed months, so add 1
+      const inputDay = dateInput.getDate();
+
+      // Verify that the entered date actually exists in the calendar
+      if (inputYear > 9999 || isNaN(dateInput.getTime()) || newDate !== `${inputYear}-${String(inputMonth).padStart(2, '0')}-${String(inputDay).padStart(2, '0')}`) {
+        alert('Invalid date! Please ensure the month and day are within the correct range.');
+      } else {
+        // Check if the date is at least 24 hours from now (backend validation)
+        const currentDate = new Date();
+        if (dateInput.getTime() - currentDate.getTime() < 24 * 60 * 60 * 1000) {
+          alert('Date must be at least 24 hours from now. Please enter a valid future date.');
+        } else {
+          isValidDate = true;  // Mark the date as valid if all checks pass
+        }
+      }
+    }
   }
 
-  const newReason = prompt('Enter a new reason for WFH:', reason.value || '');
-  if (!newReason) {
-    alert('A reason is required.');
-    return;
+  // Persistent prompt for reason
+  let newReason = '';
+  while (!newReason) {
+    newReason = prompt('Enter a new reason for WFH:', reason.value || '');
+    if (!newReason) {
+      alert('A reason is required. Please enter a valid reason.');
+    }
   }
 
   try {
@@ -247,13 +314,14 @@ const changeWfhDate = async () => {
     if (response.status === 200) {
       alert('WFH request updated successfully!');
       fetchWfhDates();  // Refresh WFH dates after update
-      showOptionsPopup.value = false;  // Close the options popup
     } else {
-      alert('Something went wrong, please try again.');
+      alert('Something went wrong. Please try again.');
     }
   } catch (error) {
     console.error('Error updating WFH request:', error.response ? error.response.data : error.message);
     alert('Error: Unable to update WFH request.');
+  } finally {
+    showOptionsPopup.value = false;
   }
 };
 
