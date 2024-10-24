@@ -21,10 +21,12 @@
           {{ day }}
         </div>
         <div
-          v-for="(day, index) in daysInMonth"
-          :key="index"
+          v-for="day of daysInMonth"
           class="calendar-cell text-center"
-          @click.stop="selectDay(day)"
+          @click.stop="
+            selectDay(day);
+            filteredStaffWorkingFromHome = [];
+          "
           :class="{
             'empty-day': day === '',
             'selected-day': day === selectedDay,
@@ -163,7 +165,7 @@
           </div>
         </div>
 
-        <div v-if="selectedDay" class="staff-schedule mt-4">
+        <div v-show="selectedDay" class="staff-schedule mt-4">
           <h5 class="schedule-title">
             Staff Schedule for {{ selectedDay }} {{ currentMonthName }},
             {{ currentYear }}
@@ -240,7 +242,9 @@ export default {
       staffsDept: [],
       selectedDepartment: "",
       selectedTeam: "",
-      scheduleType: "", // Define this according to your application logic
+      // scheduleType: "", // Define this according to your application logic
+      // selectedFilter: 'Personal Team',
+      // filter: ['Personal Team', 'Personal Department'],
       filteredStaffWorkingFromHome: [],
       selectedDate: "",
       myMeetings: [],
@@ -265,14 +269,14 @@ export default {
         this.fetchUserDept();
         this.fetchOwnSchedule();
         this.selectToday(); // Automatically select today's date
-        // this.filterStaff();
+        this.filterStaff();
+        this.fetchReportingManager(); // Fetch Reporting_Manager for the logged-in staff
 
         this.getMeetings();
 
         // Wait for reportingManager to be set before checking userRole
         if (this.userRole === 2) {
           console.log("Fetching staff team schedule for user role 2");
-          this.fetchReportingManager(); // Fetch Reporting_Manager for the logged-in staff
           this.fetchStaffTeamSchedule();
         } else if (this.userRole === 3) {
           this.fetchbyOwnDept();
@@ -287,6 +291,18 @@ export default {
     } else {
       console.error("No Staff ID found.");
     }
+  },
+
+  watch: {
+    schedule(newSchedule, oldSchedule) {
+      // this.schedule = [];
+      // this.fetchAllMembers();
+      if (this.schedule == []) {
+        this.filteredStaffWorkingFromHome = [];
+      } else {
+        this.fetchStaffTeamMembers();
+      }
+    },
   },
 
   computed: {
@@ -392,6 +408,7 @@ export default {
             if (!this.teams.includes(response.data.Position)) {
               this.teams.push(response.data.Position);
             }
+            this.filterStaff();
           })
           .catch((error) => {
             console.error("Error fetching Team Members info", error);
@@ -409,9 +426,7 @@ export default {
           console.error("Error fetching Reporting Manager:", error);
         });
     },
-    async fetchStaffTeamSchedule() {
-      this.schedule = [];
-      // this.filteredStaffWorkingFromHome=[];
+    fetchStaffTeamSchedule() {
       try {
         const params = {
           type: "Team",
@@ -425,13 +440,16 @@ export default {
           }`,
         };
 
-        const response = await axios.get(
-          `http://localhost:6003/aggregateSchedule`,
-          { params }
-        );
-        this.schedule = response.data;
-        this.fetchStaffTeamMembers();
+        axios
+          .get(`http://localhost:6003/aggregateSchedule`, {
+            params,
+          })
+          .then((response) => {
+            this.schedule = response.data;
+            // this.fetchStaffTeamMembers(); // ** running before this.schedule retrieves
+          });
       } catch (error) {
+        this.schedule = [];
         console.error("Error fetching team schedule:", error);
       }
     },
@@ -599,30 +617,49 @@ export default {
       if (this.selectedDay === day) {
         this.deselectDay(); // Call deselectDay if the same day is selected
       } else {
+        // this.schedule = [];
+        // this.filteredStaffWorkingFromHome = [];
+
+        this.deselectDay();
+
         this.selectedDay = day; // Select the new day
         this.selectedDate = `${this.currentYear}-${this.currentMonth + 1}-${
           this.selectedDay.toString().length == 1
             ? "0" + this.selectedDay
             : this.selectedDay
         }`;
-        console.log(this.selectedDate);
-        
-        this.filteredStaffWorkingFromHome = [];
-        // Fetch the new schedule based on user role
         this.updateScheduleBasedOnRole();
+        // slow in retrieving this.schedule, leading to
+
+        // this.fetchStaffTeamSchedule();
+        // this.fetchStaffTeamMembers();
         this.filterStaff(); // Filter staff based on the selected day
+
+        // this.filteredStaffWorkingFromHome.length = 0;
+        // this.filteredStaffWorkingFromHome = [];
+
+        // Fetch the new schedule based on user role
+
+        console.log({
+          userRole: this.userRole,
+          staffId: this.staffId,
+          selectedDay: this.selectedDay,
+          schedule: this.schedule,
+          filteredStaffWorkingFromHome: this.filteredStaffWorkingFromHome,
+        });
       }
     },
 
     deselectDay() {
       this.selectedDay = null; // Deselect day
+      this.schedule = [];
       this.filteredStaffWorkingFromHome = [];
     },
 
     updateScheduleBasedOnRole() {
       // Fetch schedule based on user role
       if (this.userRole === 2) {
-        this.fetchReportingManager();
+        // this.fetchReportingManager();
         this.fetchStaffTeamSchedule();
       } else if (this.userRole === 3) {
         this.fetchbyOwnDept();
