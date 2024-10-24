@@ -157,22 +157,21 @@ def create_app():
                 return jsonify({'error': 'You are not allowed to withdraw this request'}), 401
             
             # check if the request is pending
-            if status == 0:
-                # withdraw the request
-                withdraw_request = requests.delete(f"{REQUEST_SERVICE_URL}/request/delete/{request_id}")
+        
+            # withdraw the request
+            withdraw_request = requests.delete(f"{REQUEST_SERVICE_URL}/request/delete/{request_id}")
 
-                if withdraw_request.status_code == 200:
-                    # send notification to the reporting manager
-                    notification = requests.post(f"{NOTIFICATION_SERVICE_URL}/api/notifications/create", json={
-                        "user_id": retrieve_request_data['Approver_ID'],
-                        "message": f"Request for flexible arrangement from {retrieve_request_data['Employee_ID']} on {Date} has been withdrawn",
-                        "notification_type": "Request",
-                        "request_id": request_id
-                    })
+            if withdraw_request.status_code == 200:
+                # send notification to the reporting manager
+                notification = requests.post(f"{NOTIFICATION_SERVICE_URL}/api/notifications/create", json={
+                    "user_id": retrieve_request_data['Approver_ID'],
+                    "message": f"Request for flexible arrangement from {retrieve_request_data['Employee_ID']} on {Date} has been withdrawn",
+                    "notification_type": "Request",
+                    "request_id": request_id
+                })
 
-                    return jsonify({'message': 'Request withdrawn successfully'}), 200
-            else:
-                return jsonify({'error': 'Request is not pending, cannot be withdrawn'}), 400
+                return jsonify({'message': 'Request withdrawn successfully'}), 200
+        
         else:
             return jsonify({'error': 'Failed to retrieve request'}), 404
 
