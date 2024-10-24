@@ -344,11 +344,6 @@ export default {
   },
 
   methods: {
-    refreshData() {
-      console.log("Refreshing data...");
-      this.updateScheduleBasedOnRole(); // Fetch the updated schedule based on the user role
-      this.filterStaff(); // Reapply the filter if needed
-    }, 
     getMeetings() {
       let url = "http://localhost:5004/meeting";
       let params = {
