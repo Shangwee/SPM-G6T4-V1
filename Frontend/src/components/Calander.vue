@@ -168,7 +168,14 @@
             Staff Schedule for {{ selectedDay }} {{ currentMonthName }},
             {{ currentYear }}
           </h5>
-          <div class="row">
+          <!-- Refresh button -->
+          <button class="btn btn-sm btn-outline-secondary" @click="refreshData">
+              <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+          </div>
+
+          <!-- Team members list -->
+          <div class="row" v-if="schedule.length > 0">
             <div class="col-md-6 mb-3 full-width">
               <div class="card home-card">
                 <h6>Working from Home</h6>
@@ -207,7 +214,6 @@
         </div>
       </div>
     </div>
-  </div>
 </template>
 <script>
 import axios from "axios";
@@ -235,8 +241,6 @@ export default {
       selectedDepartment: "",
       selectedTeam: "",
       scheduleType: "", // Define this according to your application logic
-      // selectedFilter: 'Personal Team',
-      // filter: ['Personal Team', 'Personal Department'],
       filteredStaffWorkingFromHome: [],
       selectedDate: "",
       myMeetings: [],
@@ -324,6 +328,11 @@ export default {
   },
 
   methods: {
+    refreshData() {
+      console.log("Refreshing data...");
+      this.updateScheduleBasedOnRole(); // Fetch the updated schedule based on the user role
+      this.filterStaff(); // Reapply the filter if needed
+    }, 
     getMeetings() {
       let url = "http://localhost:5004/meeting";
       let params = {
@@ -401,6 +410,8 @@ export default {
         });
     },
     async fetchStaffTeamSchedule() {
+      this.schedule = [];
+      // this.filteredStaffWorkingFromHome=[];
       try {
         const params = {
           type: "Team",
@@ -445,6 +456,8 @@ export default {
     },
 
     async fetchManageTeamSchedule() {
+      this.schedule = [];
+      // this.filteredStaffWorkingFromHome = [];
       let params = {
         type: "Team",
         // staffId: sessionStorage.getItem('staffID'),
@@ -583,6 +596,7 @@ export default {
     },
 
     selectDay(day) {
+      
       if (this.selectedDay === day) {
         this.deselectDay(); // Call deselectDay if the same day is selected
       } else {
@@ -593,6 +607,7 @@ export default {
             : this.selectedDay
         }`;
         console.log(this.selectedDate);
+        
         this.filteredStaffWorkingFromHome = [];
         // Fetch the new schedule based on user role
         this.updateScheduleBasedOnRole();
