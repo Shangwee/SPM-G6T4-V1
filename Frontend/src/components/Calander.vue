@@ -625,14 +625,7 @@ export default {
             ? "0" + this.selectedDay
             : this.selectedDay
         }`;
-<<<<<<<<< Temporary merge branch 1
-        console.log(this.selectedDate);
-        
-        this.filteredStaffWorkingFromHome = [];
-        // Fetch the new schedule based on user role
-=========
 
->>>>>>>>> Temporary merge branch 2
         this.updateScheduleBasedOnRole();
         // slow in retrieving this.schedule, leading to
 
