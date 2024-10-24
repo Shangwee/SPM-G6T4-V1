@@ -122,14 +122,15 @@ const confirmWithdraw = async () => {
 
   const dateToWithdraw = `${currentDate.value.getFullYear()}-${String(currentDate.value.getMonth() + 1).padStart(2, '0')}-${String(dayToWithdraw.value).padStart(2, '0')}`;
 
-  const pendingRequest = wfhDates.value.find(wfh => wfh.date === dateToWithdraw && wfh.status === 0);
+  // Modify this line to allow both pending (status === 0) and approved (status === 1) requests
+  const requestToWithdraw = wfhDates.value.find(wfh => wfh.date === dateToWithdraw && (wfh.status === 0 || wfh.status === 1));
 
-  if (!pendingRequest) {
-    alert('No pending request to withdraw');
+  if (!requestToWithdraw) {
+    alert('No pending or approved request to withdraw');
     return;
   }
 
-  const requestId = pendingRequest.request_id;
+  const requestId = requestToWithdraw.request_id;
 
   try {
     const response = await axios.delete('http://localhost:6001/flexibleArrangement/withdrawRequest', {
@@ -150,21 +151,25 @@ const confirmWithdraw = async () => {
   }
 };
 
-// Show options popup for pending WFH requests
+const requestStatus = ref(null); // Track the status of the selected WFH request
+
+// Show options popup for WFH requests (pending or approved)
 const showOptionsForWfh = (day) => {
   const dateString = `${currentDate.value.getFullYear()}-${String(currentDate.value.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  
+
   // Find the WFH request for the selected day
-  const wfhRequest = wfhDates.value.find(wfh => wfh.date === dateString);
+  const wfhRequest = wfhDates.value.find(wfh => wfh.date === dateString && (wfh.status === 0 || wfh.status === 1));
 
   if (wfhRequest) {
     dayToWithdraw.value = wfhRequest.request_id;  // Set the correct request_id for withdrawal
-    console.log('Request ID (from dayToWithdraw):', dayToWithdraw.value);  // Log the correct request_id
+    requestStatus.value = wfhRequest.status;      // Track the status of the WFH request
     showOptionsPopup.value = true;  // Show options popup
   } else {
     console.error('No WFH request found for the selected day');
   }
 };
+
+
 
 const withdrawWorkFromHome = async () => {
   const staffId = sessionStorage.getItem('staffID');
@@ -388,8 +393,9 @@ onMounted(fetchWfhDates);
                     @click.stop="applyForWorkFromHome(day)">+</button>
 
                   <!-- Pencil icon for pending WFH requests (shown only on hover) -->
-                  <i v-if="getWfhDayStatus(day) === 0 && hoveredDay === day" class="bi bi-pencil-fill edit-icon"
-                    @click.stop="showOptionsForWfh(day)"></i>
+                  <i v-if="(getWfhDayStatus(day) === 0 || getWfhDayStatus(day) === 1) && hoveredDay === day"
+                    class="bi bi-pencil-fill edit-icon" @click.stop="showOptionsForWfh(day)">
+                  </i>
 
                   <!-- WFH icon or badge, shown only for days with requests (status 0, 1, or 2) -->
                   <i v-if="isWfhDay(day)" class="bi bi-house-fill wfh-icon"></i>
@@ -431,11 +437,17 @@ onMounted(fetchWfhDates);
             <button class="close-btn" @click="closePopup">×</button>
 
             <p>Select an action for WFH Request:</p>
+
             <div class="form-actions">
-              <button class="btn btn-primary" @click="changeWfhDate">Change WFH Date</button>
+              <!-- Show "Change WFH Date" button only if the request is pending (status === 0) -->
+              <button v-if="requestStatus === 0" class="btn btn-primary" @click="changeWfhDate">Change WFH Date</button>
+
+              <!-- Always show the "Delete WFH Request" button -->
               <button class="btn btn-danger" @click="withdrawWorkFromHome">Delete WFH Request</button>
             </div>
           </div>
+
+
 
           <!-- Confirmation popup for withdrawing WFH request -->
           <div v-if="showWithdrawConfirmation" class="withdraw-confirmation">
@@ -697,10 +709,34 @@ onMounted(fetchWfhDates);
   font-size: 20px;
   cursor: pointer;
   color: #000;
+  z-index: 9999;
+  /* Ensure it's above other elements */
 }
 
 .close-btn:hover {
   color: red;
+  /* Optional hover effect */
 }
 
+/* Ensure the popup is properly positioned and sized */
+.options-popup {
+  padding: 20px;
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  width: 300px;
+  /* Add a fixed width to maintain consistency */
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+}
 </style>
