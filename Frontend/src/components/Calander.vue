@@ -170,10 +170,6 @@
             Staff Schedule for {{ selectedDay }} {{ currentMonthName }},
             {{ currentYear }}
           </h5>
-          <!-- Refresh button -->
-          <button class="btn btn-sm btn-outline-secondary" @click="refreshData">
-              <i class="bi bi-arrow-clockwise"></i> Refresh
-            </button>
           </div>
 
           <!-- Team members list -->
