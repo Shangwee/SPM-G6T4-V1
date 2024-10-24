@@ -170,10 +170,6 @@
             Staff Schedule for {{ selectedDay }} {{ currentMonthName }},
             {{ currentYear }}
           </h5>
-          <!-- Refresh button -->
-          <button class="btn btn-sm btn-outline-secondary" @click="refreshData">
-              <i class="bi bi-arrow-clockwise"></i> Refresh
-            </button>
           </div>
 
           <!-- Team members list -->
@@ -344,11 +340,6 @@ export default {
   },
 
   methods: {
-    refreshData() {
-      console.log("Refreshing data...");
-      this.updateScheduleBasedOnRole(); // Fetch the updated schedule based on the user role
-      this.filterStaff(); // Reapply the filter if needed
-    }, 
     getMeetings() {
       let url = "http://localhost:5004/meeting";
       let params = {
@@ -426,9 +417,7 @@ export default {
           console.error("Error fetching Reporting Manager:", error);
         });
     },
-    async fetchStaffTeamSchedule() {
-      this.schedule = [];
-      // this.filteredStaffWorkingFromHome=[];
+    fetchStaffTeamSchedule() {
       try {
         const params = {
           type: "Team",
@@ -476,30 +465,29 @@ export default {
     },
 
     async fetchManageTeamSchedule() {
-      this.schedule = [];
-      // this.filteredStaffWorkingFromHome = [];
-      let params = {
-        type: "Team",
-        // staffId: sessionStorage.getItem('staffID'),
-        reporting_manager: parseInt(this.staffId, 10),
-        start_date: `${this.currentYear}-${this.currentMonth + 1}-${
-          this.selectedDay || this.currentDate.getDate()
-        }`,
-        end_date: `${this.currentYear}-${this.currentMonth + 1}-${
-          this.selectedDay || this.currentDate.getDate()
-        }`,
-      };
-      console.log("Fetching manage team schedule with params:", params);
       try {
-        const response = await axios.get(
-          `http://localhost:6003/aggregateSchedule`,
-          { params: params }
-        );
-        console.log("Team schedule response:", response.data);
-        this.schedule = response.data;
+        const params = {
+          type: "Team",
+          // staffId: sessionStorage.getItem('staffID'),
+          reporting_manager: parseInt(this.staffId, 10),
+          start_date: `${this.currentYear}-${this.currentMonth + 1}-${
+            this.selectedDay || this.currentDate.getDate()
+          }`,
+          end_date: `${this.currentYear}-${this.currentMonth + 1}-${
+            this.selectedDay || this.currentDate.getDate()
+          }`,
+        };
 
-        await this.fetchManageTeamMembers(); // Wait for the team members to be fetched
+        axios
+          .get(`http://localhost:6003/aggregateSchedule`, {
+            params,
+          })
+          .then((response) => {
+            this.schedule = response.data;
+            // this.fetchStaffTeamMembers(); // ** running before this.schedule retrieves
+          });
       } catch (error) {
+        this.schedule = [];
         console.error("Error fetching team schedule:", error);
       }
     },
@@ -631,7 +619,7 @@ export default {
             ? "0" + this.selectedDay
             : this.selectedDay
         }`;
-
+        
         this.updateScheduleBasedOnRole();
         // slow in retrieving this.schedule, leading to
 
