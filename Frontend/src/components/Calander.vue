@@ -568,40 +568,37 @@ export default {
       });
     },
 
-    fetchALLSchedule() {
-      let params = {
-        type: "All",
-        staff_id: this.staffId,
-        start_date: `${this.currentYear}-${this.currentMonth + 1}-${
-          this.selectedDay || this.currentDate.getDate()
-        }`,
-        end_date: `${this.currentYear}-${this.currentMonth + 1}-${
-          this.selectedDay || this.currentDate.getDate()
-        }`,
-      };
-      axios
-        .get(`http://localhost:6003/aggregateSchedule`, { params })
-        .then((response) => {
-          this.schedule = response.data;
-          this.fetchAllMembers();
-          console.log(response.data);
-          // this.staffs.push(response.data[0]);
-          // console.log(this.staffs);
-          this.staffsDept.push(response.data);
-          for (const staff in response.data) {
-            if (!this.teams.includes(response.data[staff].Position)) {
-              this.teams.push(response.data[staff].Position);
-            }
-            if (!this.depts.includes(response.data[staff].Dept)) {
-              this.depts.push(response.data[staff].Dept);
-            }
+    async fetchALLSchedule() {
+      try {
+        const params = {
+          type: "All",
+          staff_id: parseInt(this.staffId, 10), // Ensures staff_id is parsed as an integer
+          start_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
+          end_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
+        };
+
+        const response = await axios.get(`http://localhost:6003/aggregateSchedule`, { params });
+        
+        this.schedule = response.data;
+        // this.fetchAllMembers();
+        this.staffsDept.push(response.data);
+
+        for (const staff of response.data) {
+          if (!this.teams.includes(staff.Position)) {
+            this.teams.push(staff.Position);
           }
-          console.log(this.depts);
-        })
-        .catch((error) => {
-          console.error("Error fetching schedule:", error);
-        });
+          if (!this.depts.includes(staff.Dept)) {
+            this.depts.push(staff.Dept);
+          }
+        }
+
+        console.log(this.depts);
+      } catch (error) {
+        this.schedule = [];
+        console.error("Error fetching schedule:", error);
+      }
     },
+
 
     selectDay(day) {
       
