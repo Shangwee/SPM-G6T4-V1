@@ -65,11 +65,6 @@ const handleTeamSchedule = () => {
   activeButton.value = 'Team Schedule';
 };
 
-const handleArrangements = () => {
-  router.push('/arrangements');
-  activeButton.value = 'Arrangements';
-};
-
 const handleRequests = () => {
   router.push('/requests');
   activeButton.value = 'Requests';

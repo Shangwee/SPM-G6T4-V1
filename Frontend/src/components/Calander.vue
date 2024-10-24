@@ -417,13 +417,7 @@ export default {
           console.error("Error fetching Reporting Manager:", error);
         });
     },
-<<<<<<<<< Temporary merge branch 1
-    async fetchStaffTeamSchedule() {
-      this.schedule = [];
-      // this.filteredStaffWorkingFromHome=[];
-=========
     fetchStaffTeamSchedule() {
->>>>>>>>> Temporary merge branch 2
       try {
         const params = {
           type: "Team",
@@ -625,7 +619,7 @@ export default {
             ? "0" + this.selectedDay
             : this.selectedDay
         }`;
-
+        
         this.updateScheduleBasedOnRole();
         // slow in retrieving this.schedule, leading to
 
