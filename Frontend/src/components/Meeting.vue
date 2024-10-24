@@ -138,7 +138,7 @@ export default {
           if (this.selectedStaff != []) {
             this.selectedStaff.push(this.staffId);
             for (let staff of this.selectedStaff) {
-              // TODO: send notification to all staffs
+              // send notification to all selected staffs
               let url = "http://localhost:5004/meetingstaffs";
               let params = {
                 Meeting_ID: parseInt(meetingId),
@@ -152,6 +152,17 @@ export default {
                 .catch((e) => {
                   console.log(e);
                 });
+              // Send notification to staff
+              let notifiurl = "http://localhost:5005/api/notifications/create";
+              let notifiparams = {
+                user_id: staff,
+                message: `You have a meeting on ${this.selectedDate}`,
+                notification_type: "meeting",
+                request_id: null,
+              };
+              axios.post(notifiurl, notifiparams).then((r) => {
+                console.log(r.data);
+              });
             }
           }
           location.reload();
@@ -196,6 +207,19 @@ export default {
         .then((r) => {
           console.log(r.data);
           // TODO: send notification to all staffs that meeting is cancelled
+          for (let staff of this.meeting.meetingstaffs) {
+            let meetingstaffid = staff.Staff_ID;
+            let notifiurl = "http://localhost:5005/api/notifications/create";
+            let notifiparams = {
+              user_id: meetingstaffid,
+              message: `Meeting have been cancelled on ${this.selectedDate}`,
+              notification_type: "meeting",
+              request_id: null,
+            };
+            axios.post(notifiurl, notifiparams).then((r) => {
+              console.log(r.data);
+            });
+          }
           location.reload();
         })
         .catch((e) => {
