@@ -456,30 +456,29 @@ export default {
     },
 
     async fetchManageTeamSchedule() {
-      this.schedule = [];
-      // this.filteredStaffWorkingFromHome = [];
-      let params = {
-        type: "Team",
-        // staffId: sessionStorage.getItem('staffID'),
-        reporting_manager: parseInt(this.staffId, 10),
-        start_date: `${this.currentYear}-${this.currentMonth + 1}-${
-          this.selectedDay || this.currentDate.getDate()
-        }`,
-        end_date: `${this.currentYear}-${this.currentMonth + 1}-${
-          this.selectedDay || this.currentDate.getDate()
-        }`,
-      };
-      console.log("Fetching manage team schedule with params:", params);
       try {
-        const response = await axios.get(
-          `http://localhost:6003/aggregateSchedule`,
-          { params: params }
-        );
-        console.log("Team schedule response:", response.data);
-        this.schedule = response.data;
+        const params = {
+          type: "Team",
+          // staffId: sessionStorage.getItem('staffID'),
+          reporting_manager: parseInt(this.staffId, 10),
+          start_date: `${this.currentYear}-${this.currentMonth + 1}-${
+            this.selectedDay || this.currentDate.getDate()
+          }`,
+          end_date: `${this.currentYear}-${this.currentMonth + 1}-${
+            this.selectedDay || this.currentDate.getDate()
+          }`,
+        };
 
-        await this.fetchManageTeamMembers(); // Wait for the team members to be fetched
+        axios
+          .get(`http://localhost:6003/aggregateSchedule`, {
+            params,
+          })
+          .then((response) => {
+            this.schedule = response.data;
+            // this.fetchStaffTeamMembers(); // ** running before this.schedule retrieves
+          });
       } catch (error) {
+        this.schedule = [];
         console.error("Error fetching team schedule:", error);
       }
     },
