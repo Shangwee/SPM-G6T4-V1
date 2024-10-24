@@ -619,6 +619,7 @@ export default {
             ? "0" + this.selectedDay
             : this.selectedDay
         }`;
+        
         this.updateScheduleBasedOnRole();
         // slow in retrieving this.schedule, leading to
 
