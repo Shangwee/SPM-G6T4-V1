@@ -170,6 +170,11 @@ def create_app():
                     "request_id": request_id
                 })
 
+                if status == 1:
+                    delete_schedule = requests.delete(f"{SCHEDULE_SERVICE_URL}/schedule/delete/request/{request_id}")
+                    if delete_schedule.status_code == 200:
+                        return jsonify({'message': 'Request withdrawn successfully'}), 200
+
                 return jsonify({'message': 'Request withdrawn successfully'}), 200
         
         else:
