@@ -154,20 +154,60 @@ const confirmWithdraw = async () => {
 const requestStatus = ref(null); // Track the status of the selected WFH request
 
 // Show options popup for WFH requests (pending or approved)
+// Show options popup for WFH requests (pending, approved, or rejected)
 const showOptionsForWfh = (day) => {
   const dateString = `${currentDate.value.getFullYear()}-${String(currentDate.value.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-  // Find the WFH request for the selected day
-  const wfhRequest = wfhDates.value.find(wfh => wfh.date === dateString && (wfh.status === 0 || wfh.status === 1));
+  // Find the WFH request for the selected day (for all statuses including rejected)
+  const wfhRequest = wfhDates.value.find(wfh => wfh.date === dateString);
 
   if (wfhRequest) {
-    dayToWithdraw.value = wfhRequest.request_id;  // Set the correct request_id for withdrawal
-    requestStatus.value = wfhRequest.status;      // Track the status of the WFH request
-    showOptionsPopup.value = true;  // Show options popup
+    if (wfhRequest.status === 2) {
+      // If the request is rejected, show notification and auto delete
+      alert("This request has been rejected and will be deleted.");
+      autoDeleteRejectedRequest(wfhRequest.request_id);
+    } else {
+      // Handle pending or approved requests
+      dayToWithdraw.value = wfhRequest.request_id;  // Set the correct request_id for withdrawal
+      requestStatus.value = wfhRequest.status;      // Track the status of the WFH request
+      showOptionsPopup.value = true;  // Show options popup
+    }
   } else {
     console.error('No WFH request found for the selected day');
   }
 };
+
+// Function to automatically delete rejected requests
+const autoDeleteRejectedRequest = async (requestId) => {
+  const staffId = sessionStorage.getItem('staffID');
+
+  if (!staffId || !requestId) {
+    alert('Error: Staff ID or Request ID is missing');
+    return;
+  }
+
+  try {
+    // Send DELETE request to withdraw the rejected WFH request
+    const response = await axios.delete('http://localhost:6001/flexibleArrangement/withdrawRequest', {
+      headers: { 'Content-Type': 'application/json' },
+      data: {
+        staff_id: parseInt(staffId, 10), // Ensure staff_id is sent as an integer
+        request_id: requestId // Send the request_id
+      }
+    });
+
+    if (response.status === 200) {
+      alert('Rejected request deleted successfully!');
+      fetchWfhDates(); // Refresh the WFH dates after successful deletion
+    } else {
+      alert('Something went wrong while deleting the rejected request.');
+    }
+  } catch (error) {
+    console.error('Error deleting rejected request:', error.response ? error.response.data : error.message);
+    alert('Error: Unable to delete the rejected request.');
+  }
+};
+
 
 
 
@@ -378,7 +418,8 @@ onMounted(fetchWfhDates);
               <div class="calendar-grid p-2">
                 <div class="calendar-day fw-bold text-center" v-for="day in daysOfWeek" :key="day">{{ day }}</div>
                 <div v-for="(day, index) in daysInMonth" :key="index" class="calendar-cell text-center"
-                  @mouseover="hoveredDay = day" @mouseleave="hoveredDay = null" :class="{
+                  @mouseover="hoveredDay = day" @mouseleave="hoveredDay = null" @click.stop="showOptionsForWfh(day)"
+                  :class="{
                     'empty-day': day === '',
                     'selected-day': day === selectedDay,
                     today: isToday(day),
@@ -392,7 +433,7 @@ onMounted(fetchWfhDates);
                   <button v-if="hoveredDay === day && day !== '' && !isWfhDay(day)" class="apply-btn"
                     @click.stop="applyForWorkFromHome(day)">+</button>
 
-                  <!-- Pencil icon for pending WFH requests (shown only on hover) -->
+                  <!-- Pencil icon for pending or approved WFH requests (shown only on hover) -->
                   <i v-if="(getWfhDayStatus(day) === 0 || getWfhDayStatus(day) === 1) && hoveredDay === day"
                     class="bi bi-pencil-fill edit-icon" @click.stop="showOptionsForWfh(day)">
                   </i>
