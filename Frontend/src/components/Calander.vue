@@ -601,43 +601,34 @@ export default {
 
 
     selectDay(day) {
+    if (this.selectedDay === day) {
+      this.deselectDay(); // Call deselectDay if the same day is selected
+    } else {
+      this.deselectDay();
       
-      if (this.selectedDay === day) {
-        this.deselectDay(); // Call deselectDay if the same day is selected
-      } else {
-        // this.schedule = [];
-        // this.filteredStaffWorkingFromHome = [];
+      // Reset the department and team filters to their default state
+      this.selectedDepartment = ""; // Reset the department filter
+      this.selectedTeam = "";       // Reset the team filter
+      
+      this.selectedDay = day; // Select the new day
+      this.selectedDate = `${this.currentYear}-${this.currentMonth + 1}-${
+        this.selectedDay.toString().length === 1
+          ? "0" + this.selectedDay
+          : this.selectedDay
+      }`;
+      
+      this.updateScheduleBasedOnRole();
+      this.filterStaff(); // Filter staff based on the selected day
 
-        this.deselectDay();
-
-        this.selectedDay = day; // Select the new day
-        this.selectedDate = `${this.currentYear}-${this.currentMonth + 1}-${
-          this.selectedDay.toString().length == 1
-            ? "0" + this.selectedDay
-            : this.selectedDay
-        }`;
-        
-        this.updateScheduleBasedOnRole();
-        // slow in retrieving this.schedule, leading to
-
-        // this.fetchStaffTeamSchedule();
-        // this.fetchStaffTeamMembers();
-        this.filterStaff(); // Filter staff based on the selected day
-
-        // this.filteredStaffWorkingFromHome.length = 0;
-        // this.filteredStaffWorkingFromHome = [];
-
-        // Fetch the new schedule based on user role
-
-        console.log({
-          userRole: this.userRole,
-          staffId: this.staffId,
-          selectedDay: this.selectedDay,
-          schedule: this.schedule,
-          filteredStaffWorkingFromHome: this.filteredStaffWorkingFromHome,
-        });
-      }
-    },
+      console.log({
+        userRole: this.userRole,
+        staffId: this.staffId,
+        selectedDay: this.selectedDay,
+        schedule: this.schedule,
+        filteredStaffWorkingFromHome: this.filteredStaffWorkingFromHome,
+      });
+    }
+  },
 
     deselectDay() {
       this.selectedDay = null; // Deselect day
