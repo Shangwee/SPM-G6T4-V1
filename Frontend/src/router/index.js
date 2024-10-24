@@ -3,7 +3,6 @@ import Home from '@/components/HomePage.vue'
 import Login  from "@/components/Login.vue";
 import OwnSchedule from "@/components/OwnSchedule.vue";
 import TeamSchedule from "@/components/TeamSchedule.vue";
-import Arrangements from "@/components/Arrangements.vue";
 import Requests from "@/components/RequestsPage.vue";
 import Notifications from "@/components/Notifications.vue";
 
@@ -33,12 +32,6 @@ const routes = [
         path: '/requests',
         name: 'Requests',
         component: Requests
-    },
-
-    {
-        path: '/arrangements', 
-        name: 'Arrangements',
-        component: Arrangements,
     },
     {
         path: '/notifications',
