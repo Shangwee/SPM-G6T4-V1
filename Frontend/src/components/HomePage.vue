@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import NavBar from './NavBar.vue';
 
@@ -8,7 +8,10 @@ const inOfficeCount = ref(null); // Set to null initially to show loading state
 const wfhCount = ref(null); // Set to null initially to show loading state
 const totalDeptCount = ref(null); // Total number of employees in the department
 const userDept = ref(''); // Store user department
-const selectedDay = ref(new Date());
+const filteredStaffWorkingFromHome = ref([]); // Staff working from home
+const today = ref(new Date()); // Hold today's date
+const approvedWFHDates = ref([]); // Store the dates the user has applied for WFH with their status
+const isLoadingWFH = ref(true); // Loading state for WFH dates
 
 // Get staff ID from session storage (assuming staffID is stored in session)
 const staffId = sessionStorage.getItem('staffID');
@@ -21,8 +24,14 @@ const formatDate = (date) => {
   return `${year}-${month}-${day}`;
 };
 
-// Get today's date
-const today = formatDate(selectedDay.value);
+// Function to display today's date in a readable format (e.g., "October 25, 2024")
+const formatDateDisplay = (date) => {
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  return date.toLocaleDateString(undefined, options);
+};
+
+// Get today's date in formatted string for display
+const todayFormattedDisplay = ref(formatDateDisplay(today.value));
 
 // Fetch the user's department
 const fetchUserDepartment = async () => {
@@ -31,7 +40,7 @@ const fetchUserDepartment = async () => {
     if (response.data && response.data.Dept) {
       userDept.value = response.data.Dept;
       console.log('User department:', userDept.value);
-      fetchOfficeStatus(); // Fetch office status after getting the department
+      await fetchWFHCountForDepartment(); // Fetch the WFH count after getting the department
     } else {
       console.log('Department not found for the user.');
     }
@@ -54,63 +63,75 @@ const fetchTotalDeptCount = async () => {
   }
 };
 
-// Function to count the number of people working from home and in the office
-const countOfficeStatus = (schedules) => {
-  console.log('Fetched Schedules:', schedules);
-
-  if (!schedules || schedules.length === 0) {
-    console.log('No schedules returned.');
-    inOfficeCount.value = totalDeptCount.value || 0;
-    wfhCount.value = 0;
-    return;
-  }
-
-  // Ensure we have a Location or Status field in the schedule data
-  schedules.forEach(schedule => {
-    console.log(`Staff ID: ${schedule.Staff_ID}, Location: ${schedule.Location}, Dept: ${schedule.Dept}`);
-  });
-
-  // Count people working from home and in the office based on Location or Status field
-  wfhCount.value = schedules.filter(schedule => schedule.Location === 'WFH' && schedule.Dept === userDept.value).length;
-  inOfficeCount.value = (totalDeptCount.value || 0) - wfhCount.value; // Total department minus WFH count
-  console.log('In Office Count:', inOfficeCount.value);
-  console.log('WFH Count:', wfhCount.value);
-};
-
-// Fetch the number of people in the office and working from home for the selected date
-const fetchOfficeStatus = async () => {
+// Fetch the approved WFH requests for the selected day in the department
+const fetchWFHCountForDepartment = async () => {
   try {
-    // Adjust the endpoint and parameters as needed for your backend
-    const response = await axios.get(`http://localhost:5002/schedule/organisation`, {
+    // Fetch total department count
+    await fetchTotalDeptCount();
+
+    // Fetch WFH requests for the user's department on the selected day
+    const response = await axios.get(`http://localhost:6003/aggregateSchedule`, {
       params: {
-        start_date: formatDate(selectedDay.value),
-        end_date: formatDate(selectedDay.value),
+        type: 'Dept',
+        dept: userDept.value,
+        start_date: formatDate(today.value),
+        end_date: formatDate(today.value)
       }
     });
-    console.log('API Response for Office/WFH:', response.data);
+    console.log('WFH Requests API Response:', response.data); // Debugging the response
 
-    if (response.data && response.data.length > 0) {
-      await fetchTotalDeptCount(); // Ensure we get total department count first
-      countOfficeStatus(response.data); // Count WFH and office workers
-    } else {
-      console.log('No data found for the selected date.');
-      inOfficeCount.value = totalDeptCount.value || 0;
-      wfhCount.value = 0;
-    }
+    // Filter the staff working from home
+    filteredStaffWorkingFromHome.value = response.data.filter(
+      (schedule) => schedule.Location === 'WFH'
+    );
+
+    // Set WFH count
+    wfhCount.value = filteredStaffWorkingFromHome.value.length;
+
+    // Calculate in-office count
+    inOfficeCount.value = (totalDeptCount.value || 0) - wfhCount.value;
+
+    console.log('WFH Count:', wfhCount.value);
+    console.log('In Office Count:', inOfficeCount.value);
   } catch (error) {
-    console.error('Error fetching office status:', error);
-    // Set the counts to 0 in case of an error
-    inOfficeCount.value = totalDeptCount.value || 0;
+    console.error('Error fetching WFH requests:', error);
     wfhCount.value = 0;
+    inOfficeCount.value = totalDeptCount.value || 0; // If there's an error, assume all are in the office
   }
 };
 
-// Watch for changes in selectedDay and refetch the data
-watch(selectedDay, fetchOfficeStatus);
+// Fetch the approved WFH dates for the logged-in user
+const fetchApprovedWFHDates = async () => {
+  try {
+    const response = await axios.get(`http://localhost:6001/flexibleArrangement/ownRequests/${staffId}`);
+    console.log('Approved WFH Dates API Response:', response.data); // Debugging the response
+
+    // Get today's date for comparison
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0); // Reset hours to midnight to compare only the date part
+
+    // Ensure the response contains dates and filter out past dates
+    approvedWFHDates.value = response.data
+      .filter((schedule) => {
+        const scheduleDate = new Date(schedule.Date);
+        scheduleDate.setHours(0, 0, 0, 0); // Reset hours to midnight
+        return schedule.Status === 1 && scheduleDate >= todayDate; // Only future or today's approved WFH requests
+      })
+      .map((schedule) => formatDateDisplay(new Date(schedule.Date))); // Format the date for display
+
+    console.log('Approved WFH Dates (Filtered):', approvedWFHDates.value);
+  } catch (error) {
+    console.error('Error fetching approved WFH dates:', error);
+    approvedWFHDates.value = [];
+  } finally {
+    isLoadingWFH.value = false; // Set loading to false once data is fetched
+  }
+};
 
 // Fetch data when the component is mounted
 onMounted(async () => {
   await fetchUserDepartment(); // First fetch the user department
+  await fetchApprovedWFHDates(); // Fetch WFH dates after fetching department info
 });
 </script>
 
@@ -118,6 +139,9 @@ onMounted(async () => {
   <NavBar></NavBar>
   <div class="container dashboard-container">
     <h2 class="text-center">Today's Office Status</h2>
+    <!-- Display today's date -->
+    <h5 class="text-center">{{ todayFormattedDisplay }}</h5>
+    
     <!-- Display the department -->
     <h4 class="text-center mb-4">Department: {{ userDept }}</h4>
     
@@ -135,6 +159,24 @@ onMounted(async () => {
         <h3>Working from Home:</h3>
         <p class="count">{{ wfhCount }}</p> <!-- Dynamic count -->
       </div>
+    </div>
+
+    <!-- Approved WFH Dates Section -->
+    <div class="wfh-container">
+      <h3>Approved Work From Home Dates</h3>
+      
+      <!-- Loading state for WFH dates -->
+      <div v-if="isLoadingWFH">
+        Loading WFH dates...
+      </div>
+
+      <!-- Show WFH dates once loaded -->
+      <ul v-else>
+        <li v-for="(date, index) in approvedWFHDates" :key="index">
+          {{ date }}
+        </li>
+        <li v-if="approvedWFHDates.length === 0">No approved WFH dates found.</li>
+      </ul>
     </div>
   </div>
 </template>
@@ -155,6 +197,7 @@ onMounted(async () => {
   margin: 40px auto; /* Centering the container */
   box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1);
   text-align: center; /* Ensure everything is centered inside */
+  padding-top: 100px;
 }
 
 .dashboard h2 {
@@ -188,6 +231,32 @@ onMounted(async () => {
   font-size: 2.5rem;
   color: #3f51b5;
   font-weight: 600;
+}
+
+.wfh-container {
+  margin-top: 20px;
+  padding: 10px;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+ul li {
+  background-color: #f9f9f9;
+  margin: 5px 0;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+ul li:nth-child(odd) {
+  background-color: #f1f1f1;
+}
+
+ul li:nth-child(even) {
+  background-color: #e7e7e7;
 }
 
 @media (min-width: 768px) {
