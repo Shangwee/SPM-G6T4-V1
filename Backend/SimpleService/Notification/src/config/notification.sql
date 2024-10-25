@@ -1,6 +1,6 @@
-CREATE DATABASE IF NOT EXISTS notifications_db;
+CREATE DATABASE IF NOT EXISTS notifications;
 
-USE notifications_db;
+USE notifications;
 
 CREATE TABLE notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,

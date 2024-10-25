@@ -14,14 +14,14 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: account
     volumes:
-      - ./Account/db/account.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
-      - ./Account/employee.csv:/var/lib/mysql-files/employee.csv # Mount the file
+      - ./SimpleService/Account/db/account.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
+      - ./SimpleService/Account/employee.csv:/var/lib/mysql-files/employee.csv # Mount the file
 
   #################################
   # Account: The Account microservice
   #################################
   account:
-    build: ./Account
+    build: ./SimpleService/Account
     image: gcr.io/spmprojecttest/account:1.0 # Updated for GCR
     restart: always
     ports: [5001:5001]
@@ -38,7 +38,7 @@ services:
   # Account test: testing the Account microservice
   #################################
   account_test:
-    build: ./Account
+    build: ./SimpleService/Account
     image: gcr.io/spmprojecttest/account_test:1.0 # Updated for GCR
     depends_on:
       - account_db
@@ -55,7 +55,7 @@ services:
   # Schedule: The Schedule microservice
   #################################
   schedule:
-    build: ./Schedule
+    build: ./SimpleService/Schedule
     image: gcr.io/spmprojecttest/schedule:1.0 # Updated for GCR
     restart: always
     ports: [5002:5000]
@@ -79,14 +79,14 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: schedule
     volumes:
-      - ./Schedule/db/schedule.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
-      - ./Schedule/schedule.csv:/var/lib/mysql-files/schedule.csv # Mount the file
+      - ./SimpleService/Schedule/db/schedule.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
+      - ./SimpleService/Schedule/schedule.csv:/var/lib/mysql-files/schedule.csv # Mount the file
       
   #################################
   # Service_Test: Testing for scheduke microservice
   #################################
   schedule_test:
-    build: ./Schedule
+    build: ./SimpleService/Schedule
     image: gcr.io/spmprojecttest/schedule_test:1.0
     depends_on:
       - schedule_db
@@ -103,7 +103,7 @@ services:
   # Request: The Request microservice
   #################################
   request:
-    build: ./Request
+    build: ./SimpleService/Request
     image: gcr.io/spmprojecttest/request:1.0 # Updated for GCR
     restart: always
     ports: [5003:5000]
@@ -127,14 +127,14 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: request
     volumes:
-      - ./Request/db/request.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
-      - ./Request/request.csv:/var/lib/mysql-files/request.csv # Mount the file
+      - ./SimpleService/Request/db/request.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
+      - ./SimpleService/Request/request.csv:/var/lib/mysql-files/request.csv # Mount the file
 
   #################################
   # Request test: testing the Request microservice
   #################################
   request_test:
-    build: ./Request
+    build: ./SimpleService/Request
     image: gcr.io/spmprojecttest/request_test:1.0 # Updated for GCR
     depends_on:
       - request_db
@@ -151,7 +151,7 @@ services:
   # Meeting: The Meeting microservice
   #################################
   meeting:
-    build: ./Meeting
+    build: ./SimpleService/Meeting
     image: gcr.io/spmprojecttest/meeting:1.0 # Updated for GCR
     restart: always
     ports: [5004:5000]
@@ -175,15 +175,15 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: meeting
     volumes:
-      - ./Meeting/db/meeting.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
-      - ./Meeting/meeting.csv:/var/lib/mysql-files/meeting.csv # Mount the file
-      - ./Meeting/meetingstaffs.csv:/var/lib/mysql-files/meetingstaffs.csv # Mount the file
+      - ./SimpleService/Meeting/db/meeting.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
+      - ./SimpleService/Meeting/meeting.csv:/var/lib/mysql-files/meeting.csv # Mount the file
+      - ./SimpleService/Meeting/meetingstaffs.csv:/var/lib/mysql-files/meetingstaffs.csv # Mount the file
 
   #################################
   # notification: The Notification microservice
   #################################
   notification:
-    build: ./Notification
+    build: ./SimpleService/Notification
     image: gcr.io/spmprojecttest/notification:1.0
     restart: always
     ports : [5005:5005]
@@ -207,4 +207,81 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: notifications
     volumes:
-      - ./Notification/src/config/notification.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./SimpleService/Notification/src/config/notification.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # complex microservice
+
+  #################################
+  # FlexibleArrangement: The FlexibleArrangement microservice
+  #################################
+  FlexibleArrangement:
+    build:
+      context: ./ComplexService/FlexibleArrangement
+      dockerfile: Dockerfile
+    image: gcr.io/spmprojecttest/flexiblearrangement:1.0  # Updated for GCR
+    restart: always
+    ports: ["6001:6001"]
+    environment:
+      PYTHONUNBUFFERED: 1
+
+  #################################
+  # FlexibleArrangement test: testing the FlexibleArrangement microservice
+  #################################
+  FlexibleArrangement_test:
+    build:
+      context: ./ComplexService/FlexibleArrangement
+      dockerfile: Dockerfile
+    image: spm/flexiblearrangement_test:1.0
+    depends_on:
+      - FlexibleArrangement
+    command: /bin/sh -c "sleep 80 && python -m unittest flexible_arrangement_test.py"
+
+  #################################
+  # ManageRequest: The ManageRequest microservice
+  #################################
+  ManageRequest:
+    build:
+      context: ./ComplexService/ManageRequest
+      dockerfile: Dockerfile
+    image: gcr.io/spmprojecttest/managerequest:1.0  # Updated for GCR
+    restart: always
+    ports: ["6002:6002"]
+    environment:
+      PYTHONUNBUFFERED: 1 
+
+  #################################
+  # ManageRequest test: testing the ManageRequest microservice
+  #################################
+  ManageRequest_test:
+    build:
+      context: ./ComplexService/ManageRequest
+      dockerfile: Dockerfile
+    image: gcr.io/spmprojecttest/managerequest_test:1.0  # Updated for GCR
+    depends_on:
+      - ManageRequest
+    command: /bin/sh -c "sleep 100 && python -m unittest manage_request_test.py"
+
+  #################################
+  # ScheduleAggregation: The ScheduleAggregation microservice
+  #################################
+  ScheduleAggregation:
+    build:
+      context: ./ComplexService/ScheduleAggregation
+      dockerfile: Dockerfile
+    image: gcr.io/spmprojecttest/scheduleaggregation:1.0  # Updated for GCR
+    restart: always
+    ports: ["6003:6003"]
+    environment:
+      PYTHONUNBUFFERED: 1
+
+  #################################
+  # ScheduleAggregation test: testing the ScheduleAggregation microservice
+  #################################
+  ScheduleAggregation_test:
+    build:
+      context: ./ComplexService/ScheduleAggregation
+      dockerfile: Dockerfile
+    image: gcr.io/spmprojecttest/scheduleaggregation_test:1.0  # Updated for GCR
+    depends_on:
+      - ScheduleAggregation
+    command: /bin/sh -c "sleep 100 && python -m unittest schedule_aggregation_test.py"
