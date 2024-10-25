@@ -49,40 +49,52 @@ const fetchUserDetails = async () => {
   }
 };
 
+// Fetch the total department count for the logged-in user's department
 const fetchTotalDeptCount = async () => {
   try {
     const response = await axios.get(`http://localhost:5001/users`, {
-      params: { dept: userDept.value }
+      params: { dept: userDept.value },
     });
-    totalDeptCount.value = response.data.length;
+    totalDeptCount.value = response.data.length || 0;
   } catch (error) {
     console.error('Error fetching total department count:', error);
     totalDeptCount.value = 0;
   }
 };
 
+// Fetch WFH schedules for the current day in the user's department
 const fetchWFHCountForDepartment = async () => {
   try {
-    await fetchTotalDeptCount();
     const response = await axios.get(`http://localhost:6003/aggregateSchedule`, {
       params: {
         type: 'Dept',
         dept: userDept.value,
         start_date: formatDate(today.value),
-        end_date: formatDate(today.value)
-      }
+        end_date: formatDate(today.value),
+      },
     });
 
-    filteredStaffWorkingFromHome.value = response.data.filter(
-      (schedule) => schedule.Location === 'WFH'
-    );
+    const schedules = response.data || [];
 
-    wfhCount.value = filteredStaffWorkingFromHome.value.length;
-    inOfficeCount.value = (totalDeptCount.value || 0) - wfhCount.value;
+    // Log the full structure of each schedule for debugging
+    console.log('Detailed Schedules:', schedules);
+
+    // Assuming 'Location' field indicates WFH or In Office
+    // Update the filter based on the actual field name
+    wfhCount.value = schedules.filter((schedule) => schedule.Location === 'WFH').length;
+
+    // Correct the in-office count
+    wfhCount.value = schedules.length - wfhCount.value;
+    inOfficeCount.value = totalDeptCount.value - wfhCount.value;
+
+    // Log counts to verify correctness
+    console.log(`WFH Count: ${wfhCount.value}`);
+    console.log(`In Office Count: ${inOfficeCount.value}`);
+    
   } catch (error) {
     console.error('Error fetching WFH requests:', error);
-    wfhCount.value = 0;
-    inOfficeCount.value = totalDeptCount.value || 0;
+    wfhCount.value = 0; // Default to 0 if an error occurs
+    inOfficeCount.value = totalDeptCount.value || 0; // Assume all are in office if there's an error
   }
 };
 
@@ -119,6 +131,8 @@ const fetchPendingRequests = async () => {
 
 onMounted(async () => {
   await fetchUserDetails();
+  await fetchTotalDeptCount(); // Fetch department count first
+  await fetchWFHCountForDepartment(); // Then fetch WFH count and in-office count based on total
   await fetchApprovedWFHDates();
 });
 </script>
@@ -141,7 +155,7 @@ onMounted(async () => {
         <p class="count">{{ inOfficeCount }}</p>
       </div>
       <div class="status-card">
-        <h3>Working from Home</h3>
+        <h3>WFH</h3>
         <p class="count">{{ wfhCount }}</p>
       </div>
     </div>
@@ -173,7 +187,6 @@ onMounted(async () => {
     </div>
   </div>
 </template>
-
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
