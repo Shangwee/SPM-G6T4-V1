@@ -156,6 +156,8 @@ def create_app():
             if staff_id != retrieve_staff_id:
                 return jsonify({'error': 'You are not allowed to withdraw this request'}), 401
             
+            # check if the request is pending
+        
             # withdraw the request
             withdraw_request = requests.delete(f"{REQUEST_SERVICE_URL}/request/delete/{request_id}")
 
@@ -168,13 +170,13 @@ def create_app():
                     "request_id": request_id
                 })
 
-                # delete from schedule
                 if status == 1:
                     delete_schedule = requests.delete(f"{SCHEDULE_SERVICE_URL}/schedule/delete/request/{request_id}")
                     if delete_schedule.status_code == 200:
                         return jsonify({'message': 'Request withdrawn successfully'}), 200
-                    
+
                 return jsonify({'message': 'Request withdrawn successfully'}), 200
+        
         else:
             return jsonify({'error': 'Failed to retrieve request'}), 404
 

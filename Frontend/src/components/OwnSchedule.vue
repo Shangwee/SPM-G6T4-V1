@@ -122,14 +122,15 @@ const confirmWithdraw = async () => {
 
   const dateToWithdraw = `${currentDate.value.getFullYear()}-${String(currentDate.value.getMonth() + 1).padStart(2, '0')}-${String(dayToWithdraw.value).padStart(2, '0')}`;
 
-  const pendingRequest = wfhDates.value.find(wfh => wfh.date === dateToWithdraw && wfh.status === 0);
+  // Modify this line to allow both pending (status === 0) and approved (status === 1) requests
+  const requestToWithdraw = wfhDates.value.find(wfh => wfh.date === dateToWithdraw && (wfh.status === 0 || wfh.status === 1));
 
-  if (!pendingRequest) {
-    alert('No pending request to withdraw');
+  if (!requestToWithdraw) {
+    alert('No pending or approved request to withdraw');
     return;
   }
 
-  const requestId = pendingRequest.request_id;
+  const requestId = requestToWithdraw.request_id;
 
   try {
     const response = await axios.delete('http://localhost:6001/flexibleArrangement/withdrawRequest', {
@@ -150,21 +151,65 @@ const confirmWithdraw = async () => {
   }
 };
 
-// Show options popup for pending WFH requests
+const requestStatus = ref(null); // Track the status of the selected WFH request
+
+// Show options popup for WFH requests (pending or approved)
+// Show options popup for WFH requests (pending, approved, or rejected)
 const showOptionsForWfh = (day) => {
   const dateString = `${currentDate.value.getFullYear()}-${String(currentDate.value.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  
-  // Find the WFH request for the selected day
+
+  // Find the WFH request for the selected day (for all statuses including rejected)
   const wfhRequest = wfhDates.value.find(wfh => wfh.date === dateString);
 
   if (wfhRequest) {
-    dayToWithdraw.value = wfhRequest.request_id;  // Set the correct request_id for withdrawal
-    console.log('Request ID (from dayToWithdraw):', dayToWithdraw.value);  // Log the correct request_id
-    showOptionsPopup.value = true;  // Show options popup
+    if (wfhRequest.status === 2) {
+      // If the request is rejected, show notification and auto delete
+      alert("This request has been rejected and will be deleted.");
+      autoDeleteRejectedRequest(wfhRequest.request_id);
+    } else {
+      // Handle pending or approved requests
+      dayToWithdraw.value = wfhRequest.request_id;  // Set the correct request_id for withdrawal
+      requestStatus.value = wfhRequest.status;      // Track the status of the WFH request
+      showOptionsPopup.value = true;  // Show options popup
+    }
   } else {
     console.error('No WFH request found for the selected day');
   }
 };
+
+// Function to automatically delete rejected requests
+const autoDeleteRejectedRequest = async (requestId) => {
+  const staffId = sessionStorage.getItem('staffID');
+
+  if (!staffId || !requestId) {
+    alert('Error: Staff ID or Request ID is missing');
+    return;
+  }
+
+  try {
+    // Send DELETE request to withdraw the rejected WFH request
+    const response = await axios.delete('http://localhost:6001/flexibleArrangement/withdrawRequest', {
+      headers: { 'Content-Type': 'application/json' },
+      data: {
+        staff_id: parseInt(staffId, 10), // Ensure staff_id is sent as an integer
+        request_id: requestId // Send the request_id
+      }
+    });
+
+    if (response.status === 200) {
+      alert('Rejected request deleted successfully!');
+      fetchWfhDates(); // Refresh the WFH dates after successful deletion
+    } else {
+      alert('Something went wrong while deleting the rejected request.');
+    }
+  } catch (error) {
+    console.error('Error deleting rejected request:', error.response ? error.response.data : error.message);
+    alert('Error: Unable to delete the rejected request.');
+  }
+};
+
+
+
 
 const withdrawWorkFromHome = async () => {
   const staffId = sessionStorage.getItem('staffID');
@@ -373,7 +418,8 @@ onMounted(fetchWfhDates);
               <div class="calendar-grid p-2">
                 <div class="calendar-day fw-bold text-center" v-for="day in daysOfWeek" :key="day">{{ day }}</div>
                 <div v-for="(day, index) in daysInMonth" :key="index" class="calendar-cell text-center"
-                  @mouseover="hoveredDay = day" @mouseleave="hoveredDay = null" :class="{
+                  @mouseover="hoveredDay = day" @mouseleave="hoveredDay = null" @click.stop="showOptionsForWfh(day)"
+                  :class="{
                     'empty-day': day === '',
                     'selected-day': day === selectedDay,
                     today: isToday(day),
@@ -387,9 +433,10 @@ onMounted(fetchWfhDates);
                   <button v-if="hoveredDay === day && day !== '' && !isWfhDay(day)" class="apply-btn"
                     @click.stop="applyForWorkFromHome(day)">+</button>
 
-                  <!-- Pencil icon for pending WFH requests (shown only on hover) -->
-                  <i v-if="getWfhDayStatus(day) === 0 && hoveredDay === day" class="bi bi-pencil-fill edit-icon"
-                    @click.stop="showOptionsForWfh(day)"></i>
+                  <!-- Pencil icon for pending or approved WFH requests (shown only on hover) -->
+                  <i v-if="(getWfhDayStatus(day) === 0 || getWfhDayStatus(day) === 1) && hoveredDay === day"
+                    class="bi bi-pencil-fill edit-icon" @click.stop="showOptionsForWfh(day)">
+                  </i>
 
                   <!-- WFH icon or badge, shown only for days with requests (status 0, 1, or 2) -->
                   <i v-if="isWfhDay(day)" class="bi bi-house-fill wfh-icon"></i>
@@ -431,11 +478,17 @@ onMounted(fetchWfhDates);
             <button class="close-btn" @click="closePopup">×</button>
 
             <p>Select an action for WFH Request:</p>
+
             <div class="form-actions">
-              <button class="btn btn-primary" @click="changeWfhDate">Change WFH Date</button>
+              <!-- Show "Change WFH Date" button only if the request is pending (status === 0) -->
+              <button v-if="requestStatus === 0" class="btn btn-primary" @click="changeWfhDate">Change WFH Date</button>
+
+              <!-- Always show the "Delete WFH Request" button -->
               <button class="btn btn-danger" @click="withdrawWorkFromHome">Delete WFH Request</button>
             </div>
           </div>
+
+
 
           <!-- Confirmation popup for withdrawing WFH request -->
           <div v-if="showWithdrawConfirmation" class="withdraw-confirmation">
@@ -697,10 +750,34 @@ onMounted(fetchWfhDates);
   font-size: 20px;
   cursor: pointer;
   color: #000;
+  z-index: 9999;
+  /* Ensure it's above other elements */
 }
 
 .close-btn:hover {
   color: red;
+  /* Optional hover effect */
 }
 
+/* Ensure the popup is properly positioned and sized */
+.options-popup {
+  padding: 20px;
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  width: 300px;
+  /* Add a fixed width to maintain consistency */
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+}
 </style>
