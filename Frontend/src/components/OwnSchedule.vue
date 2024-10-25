@@ -122,14 +122,15 @@ const confirmWithdraw = async () => {
 
   const dateToWithdraw = `${currentDate.value.getFullYear()}-${String(currentDate.value.getMonth() + 1).padStart(2, '0')}-${String(dayToWithdraw.value).padStart(2, '0')}`;
 
-  const pendingRequest = wfhDates.value.find(wfh => wfh.date === dateToWithdraw && wfh.status === 0);
+  // Modify this line to allow both pending (status === 0) and approved (status === 1) requests
+  const requestToWithdraw = wfhDates.value.find(wfh => wfh.date === dateToWithdraw && (wfh.status === 0 || wfh.status === 1));
 
-  if (!pendingRequest) {
-    alert('No pending request to withdraw');
+  if (!requestToWithdraw) {
+    alert('No pending or approved request to withdraw');
     return;
   }
 
-  const requestId = pendingRequest.request_id;
+  const requestId = requestToWithdraw.request_id;
 
   try {
     const response = await axios.delete('http://localhost:6001/flexibleArrangement/withdrawRequest', {
@@ -150,21 +151,99 @@ const confirmWithdraw = async () => {
   }
 };
 
-// Show options popup for pending WFH requests
+const requestStatus = ref(null); // Track the status of the selected WFH request
+
+// Show options popup for WFH requests (pending or approved)
+// Show options popup for WFH requests (pending, approved, or rejected)
 const showOptionsForWfh = (day) => {
-  dayToWithdraw.value = day; // Set the day
-  showOptionsPopup.value = true; // Show options popup
+  const dateString = `${currentDate.value.getFullYear()}-${String(currentDate.value.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+  // Find the WFH request for the selected day (for all statuses including rejected)
+  const wfhRequest = wfhDates.value.find(wfh => wfh.date === dateString);
+
+  if (wfhRequest) {
+    if (wfhRequest.status === 2) {
+      // If the request is rejected, show notification and auto delete
+      alert("This request has been rejected and will be deleted.");
+      autoDeleteRejectedRequest(wfhRequest.request_id);
+    } else {
+      // Handle pending or approved requests
+      dayToWithdraw.value = wfhRequest.request_id;  // Set the correct request_id for withdrawal
+      requestStatus.value = wfhRequest.status;      // Track the status of the WFH request
+      showOptionsPopup.value = true;  // Show options popup
+    }
+  } else {
+    console.error('No WFH request found for the selected day');
+  }
 };
 
-// Function to open confirmation popup for withdrawal
-const withdrawWorkFromHome = () => {
-  showOptionsPopup.value = false; // Hide options popup
-  showWithdrawConfirmation.value = true; // Show confirmation popup
+// Function to automatically delete rejected requests
+const autoDeleteRejectedRequest = async (requestId) => {
+  const staffId = sessionStorage.getItem('staffID');
+
+  if (!staffId || !requestId) {
+    alert('Error: Staff ID or Request ID is missing');
+    return;
+  }
+
+  try {
+    // Send DELETE request to withdraw the rejected WFH request
+    const response = await axios.delete('http://localhost:6001/flexibleArrangement/withdrawRequest', {
+      headers: { 'Content-Type': 'application/json' },
+      data: {
+        staff_id: parseInt(staffId, 10), // Ensure staff_id is sent as an integer
+        request_id: requestId // Send the request_id
+      }
+    });
+
+    if (response.status === 200) {
+      alert('Rejected request deleted successfully!');
+      fetchWfhDates(); // Refresh the WFH dates after successful deletion
+    } else {
+      alert('Something went wrong while deleting the rejected request.');
+    }
+  } catch (error) {
+    console.error('Error deleting rejected request:', error.response ? error.response.data : error.message);
+    alert('Error: Unable to delete the rejected request.');
+  }
 };
 
-// Function to handle changing WFH date (you can implement the logic here)
-const changeWfhDate = () => {
-  alert('Change WFH Date option clicked'); // Placeholder for changing WFH date
+
+
+
+const withdrawWorkFromHome = async () => {
+  const staffId = sessionStorage.getItem('staffID');
+  const requestId = dayToWithdraw.value; // Get the request ID from the day selected
+
+  if (!staffId || !requestId) {
+    alert('Error: Staff ID or Request ID is missing');
+    return;
+  }
+
+  try {
+    // Send DELETE request to withdraw WFH request
+    const response = await axios.delete('http://localhost:6001/flexibleArrangement/withdrawRequest', {
+      headers: { 'Content-Type': 'application/json' },
+      data: {
+        staff_id: parseInt(staffId, 10), // Ensure staff_id is sent as an integer
+        request_id: requestId // Send the request_id
+      }
+    });
+
+    if (response.status === 200) {
+      alert('Request withdrawn successfully!');
+      fetchWfhDates(); // Refresh the WFH dates after successful deletion
+    } else {
+      alert('Something went wrong, please try again.');
+    }
+  } catch (error) {
+    console.error('Error withdrawing WFH request:', error.response ? error.response.data : error.message);
+    alert('Error: Unable to withdraw request. Please check the console for more details.');
+  } finally {
+    // Close both confirmation and options popup regardless of success or failure
+    showWithdrawConfirmation.value = false;
+    showOptionsPopup.value = false; // If there is another popup open, also ensure it is closed
+  }
 };
 
 const fetchWfhDates = async () => {
@@ -213,6 +292,98 @@ const cancelWorkFromHome = () => {
   showForm.value = false; // Hide the form
 };
 
+
+
+const changeWfhDate = async () => {
+  const staffId = parseInt(sessionStorage.getItem('staffID'), 10);  // Get staff ID from session
+  if (!staffId) {
+    alert('Error: Staff ID is missing');
+    return;
+  }
+
+  // Get the request ID and the original requested date
+  const requestId = dayToWithdraw.value; // Assuming you have requestId stored here
+
+  // Find the initial WFH requested date for the current request
+  const initialRequest = wfhDates.value.find(wfh => wfh.request_id === requestId);
+  const initialDate = initialRequest ? initialRequest.date : null;
+
+  if (!initialDate) {
+    alert('Error: Unable to retrieve initial WFH request date.');
+    return;
+  }
+
+  let isValidDate = false;
+  let newDate = null;
+
+  // Keep asking for a valid and different date until the user enters a correct one or cancels
+  while (!isValidDate) {
+    newDate = prompt('Enter a new date for WFH (YYYY-MM-DD):');
+
+    if (!newDate) {
+      // If the user presses "Cancel", close the popup
+      showOptionsPopup.value = false;
+      return;
+    }
+
+    const dateRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+
+    if (!dateRegex.test(newDate)) {
+      alert('Invalid date format! Please enter a valid date in YYYY-MM-DD format (with correct month and day).');
+    } else if (newDate === initialDate) {
+      alert('The new date cannot be the same as the original requested date. Please choose a different date.');
+    } else {
+      const dateInput = new Date(newDate);
+      const currentDate = new Date();
+
+      // Check if the date is at least 24 hours in the future
+      if (dateInput.getTime() - currentDate.getTime() < 24 * 60 * 60 * 1000) {
+        alert('Date must be at least 24 hours from now. Please enter a valid future date.');
+      } else {
+        isValidDate = true;  // Mark the date as valid if all checks pass and it's different from the original date
+      }
+    }
+  }
+
+  // Persistent prompt for reason
+  let newReason = '';
+  while (!newReason) {
+    newReason = prompt('Enter a new reason for WFH:', reason.value || '');
+    if (!newReason) {
+      alert('A reason is required. Please enter a valid reason.');
+    }
+  }
+
+  try {
+    // Send the PUT request to the backend to update the WFH request
+    const response = await axios.put('http://localhost:6001/flexibleArrangement/updateRequest', {
+      staff_id: staffId,
+      request_id: requestId,
+      date: newDate,
+      reason: newReason
+    });
+
+    if (response.status === 200) {
+      alert('WFH request updated successfully!');
+      fetchWfhDates();  // Refresh WFH dates after update
+    } else {
+      alert('Something went wrong. Please try again.');
+    }
+  } catch (error) {
+    console.error('Error updating WFH request:', error.response ? error.response.data : error.message);
+    alert('Error: Unable to update WFH request.');
+  } finally {
+    showOptionsPopup.value = false;  // Close the options popup after successful submission
+  }
+};
+
+
+
+const closePopup = () => {
+  showOptionsPopup.value = false; // Close the popup
+};
+
+
 // Fetch WFH dates when the component is mounted
 onMounted(fetchWfhDates);
 </script>
@@ -247,7 +418,8 @@ onMounted(fetchWfhDates);
               <div class="calendar-grid p-2">
                 <div class="calendar-day fw-bold text-center" v-for="day in daysOfWeek" :key="day">{{ day }}</div>
                 <div v-for="(day, index) in daysInMonth" :key="index" class="calendar-cell text-center"
-                  @mouseover="hoveredDay = day" @mouseleave="hoveredDay = null" :class="{
+                  @mouseover="hoveredDay = day" @mouseleave="hoveredDay = null" @click.stop="showOptionsForWfh(day)"
+                  :class="{
                     'empty-day': day === '',
                     'selected-day': day === selectedDay,
                     today: isToday(day),
@@ -261,9 +433,10 @@ onMounted(fetchWfhDates);
                   <button v-if="hoveredDay === day && day !== '' && !isWfhDay(day)" class="apply-btn"
                     @click.stop="applyForWorkFromHome(day)">+</button>
 
-                  <!-- Pencil icon for pending WFH requests (shown only on hover) -->
-                  <i v-if="getWfhDayStatus(day) === 0 && hoveredDay === day" class="bi bi-pencil-fill edit-icon"
-                    @click.stop="showOptionsForWfh(day)"></i>
+                  <!-- Pencil icon for pending or approved WFH requests (shown only on hover) -->
+                  <i v-if="(getWfhDayStatus(day) === 0 || getWfhDayStatus(day) === 1) && hoveredDay === day"
+                    class="bi bi-pencil-fill edit-icon" @click.stop="showOptionsForWfh(day)">
+                  </i>
 
                   <!-- WFH icon or badge, shown only for days with requests (status 0, 1, or 2) -->
                   <i v-if="isWfhDay(day)" class="bi bi-house-fill wfh-icon"></i>
@@ -301,12 +474,21 @@ onMounted(fetchWfhDates);
 
           <!-- Options popup for WFH request -->
           <div v-if="showOptionsPopup" class="options-popup">
+            <!-- Close Button (X) -->
+            <button class="close-btn" @click="closePopup">×</button>
+
             <p>Select an action for WFH Request:</p>
+
             <div class="form-actions">
-              <button class="btn btn-primary" @click="changeWfhDate">Change WFH Date</button>
+              <!-- Show "Change WFH Date" button only if the request is pending (status === 0) -->
+              <button v-if="requestStatus === 0" class="btn btn-primary" @click="changeWfhDate">Change WFH Date</button>
+
+              <!-- Always show the "Delete WFH Request" button -->
               <button class="btn btn-danger" @click="withdrawWorkFromHome">Delete WFH Request</button>
             </div>
           </div>
+
+
 
           <!-- Confirmation popup for withdrawing WFH request -->
           <div v-if="showWithdrawConfirmation" class="withdraw-confirmation">
@@ -560,5 +742,45 @@ onMounted(fetchWfhDates);
   display: flex;
   justify-content: space-around;
   margin-top: 10px;
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #000;
+  z-index: 9999;
+  /* Ensure it's above other elements */
+}
+
+.close-btn:hover {
+  color: red;
+  /* Optional hover effect */
+}
+
+/* Ensure the popup is properly positioned and sized */
+.options-popup {
+  padding: 20px;
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  width: 300px;
+  /* Add a fixed width to maintain consistency */
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
 }
 </style>

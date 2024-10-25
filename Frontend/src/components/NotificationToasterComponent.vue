@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid h-100 d-flex align-items-center justify-content-center">
+  <div class="h-100 d-flex align-items-center justify-content-center">
     <!-- Toast container for showing real-time alerts -->
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1050;">
       <div
