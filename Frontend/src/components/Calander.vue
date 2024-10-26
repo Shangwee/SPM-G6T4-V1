@@ -169,7 +169,9 @@
             <div>
               <h6>Users Not in Schedule</h6>
               <ul>
-                <li v-for="user in usersNotInSchedule" :key="user.id">{{ user.Staff_FName }}</li>
+                <li v-for="user in usersNotInSchedule" :key="user.id">{{ user.Staff_FName }} {{ user.Staff_LName }} ({{
+                      user.Staff_ID
+                    }}) - {{ user.Position }}</li>
               </ul>
             </div>
           </div>
@@ -193,6 +195,7 @@ export default {
       staffId: null,
       reportingManager: null,
       userRole: null,
+      userPosition: null,
       userDept: null,
       ownSchedule: [],
       schedule: [],
@@ -230,7 +233,6 @@ export default {
 
     if (this.staffId) {
       try {
-        this.fetchAllUsers();
         this.fetchUserRole(); // Wait for user role to be fetched
         this.fetchUserDept();
         this.fetchOwnSchedule();
@@ -244,12 +246,15 @@ export default {
         if (this.userRole === 2) {
           console.log("Fetching staff team schedule for user role 2");
           this.fetchStaffTeamSchedule();
+          this.fetchUsersByTeam();
         } else if (this.userRole === 3) {
           this.fetchbyOwnDept();
           this.fetchManageTeamSchedule();
+          this.fetchUsersByDept();
         } else if (this.userRole === 1) {
           // this.fetchbyOwnDept();
           this.fetchALLSchedule();
+          this.fetchAllUsers();
         }
       } catch (error) {
         console.error("Error in created lifecycle:", error);
@@ -313,7 +318,7 @@ export default {
   
   methods: {
     mounted() {
-      this.fetchAllUsers();
+      
     },
 
     async fetchAllUsers() {
@@ -322,6 +327,26 @@ export default {
         this.allUsers = response.data; // Assuming the response is an array of users
       } catch (error) {
         console.error("Error fetching all users:", error);
+      }
+    },
+    async fetchUsersByTeam() {
+      try {
+        const response = await axios.get("http://localhost:5001/users", {
+          params: { position: this.userPosition },
+        });
+        this.allUsers = response.data; // Store the users fetched by team
+      } catch (error) {
+        console.error("Error fetching users by team:", error);
+      }
+    },
+    async fetchUsersByDept() {
+      try {
+        const response = await axios.get("http://localhost:5001/users", {
+          params: { dept: this.userDept },
+        });
+        this.allUsers = response.data; // Store the users fetched by department
+      } catch (error) {
+        console.error("Error fetching users by department:", error);
       }
     },
 
@@ -356,6 +381,17 @@ export default {
         })
         .catch((error) => {
           console.error("Failed to fetch user role:", error);
+          throw error; // Re-throw the error to catch it in created()
+        });
+    },
+    fetchUserPosition() {
+      return axios
+        .get(`http://localhost:5001/user/${this.staffId}`)
+        .then((response) => {
+          this.userPosition = response.data.Position; // Set the userRole based on response
+        })
+        .catch((error) => {
+          console.error("Failed to fetch user Position:", error);
           throw error; // Re-throw the error to catch it in created()
         });
     },
@@ -611,7 +647,6 @@ export default {
       }`;
 
       // Only fetch or update schedule if the day has WFH requests
-      this.fetchAllUsers();
       this.updateScheduleBasedOnRole();
       this.filterStaff(); // Reapply staff filtering logic
       this.fetchUsersNotInSchedule();
@@ -640,12 +675,15 @@ export default {
       if (this.userRole === 2) {
         // this.fetchReportingManager();
         this.fetchStaffTeamSchedule();
+        this.fetchUsersByTeam();
       } else if (this.userRole === 3) {
         this.fetchbyOwnDept();
         this.fetchManageTeamSchedule();
+        this.fetchUsersByDept();
       } else if (this.userRole === 1) {
         // this.fetchbyOwnDept();
         this.fetchALLSchedule();
+        this.fetchAllUsers();
       }
     },
 
