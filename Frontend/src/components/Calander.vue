@@ -424,12 +424,20 @@ export default {
 
 
     fetchUsersNotInSchedule() {
-      // Ensure scheduledUserIds contains integer Staff_IDs
-      const scheduledUserIds = new Set(this.schedule.map((s) => parseInt(s.Staff_ID, 10))); 
-
-      // Filter out users from allUsers based on their presence in the schedule
+      // Ensure that schedule and allUsers contain expected data
+      if (!Array.isArray(this.schedule) || !Array.isArray(this.allUsers)) {
+        console.error("Schedule or AllUsers is not an array");
+        return;
+      }
+      
+      // Collect all Staff_IDs from the schedule into a Set
+      const scheduledUserIds = new Set(this.schedule.map(s => {
+        console.log("Staff_ID:", s.Staff_ID); // Debugging to check Staff_ID values
+        return parseInt(s.Staff_ID, 10); // Convert to integer
+      }));
+      // Filter users who are not in the schedule
       this.usersNotInSchedule = this.allUsers.filter((user) => {
-        const isNotInSchedule = !scheduledUserIds.has(parseInt(user.Staff_ID, 10)); 
+        const isNotInSchedule = !scheduledUserIds.has(parseInt(user.Staff_ID, 10));
 
         // Apply department and team filtering
         const isDepartmentMatch = !this.selectedDepartment || user.Dept === this.selectedDepartment;
@@ -438,8 +446,9 @@ export default {
         return isNotInSchedule && isDepartmentMatch && isTeamMatch;
       });
 
-      console.log("Users Not In Schedule:", this.usersNotInSchedule); // Optional: log the results for debugging
-    },
+      console.log("Users Not In Schedule:", this.usersNotInSchedule); // Debugging
+    }, 
+
 
 
 
@@ -551,6 +560,7 @@ export default {
           })
           .then((response) => {
             this.schedule = response.data;
+            console.log("Schedule data:", this.schedule);
             // this.fetchStaffTeamMembers(); // ** running before this.schedule retrieves
           });
           this.filterUsersNotInSchedule();
