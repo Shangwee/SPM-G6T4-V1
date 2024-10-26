@@ -166,6 +166,12 @@
                 </div>
               </ul>
             </div>
+            <div>
+              <h6>Users Not in Schedule</h6>
+              <ul>
+                <li v-for="user in usersNotInSchedule" :key="user.id">{{ user.Staff_FName }}</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -203,6 +209,10 @@ export default {
       filteredStaffWorkingFromHome: [],
       selectedDate: "",
       myMeetings: [],
+
+      allUsers: [], // Array to hold all users
+      scheduledUsers: [], // Array to hold scheduled users
+      usersNotInSchedule: [], // Array to hold users not in schedule
     };
   },
 
@@ -220,6 +230,7 @@ export default {
 
     if (this.staffId) {
       try {
+        this.fetchAllUsers();
         this.fetchUserRole(); // Wait for user role to be fetched
         this.fetchUserDept();
         this.fetchOwnSchedule();
@@ -299,8 +310,30 @@ export default {
       return days;
     },
   },
-
+  
   methods: {
+    mounted() {
+      this.fetchAllUsers();
+    },
+
+    async fetchAllUsers() {
+      try {
+        const response = await axios.get("http://localhost:5001/users"); // Adjust the endpoint as necessary
+        this.allUsers = response.data; // Assuming the response is an array of users
+      } catch (error) {
+        console.error("Error fetching all users:", error);
+      }
+    },
+
+    fetchUsersNotInSchedule() {
+      const scheduleDates = this.schedule.map((s) => new Date(s.Date).toDateString());
+      console.log("asfasfasfa");
+      this.usersNotInSchedule = this.allUsers.filter((user) => {
+        const userDate = new Date(user.date).toDateString();
+        return !scheduleDates.includes(userDate);
+      });
+    },
+
     getMeetings() {
       let url = "http://localhost:5004/meeting";
       let params = {
@@ -398,6 +431,7 @@ export default {
             this.schedule = response.data;
             // this.fetchStaffTeamMembers(); // ** running before this.schedule retrieves
           });
+          this.filterUsersNotInSchedule();
       } catch (error) {
         this.schedule = [];
         console.error("Error fetching team schedule:", error);
@@ -577,8 +611,10 @@ export default {
       }`;
 
       // Only fetch or update schedule if the day has WFH requests
+      this.fetchAllUsers();
       this.updateScheduleBasedOnRole();
       this.filterStaff(); // Reapply staff filtering logic
+      this.fetchUsersNotInSchedule();
 
       // Log state for debugging
       console.log({
