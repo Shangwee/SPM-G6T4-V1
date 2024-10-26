@@ -363,15 +363,27 @@ export default {
 
     async fetchUsersForStaff() {
       try {
-        const response = await axios.get("http://localhost:5001/users", {
-          params: {Reporting_Manager: this.reportingManager},
+        // Fetch the general list of users reporting to the manager
+        const allUsersResponse = await axios.get("http://localhost:5001/users", {
+          params: { Reporting_Manager: this.reportingManager },
         });
-        this.allUsers = response.data; // Assuming the response is an array of users
+
+        // Fetch the reporting manager's details
+        const managerResponse = await axios.get(`http://localhost:5001/user/${this.reportingManager}`);
+        const manager = managerResponse.data;
+
+        // Combine manager with the users list, placing the manager at the start
+        this.allUsers = [manager, ...allUsersResponse.data];
+
+        // Proceed to filter users not in the schedule
         this.fetchUsersNotInSchedule();
       } catch (error) {
-        console.error("Error fetching all users:", error);
+        console.error("Error fetching all users including manager:", error);
       }
     },
+
+
+
     
 
     async fetchUsersForManagers() {
@@ -412,12 +424,12 @@ export default {
 
 
     fetchUsersNotInSchedule() {
-      // Extract the IDs of users in the schedule
-      const scheduledUserIds = new Set(this.schedule.map((s) => s.Staff_ID));
+      // Ensure scheduledUserIds contains integer Staff_IDs
+      const scheduledUserIds = new Set(this.schedule.map((s) => parseInt(s.Staff_ID, 10))); 
 
       // Filter out users from allUsers based on their presence in the schedule
       this.usersNotInSchedule = this.allUsers.filter((user) => {
-        const isNotInSchedule = !scheduledUserIds.has(user.Staff_ID); // Check if the user is not in schedule
+        const isNotInSchedule = !scheduledUserIds.has(parseInt(user.Staff_ID, 10)); 
 
         // Apply department and team filtering
         const isDepartmentMatch = !this.selectedDepartment || user.Dept === this.selectedDepartment;
@@ -428,7 +440,6 @@ export default {
 
       console.log("Users Not In Schedule:", this.usersNotInSchedule); // Optional: log the results for debugging
     },
-
 
 
 
