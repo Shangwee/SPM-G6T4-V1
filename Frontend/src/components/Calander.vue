@@ -139,7 +139,7 @@
 
         <!-- Team members list -->
         <div class="row" v-if="schedule.length > 0">
-          <div class="col-md-6 mb-3 full-width">
+          <div class="col-md-6 mb-3">
             <div class="card home-card">
               <h6>Working from Home</h6>
               <ul class="staff-list">
@@ -147,7 +147,7 @@
                   <li v-for="staff in filteredStaffWorkingFromHome" :key="staff.id">
                     {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{
                       staff.Staff_ID
-                    }})
+                    }}) - {{ staff.Position }}
                   </li>
                 </div>
                 <div v-if="userRole === 3">
@@ -166,19 +166,22 @@
                 </div>
               </ul>
             </div>
-            <div>
-              <h6>Users Not in Schedule</h6>
-              <ul>
+          </div>
+          <div class="col-md-6 mb-3">
+          <div class="card home-card">
+              <h6>Working In Office</h6>
+              <ul class="staff-list">
                 <li v-for="user in usersNotInSchedule" :key="user.id">{{ user.Staff_FName }} {{ user.Staff_LName }} ({{
                       user.Staff_ID
-                    }}) - {{ user.Position }}</li>
+                    }}) - {{ user.Position }}
+                </li>
               </ul>
             </div>
-          </div>
         </div>
       </div>
     </div>
   </div>
+</div>
 </template>
 <script>
 import axios from "axios";
@@ -246,15 +249,15 @@ export default {
         if (this.userRole === 2) {
           console.log("Fetching staff team schedule for user role 2");
           this.fetchStaffTeamSchedule();
-          this.fetchUsersByTeam();
+          this.fetchUsersForStaff();
         } else if (this.userRole === 3) {
           this.fetchbyOwnDept();
           this.fetchManageTeamSchedule();
-          this.fetchUsersByDept();
+          this.fetchUsersForManagers();
         } else if (this.userRole === 1) {
           // this.fetchbyOwnDept();
           this.fetchALLSchedule();
-          this.fetchAllUsers();
+          this.fetchUsersForDirectors();
         }
       } catch (error) {
         console.error("Error in created lifecycle:", error);
@@ -321,43 +324,76 @@ export default {
       
     },
 
-    async fetchAllUsers() {
+    async fetchUsersForStaff() {
       try {
-        const response = await axios.get("http://localhost:5001/users"); // Adjust the endpoint as necessary
+        const response = await axios.get("http://localhost:5001/users", {
+          params: {Reporting_Manager: this.reportingManager},
+        });
         this.allUsers = response.data; // Assuming the response is an array of users
+        this.fetchUsersNotInSchedule();
       } catch (error) {
         console.error("Error fetching all users:", error);
       }
     },
-    async fetchUsersByTeam() {
-      try {
-        const response = await axios.get("http://localhost:5001/users", {
-          params: { position: this.userPosition },
-        });
-        this.allUsers = response.data; // Store the users fetched by team
-      } catch (error) {
-        console.error("Error fetching users by team:", error);
-      }
-    },
-    async fetchUsersByDept() {
+    
+
+    async fetchUsersForManagers() {
       try {
         const response = await axios.get("http://localhost:5001/users", {
           params: { dept: this.userDept },
         });
         this.allUsers = response.data; // Store the users fetched by department
+
+        // Clear existing teams to prevent duplicates
+        const positions = response.data.map(user => user.Position); // Extract positions from the user data
+        this.teams = [...new Set([...this.teams, ...postions])]; // Add new positions to teams, ensuring uniqueness
+
+        this.fetchUsersNotInSchedule();
       } catch (error) {
         console.error("Error fetching users by department:", error);
       }
     },
 
-    fetchUsersNotInSchedule() {
-      const scheduleDates = this.schedule.map((s) => new Date(s.Date).toDateString());
-      console.log("asfasfasfa");
-      this.usersNotInSchedule = this.allUsers.filter((user) => {
-        const userDate = new Date(user.date).toDateString();
-        return !scheduleDates.includes(userDate);
-      });
+    async fetchUsersForDirectors() {
+      try {
+        const response = await axios.get("http://localhost:5001/users", {
+          params: { position: this.userPosition },
+        });
+        this.allUsers = response.data; // Store the users fetched by team
+
+        // Clear existing teams to prevent duplicates
+        const positions = response.data.map(user => user.Position); // Extract positions from the user data
+        this.teams = [...new Set([...this.teams, ...positions])]; // Add new positions to teams, ensuring uniqueness
+        const dept = response.data.map(user => user.Dept);
+        this.depts = [...new Set([...this.depts, ...dept])];
+
+        this.fetchUsersNotInSchedule();
+      } catch (error) {
+        console.error("Error fetching users by team:", error);
+      }
     },
+
+
+fetchUsersNotInSchedule() {
+  // Extract the IDs of users in the staffs array
+  const staffUserIds = new Set(this.staffs.map((staff) => staff.Staff_ID));
+
+  // Filter out users from allUsers based on their presence in the staffs
+  this.usersNotInSchedule = this.allUsers.filter((user) => {
+    const isNotInStaffs = !staffUserIds.has(user.Staff_ID); // Check if the user is not in staffs
+
+    // Apply department and team filtering
+    const isDepartmentMatch = !this.selectedDepartment || user.Dept === this.selectedDepartment;
+    const isTeamMatch = !this.selectedTeam || user.Position === this.selectedTeam;
+
+    return isNotInStaffs && isDepartmentMatch && isTeamMatch;
+  });
+
+  console.log("Users Not In Schedule:", this.usersNotInSchedule); // Optional: log the results for debugging
+},
+
+
+
 
     getMeetings() {
       let url = "http://localhost:5004/meeting";
@@ -425,10 +461,10 @@ export default {
           .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
           .then((response) => {
             this.staffs.push(response.data);
-            // get all teams
-            if (!this.teams.includes(response.data.Position)) {
-              this.teams.push(response.data.Position);
-            }
+            // // get all teams
+            // if (!this.teams.includes(response.data.Position)) {
+            //   this.teams.push(response.data.Position);
+            // }
             this.filterStaff();
           })
           .catch((error) => {
@@ -481,10 +517,10 @@ export default {
           .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
           .then((response) => {
             this.staffs.push(response.data);
-            // get all teams
-            if (!this.teams.includes(response.data.Position)) {
-              this.teams.push(response.data.Position);
-            }
+            // // get all teams
+            // if (!this.teams.includes(response.data.Position)) {
+            //   this.teams.push(response.data.Position);
+            // }
           })
           .catch((error) => {
             console.error("Error fetching Reporting Manager:", error);
@@ -560,9 +596,11 @@ export default {
 
     filterByDepartment() {
       this.filterStaff();
+      this.fetchUsersNotInSchedule();
     },
     filterByTeam() {
       this.filterStaff();
+      this.fetchUsersNotInSchedule();
     },
     filterStaff() {
       // Filter staff based on selected department and team
@@ -675,15 +713,15 @@ export default {
       if (this.userRole === 2) {
         // this.fetchReportingManager();
         this.fetchStaffTeamSchedule();
-        this.fetchUsersByTeam();
+        this.fetchUsersForStaff();
       } else if (this.userRole === 3) {
         this.fetchbyOwnDept();
         this.fetchManageTeamSchedule();
-        this.fetchUsersByDept();
+        this.fetchUsersForManagers();
       } else if (this.userRole === 1) {
         // this.fetchbyOwnDept();
         this.fetchALLSchedule();
-        this.fetchAllUsers();
+        this.fetchUsersForDirectors();
       }
     },
 
