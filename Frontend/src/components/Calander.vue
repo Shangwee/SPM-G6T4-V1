@@ -898,7 +898,7 @@ export default {
 }
 
 .calendar-cell.wfh {
-  background-color: green;
+  background-color: #b6c6fd;
 }
 
 .calendar-cell.conflict {
