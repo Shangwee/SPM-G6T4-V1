@@ -1,9 +1,7 @@
 <template>
   <div class="calendar-container">
     <div class="calendar card shadow-sm" @click="deselectDay">
-      <div
-        class="calendar-header d-flex justify-content-between align-items-center p-3"
-      >
+      <div class="calendar-header d-flex justify-content-between align-items-center p-3">
         <button class="btn btn-outline-primary" @click.stop="previousMonth">
           <i class="bi bi-arrow-left-circle"></i> Previous
         </button>
@@ -13,87 +11,78 @@
         </button>
       </div>
       <div class="calendar-grid p-2" id="calendar-refresh">
-        <div
-          class="calendar-day fw-bold text-center"
-          v-for="day in daysOfWeek"
-          :key="day"
-        >
+        <div class="calendar-day fw-bold text-center" v-for="day in daysOfWeek" :key="day">
           {{ day }}
         </div>
-        <div
-          v-for="day of daysInMonth"
-          class="calendar-cell text-center"
-          @click.stop="
-            selectDay(day);
-            filteredStaffWorkingFromHome = [];
-          "
-          :class="{
-            'empty-day': day === '',
-            'selected-day': day === selectedDay,
-            today: isToday(day),
-            active: this.ownSchedule.some((e) => {
-              const scheduleDate = new Date(e.Date);
-              const currentDay = new Date(
-                this.currentDate.getFullYear(),
-                this.currentDate.getMonth(),
-                day
-              );
-              return (
-                scheduleDate.getFullYear() === currentDay.getFullYear() &&
-                scheduleDate.getMonth() === currentDay.getMonth() &&
-                scheduleDate.getDate() === currentDay.getDate()
-              );
-            }),
-            meeting: this.myMeetings.some((meeting) => {
-              const meetingDate = new Date(meeting.Date);
-              const currentDay = new Date(
-                this.currentDate.getFullYear(),
-                this.currentDate.getMonth(),
-                day
-              );
+        <div v-for="day of daysInMonth" class="calendar-cell text-center" @click.stop="
+          selectDay(day);
+        filteredStaffWorkingFromHome = [];
+        " :class="{
+          'empty-day': day === '',
+          'selected-day': day === selectedDay,
+          today: isToday(day),
+          active: this.ownSchedule.some((e) => {
+            const scheduleDate = new Date(e.Date);
+            const currentDay = new Date(
+              this.currentDate.getFullYear(),
+              this.currentDate.getMonth(),
+              day
+            );
+            return (
+              scheduleDate.getFullYear() === currentDay.getFullYear() &&
+              scheduleDate.getMonth() === currentDay.getMonth() &&
+              scheduleDate.getDate() === currentDay.getDate()
+            );
+          }),
+          meeting: this.myMeetings.some((meeting) => {
+            const meetingDate = new Date(meeting.Date);
+            const currentDay = new Date(
+              this.currentDate.getFullYear(),
+              this.currentDate.getMonth(),
+              day
+            );
 
-              return (
-                meeting.meetingstaffs.some(
-                  (staff) => String(staff.Staff_ID) === this.staffId
-                ) &&
-                meetingDate.getFullYear() === currentDay.getFullYear() &&
-                meetingDate.getMonth() === currentDay.getMonth() &&
-                meetingDate.getDate() === currentDay.getDate()
-              );
-            }),
-            // conflict:
-            //   this.ownSchedule.some((e) => {
-            //     const scheduleDate = new Date(e.Date);
-            //     const currentDay = new Date(
-            //       this.currentDate.getFullYear(),
-            //       this.currentDate.getMonth(),
-            //       day
-            //     );
-            //     return (
-            //       scheduleDate.getFullYear() === currentDay.getFullYear() &&
-            //       scheduleDate.getMonth() === currentDay.getMonth() &&
-            //       scheduleDate.getDate() === currentDay.getDate()
-            //     );
-            //   }) &&
-            //   this.myMeetings.some((meeting) => {
-            //     const meetingDate = new Date(meeting.Date);
-            //     const currentDay = new Date(
-            //       this.currentDate.getFullYear(),
-            //       this.currentDate.getMonth(),
-            //       day
-            //     );
+            return (
+              meeting.meetingstaffs.some(
+                (staff) => String(staff.Staff_ID) === this.staffId
+              ) &&
+              meetingDate.getFullYear() === currentDay.getFullYear() &&
+              meetingDate.getMonth() === currentDay.getMonth() &&
+              meetingDate.getDate() === currentDay.getDate()
+            );
+          }),
+          // conflict:
+          //   this.ownSchedule.some((e) => {
+          //     const scheduleDate = new Date(e.Date);
+          //     const currentDay = new Date(
+          //       this.currentDate.getFullYear(),
+          //       this.currentDate.getMonth(),
+          //       day
+          //     );
+          //     return (
+          //       scheduleDate.getFullYear() === currentDay.getFullYear() &&
+          //       scheduleDate.getMonth() === currentDay.getMonth() &&
+          //       scheduleDate.getDate() === currentDay.getDate()
+          //     );
+          //   }) &&
+          //   this.myMeetings.some((meeting) => {
+          //     const meetingDate = new Date(meeting.Date);
+          //     const currentDay = new Date(
+          //       this.currentDate.getFullYear(),
+          //       this.currentDate.getMonth(),
+          //       day
+          //     );
 
-            //     return (
-            //       meeting.meetingstaffs.some(
-            //         (staff) => String(staff.Staff_ID) === this.staffId
-            //       ) &&
-            //       meetingDate.getFullYear() === currentDay.getFullYear() &&
-            //       meetingDate.getMonth() === currentDay.getMonth() &&
-            //       meetingDate.getDate() === currentDay.getDate()
-            //     );
-            //   }),
-          }"
-        >
+          //     return (
+          //       meeting.meetingstaffs.some(
+          //         (staff) => String(staff.Staff_ID) === this.staffId
+          //       ) &&
+          //       meetingDate.getFullYear() === currentDay.getFullYear() &&
+          //       meetingDate.getMonth() === currentDay.getMonth() &&
+          //       meetingDate.getDate() === currentDay.getDate()
+          //     );
+          //   }),
+        }">
           <span v-if="day">{{ day }}</span>
         </div>
       </div>
@@ -116,32 +105,15 @@
 
     <!-- Team or personal schedule section -->
     <div v-if="scheduleType === 'team'" class="staff-schedule-container">
-      <Meeting
-        :staffId="staffId"
-        :selectedDate="selectedDate"
-        :selectedDay="selectedDay"
-        :daysInMonth="daysInMonth"
-        @getMyMeeting="getMeetings"
-      ></Meeting>
+      <Meeting :staffId="staffId" :selectedDate="selectedDate" :selectedDay="selectedDay" :daysInMonth="daysInMonth"
+        @getMyMeeting="getMeetings"></Meeting>
       <div class="filter-controls d-flex flex-column mb-4">
-        <div
-          v-if="userRole === 3 || userRole === 1"
-          class="filter-controls d-flex mb-4"
-        >
+        <div v-if="userRole === 3 || userRole === 1" class="filter-controls d-flex mb-4">
           <div class="form-group mr-2" style="flex: 1">
             <label for="department">Department</label>
-            <select
-              id="department"
-              v-model="selectedDepartment"
-              class="form-control"
-              @change="filterByDepartment"
-            >
+            <select id="department" v-model="selectedDepartment" class="form-control" @change="filterByDepartment">
               <option value="">Select Department</option>
-              <option
-                v-for="department in depts"
-                :key="department"
-                :value="department"
-              >
+              <option v-for="department in depts" :key="department" :value="department">
                 {{ department }}
               </option>
             </select>
@@ -149,12 +121,7 @@
 
           <div class="form-group" style="flex: 1">
             <label for="team">Team</label>
-            <select
-              id="team"
-              v-model="selectedTeam"
-              class="form-control"
-              @change="filterByTeam"
-            >
+            <select id="team" v-model="selectedTeam" class="form-control" @change="filterByTeam">
               <option value="">Select Teams</option>
               <option v-for="team in teams" :key="team" :value="team">
                 {{ team }}
@@ -177,50 +144,37 @@
               <h6>Working from Home</h6>
               <ul class="staff-list">
                 <div v-if="userRole === 2">
-                  <li
-                    v-for="staff in filteredStaffWorkingFromHome"
-                    :key="staff.id"
-                  >
-                    {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{
-                      staff.Staff_ID
-                    }}) - {{ staff.Position }}
+                  <li class="staff-item" v-for="staff in filteredStaffWorkingFromHome" :key="staff.id">
+                    {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }}) - {{ staff.Position }}
                   </li>
                 </div>
                 <div v-if="userRole === 3">
-                  <li
-                    v-for="staff in filteredStaffWorkingFromHome"
-                    :key="staff.id"
-                  >
-                    {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{
-                      staff.Staff_ID
-                    }}) - {{ staff.Position }}
+                  <li class="staff-item" v-for="staff in filteredStaffWorkingFromHome" :key="staff.id">
+                    {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }}) - {{ staff.Position }}
                   </li>
                 </div>
                 <div v-if="userRole === 1">
-                  <li v-for="staff in filteredStaffWorkingFromHome">
-                    {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{
-                      staff.Staff_ID
-                    }}) - {{ staff.Position }}
+                  <li class="staff-item" v-for="staff in filteredStaffWorkingFromHome" :key="staff.id">
+                    {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }}) - {{ staff.Position }}
                   </li>
                 </div>
               </ul>
             </div>
           </div>
           <div class="col-md-6 mb-3">
-          <div class="card home-card">
+            <div class="card home-card">
               <h6>Working In Office</h6>
               <ul class="staff-list">
-                <li v-for="user in usersNotInSchedule" :key="user.id">{{ user.Staff_FName }} {{ user.Staff_LName }} ({{
-                      user.Staff_ID
-                    }}) - {{ user.Position }}
+                <li class="staff-item" v-for="user in usersNotInSchedule" :key="user.id">
+                  {{ user.Staff_FName }} {{ user.Staff_LName }} ({{ user.Staff_ID }}) - {{ user.Position }}
                 </li>
               </ul>
             </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 </template>
 <script>
 import axios from "axios";
@@ -355,10 +309,10 @@ export default {
       return days;
     },
   },
-  
+
   methods: {
     mounted() {
-      
+
     },
 
     async fetchUsersForStaff() {
@@ -384,7 +338,7 @@ export default {
 
 
 
-    
+
 
     async fetchUsersForManagers() {
       try {
@@ -424,30 +378,28 @@ export default {
 
 
     fetchUsersNotInSchedule() {
-      // Ensure that schedule and allUsers contain expected data
-      if (!Array.isArray(this.schedule) || !Array.isArray(this.allUsers)) {
-        console.error("Schedule or AllUsers is not an array");
-        return;
-      }
-      
-      // Collect all Staff_IDs from the schedule into a Set
-      const scheduledUserIds = new Set(this.schedule.map(s => {
-        console.log("Staff_ID:", s.Staff_ID); // Debugging to check Staff_ID values
-        return parseInt(s.Staff_ID, 10); // Convert to integer
-      }));
-      // Filter users who are not in the schedule
-      this.usersNotInSchedule = this.allUsers.filter((user) => {
-        const isNotInSchedule = !scheduledUserIds.has(parseInt(user.Staff_ID, 10));
+  // Ensure that schedule and allUsers contain expected data
+  if (!Array.isArray(this.schedule) || !Array.isArray(this.allUsers)) {
+    console.error("Schedule or AllUsers is not an array");
+    return;
+  }
 
-        // Apply department and team filtering
-        const isDepartmentMatch = !this.selectedDepartment || user.Dept === this.selectedDepartment;
-        const isTeamMatch = !this.selectedTeam || user.Position === this.selectedTeam;
+  // Collect all Staff_IDs from filteredStaffWorkingFromHome into a Set
+  const wfhUserIds = new Set(this.filteredStaffWorkingFromHome.map(staff => parseInt(staff.Staff_ID, 10)));
 
-        return isNotInSchedule && isDepartmentMatch && isTeamMatch;
-      });
+  // Filter users who are not in the filtered WFH list (working from home)
+  this.usersNotInSchedule = this.allUsers.filter(user => {
+    const isNotInWFH = !wfhUserIds.has(parseInt(user.Staff_ID, 10));
 
-      console.log("Users Not In Schedule:", this.usersNotInSchedule); // Debugging
-    }, 
+    // Apply department and team filtering
+    const isDepartmentMatch = !this.selectedDepartment || user.Dept === this.selectedDepartment;
+    const isTeamMatch = !this.selectedTeam || user.Position === this.selectedTeam;
+
+    return isNotInWFH && isDepartmentMatch && isTeamMatch;
+  });
+
+  console.log("Users Not In Schedule (Working in Office):", this.usersNotInSchedule); // Debugging
+},
 
 
 
@@ -546,12 +498,10 @@ export default {
           type: "Team",
           // staffId: sessionStorage.getItem('staffID'),
           reporting_manager: this.reportingManager,
-          start_date: `${this.currentYear}-${this.currentMonth + 1}-${
-            this.selectedDay || this.currentDate.getDate()
-          }`,
-          end_date: `${this.currentYear}-${this.currentMonth + 1}-${
-            this.selectedDay || this.currentDate.getDate()
-          }`,
+          start_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()
+            }`,
+          end_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()
+            }`,
         };
 
         axios
@@ -563,7 +513,7 @@ export default {
             console.log("Schedule data:", this.schedule);
             // this.fetchStaffTeamMembers(); // ** running before this.schedule retrieves
           });
-          this.filterUsersNotInSchedule();
+        this.filterUsersNotInSchedule();
       } catch (error) {
         this.schedule = [];
         console.error("Error fetching team schedule:", error);
@@ -595,12 +545,10 @@ export default {
           type: "Team",
           // staffId: sessionStorage.getItem('staffID'),
           reporting_manager: parseInt(this.staffId, 10),
-          start_date: `${this.currentYear}-${this.currentMonth + 1}-${
-            this.selectedDay || this.currentDate.getDate()
-          }`,
-          end_date: `${this.currentYear}-${this.currentMonth + 1}-${
-            this.selectedDay || this.currentDate.getDate()
-          }`,
+          start_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()
+            }`,
+          end_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()
+            }`,
         };
 
         axios
@@ -621,12 +569,10 @@ export default {
       let params = {
         type: "Dept",
         dept: this.userDept,
-        start_date: `${this.currentYear}-${this.currentMonth + 1}-${
-          this.selectedDay || this.currentDate.getDate()
-        }`,
-        end_date: `${this.currentYear}-${this.currentMonth + 1}-${
-          this.selectedDay || this.currentDate.getDate()
-        }`,
+        start_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()
+          }`,
+        end_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()
+          }`,
       };
       axios
         .get(`http://localhost:6003/aggregateSchedule`, { params: params })
@@ -700,12 +646,10 @@ export default {
         const params = {
           type: "All",
           staff_id: parseInt(this.staffId, 10), // Ensures staff_id is parsed as an integer
-          start_date: `${this.currentYear}-${this.currentMonth + 1}-${
-            this.selectedDay || this.currentDate.getDate()
-          }`,
-          end_date: `${this.currentYear}-${this.currentMonth + 1}-${
-            this.selectedDay || this.currentDate.getDate()
-          }`,
+          start_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()
+            }`,
+          end_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()
+            }`,
         };
 
         const response = await axios.get(
@@ -750,16 +694,15 @@ export default {
         this.selectedDay = day; // Set the new day
         this.selectedDate = `${this.currentYear}-${String(
           this.currentMonth + 1
-        ).padStart(2, "0")}-${
-          this.selectedDay.toString().length === 1
-            ? "0" + this.selectedDay
-            : this.selectedDay
-        }`;
+        ).padStart(2, "0")}-${this.selectedDay.toString().length === 1
+          ? "0" + this.selectedDay
+          : this.selectedDay
+          }`;
 
-      // Only fetch or update schedule if the day has WFH requests
-      this.updateScheduleBasedOnRole();
-      this.filterStaff(); // Reapply staff filtering logic
-      this.fetchUsersNotInSchedule();
+        // Only fetch or update schedule if the day has WFH requests
+        this.updateScheduleBasedOnRole();
+        this.filterStaff(); // Reapply staff filtering logic
+        this.fetchUsersNotInSchedule();
 
         // Log state for debugging
         console.log({
@@ -818,9 +761,8 @@ export default {
 
     selectToday() {
       this.selectedDay = this.currentDate.getDate(); // Automatically select today
-      this.selectedDate = `${this.currentYear}-${this.currentMonth + 1}-${
-        this.selectedDay
-      }`;
+      this.selectedDate = `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay
+        }`;
       this.filterStaff();
     },
   },
@@ -831,21 +773,6 @@ export default {
 .full-width {
   width: 100%;
   /* Expand to full width */
-}
-
-.filter-controls.full-width {
-  justify-content: flex-start;
-  /* Prevent misalignment */
-}
-
-.filter-controls .form-group.full-width {
-  width: 100%;
-  /* Ensure full width for form-group */
-}
-
-.filter-controls select {
-  width: 100%;
-  /* Ensure select element is also full width */
 }
 
 .calendar-container {
@@ -859,11 +786,27 @@ export default {
 
 .calendar {
   background-color: rgba(255, 255, 255, 0.9);
-  width: 70%;
-  /* Increased width from 58% to 65% */
-  margin: 0 auto;
+  width: 58%; /* Fixed width for the calendar */
   border-radius: 8px;
   padding: 10px;
+  box-sizing: border-box;
+}
+
+.staff-schedule-container {
+  width: 80%; /* Fixed width for the staff schedule */
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.card {
+  width: 100%;
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fff;
+  box-sizing: border-box;
 }
 
 .calendar-grid {
@@ -928,14 +871,6 @@ export default {
   background-color: #fafafa;
 }
 
-.staff-schedule-container {
-  width: 70%;
-  /* Increased width from 40% to 50% */
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-}
-
 .filter-controls {
   display: flex;
   justify-content: space-between;
@@ -972,39 +907,31 @@ export default {
   margin-bottom: 20px;
 }
 
-.card {
-  flex-grow: 1;
-  background-color: #fff;
-  border: 1px solid #e0e0e0;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 15px;
-}
-
 .office-card h6,
 .home-card h6 {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: bold;
   color: #333;
   border-bottom: 1px solid #ddd;
   padding-bottom: 10px;
 }
 
-/* Updated staff list to be more compact */
 .staff-list {
-  list-style-type: none;
-  /* Removed bullet points */
   padding-left: 0;
-  /* Removed extra padding */
   margin: 0;
 }
 
 .staff-item {
+  display: block;
+  padding: 5px 0;
   font-size: 0.85rem;
-  /* Reduced font size for compactness */
-  padding: 3px 0;
-  /* Reduced padding between list items */
   color: #555;
+  white-space: wrap;
+  border-bottom: 1px solid #ddd; /* Adds a line between each name */
+}
+
+.staff-item:last-child {
+  border-bottom: none; /* Remove the line for the last item */
 }
 
 @media (max-width: 768px) {
@@ -1015,16 +942,8 @@ export default {
 
   .calendar,
   .staff-schedule-container {
-    width: 100%;
+    width: 100%; /* Full width on smaller screens */
     margin-bottom: 20px;
-  }
-
-  .calendar-cell {
-    height: 60px;
-  }
-
-  .card {
-    margin-bottom: 10px;
   }
 }
 
@@ -1067,3 +986,5 @@ export default {
   margin: 8px 8px;
 }
 </style>
+
+
