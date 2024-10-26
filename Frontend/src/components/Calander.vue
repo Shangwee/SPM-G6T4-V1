@@ -412,22 +412,22 @@ export default {
 
 
     fetchUsersNotInSchedule() {
-      // Extract the IDs of users in the staffs array
-      const staffUserIds = new Set(this.staffs.map((staff) => staff.Staff_ID));
+      // Extract the IDs of users in the schedule
+      const scheduledUserIds = new Set(this.schedule.map((s) => s.Staff_ID));
 
-      // Filter out users from allUsers based on their presence in the staffs
+      // Filter out users from allUsers based on their presence in the schedule
       this.usersNotInSchedule = this.allUsers.filter((user) => {
-        const isNotInStaffs = !staffUserIds.has(user.Staff_ID); // Check if the user is not in staffs
+        const isNotInSchedule = !scheduledUserIds.has(user.Staff_ID); // Check if the user is not in schedule
 
         // Apply department and team filtering
         const isDepartmentMatch = !this.selectedDepartment || user.Dept === this.selectedDepartment;
         const isTeamMatch = !this.selectedTeam || user.Position === this.selectedTeam;
 
-        return isNotInStaffs && isDepartmentMatch && isTeamMatch;
+        return isNotInSchedule && isDepartmentMatch && isTeamMatch;
       });
 
-  console.log("Users Not In Schedule:", this.usersNotInSchedule); // Optional: log the results for debugging
-},
+      console.log("Users Not In Schedule:", this.usersNotInSchedule); // Optional: log the results for debugging
+    },
 
 
 
