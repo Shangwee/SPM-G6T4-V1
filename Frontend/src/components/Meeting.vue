@@ -136,7 +136,7 @@ export default {
           console.log(r.data);
           const meetingId = r.data.data.Meeting_ID;
           if (this.selectedStaff != []) {
-            this.selectedStaff.push(this.staffId);
+            this.selectedStaff.push(parseInt(this.staffId));
             for (let staff of this.selectedStaff) {
               // send notification to all selected staffs
               let url = "http://localhost:5004/meetingstaffs";
