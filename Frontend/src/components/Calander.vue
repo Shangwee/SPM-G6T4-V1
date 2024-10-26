@@ -61,6 +61,19 @@
                 meetingDate.getDate() === currentDay.getDate()
               );
             }),
+            wfh: this.schedule.some((entry) => {
+              const schedulesDate = new Date(entry.Date);
+              const currentDay = new Date(
+                this.currentDate.getFullYear(),
+                this.currentDate.getMonth(),
+                day
+              );
+              return (
+                schedulesDate.getFullYear() === currentDay.getFullYear() &&
+                schedulesDate.getMonth() === currentDay.getMonth() &&
+                schedulesDate.getDate() === currentDay.getDate()
+              );
+            }),
             // conflict:
             //   this.ownSchedule.some((e) => {
             //     const scheduleDate = new Date(e.Date);
@@ -355,11 +368,44 @@ export default {
       return days;
     },
   },
-  
+  mounted() {
+    // this.staffId = sessionStorage.getItem("staffID"); // Retrieve Staff_ID
+
+    // if (this.staffId) {
+    //   this.initializeData(); // Call the method to initialize data
+    // } else {
+    //   console.error("No Staff ID found.");
+    // }
+  },
+
   methods: {
-    mounted() {
-      
-    },
+    // async initializeData() {
+    //   try {
+    //     await this.fetchUserRole(); // Wait for user role to be fetched
+    //     this.fetchUserDept();
+    //     this.fetchOwnSchedule();
+    //     this.selectToday(); // Automatically select today's date
+    //     this.filterStaff();
+    //     this.fetchReportingManager(); // Fetch Reporting_Manager for the logged-in staff
+    //     this.getMeetings();
+
+    //     // Wait for reportingManager to be set before checking userRole
+    //     if (this.userRole === 2) {
+    //       console.log("Fetching staff team schedule for user role 2");
+    //       this.fetchStaffTeamSchedule();
+    //       this.fetchUsersForStaff();
+    //     } else if (this.userRole === 3) {
+    //       this.fetchbyOwnDept();
+    //       this.fetchManageTeamSchedule();
+    //       this.fetchUsersForManagers();
+    //     } else if (this.userRole === 1) {
+    //       this.fetchALLSchedule();
+    //       this.fetchUsersForDirectors();
+    //     }
+    //   } catch (error) {
+    //     console.error("Error in initializing data:", error);
+    //   }
+    // },
 
     async fetchUsersForStaff() {
       try {
@@ -906,6 +952,10 @@ export default {
 
 .calendar-cell.meeting {
   background-color: #ffc494;
+}
+
+.calendar-cell.wfh {
+  background-color: green;
 }
 
 .calendar-cell.conflict {
