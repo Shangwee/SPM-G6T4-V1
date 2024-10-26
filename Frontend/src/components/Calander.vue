@@ -1,7 +1,9 @@
 <template>
   <div class="calendar-container">
     <div class="calendar card shadow-sm" @click="deselectDay">
-      <div class="calendar-header d-flex justify-content-between align-items-center p-3">
+      <div
+        class="calendar-header d-flex justify-content-between align-items-center p-3"
+      >
         <button class="btn btn-outline-primary" @click.stop="previousMonth">
           <i class="bi bi-arrow-left-circle"></i> Previous
         </button>
@@ -10,79 +12,88 @@
           Next <i class="bi bi-arrow-right-circle"></i>
         </button>
       </div>
-      <div class="calendar-grid p-2">
-        <div class="calendar-day fw-bold text-center" v-for="day in daysOfWeek" :key="day">
+      <div class="calendar-grid p-2" id="calendar-refresh">
+        <div
+          class="calendar-day fw-bold text-center"
+          v-for="day in daysOfWeek"
+          :key="day"
+        >
           {{ day }}
         </div>
-        <div v-for="day of daysInMonth" class="calendar-cell text-center" @click.stop="
-          selectDay(day);
-        filteredStaffWorkingFromHome = [];
-        " :class="{
-          'empty-day': day === '',
-          'selected-day': day === selectedDay,
-          today: isToday(day),
-          active: this.ownSchedule.some((e) => {
-            const scheduleDate = new Date(e.Date);
-            const currentDay = new Date(
-              this.currentDate.getFullYear(),
-              this.currentDate.getMonth(),
-              day
-            );
-            return (
-              scheduleDate.getFullYear() === currentDay.getFullYear() &&
-              scheduleDate.getMonth() === currentDay.getMonth() &&
-              scheduleDate.getDate() === currentDay.getDate()
-            );
-          }),
-          meeting: this.myMeetings.some((meeting) => {
-            const meetingDate = new Date(meeting.Date);
-            const currentDay = new Date(
-              this.currentDate.getFullYear(),
-              this.currentDate.getMonth(),
-              day
-            );
+        <div
+          v-for="day of daysInMonth"
+          class="calendar-cell text-center"
+          @click.stop="
+            selectDay(day);
+            filteredStaffWorkingFromHome = [];
+          "
+          :class="{
+            'empty-day': day === '',
+            'selected-day': day === selectedDay,
+            today: isToday(day),
+            active: this.ownSchedule.some((e) => {
+              const scheduleDate = new Date(e.Date);
+              const currentDay = new Date(
+                this.currentDate.getFullYear(),
+                this.currentDate.getMonth(),
+                day
+              );
+              return (
+                scheduleDate.getFullYear() === currentDay.getFullYear() &&
+                scheduleDate.getMonth() === currentDay.getMonth() &&
+                scheduleDate.getDate() === currentDay.getDate()
+              );
+            }),
+            meeting: this.myMeetings.some((meeting) => {
+              const meetingDate = new Date(meeting.Date);
+              const currentDay = new Date(
+                this.currentDate.getFullYear(),
+                this.currentDate.getMonth(),
+                day
+              );
 
-            return (
-              meeting.meetingstaffs.some(
-                (staff) => String(staff.Staff_ID) === this.staffId
-              ) &&
-              meetingDate.getFullYear() === currentDay.getFullYear() &&
-              meetingDate.getMonth() === currentDay.getMonth() &&
-              meetingDate.getDate() === currentDay.getDate()
-            );
-          }),
-          // conflict:
-          //   this.ownSchedule.some((e) => {
-          //     const scheduleDate = new Date(e.Date);
-          //     const currentDay = new Date(
-          //       this.currentDate.getFullYear(),
-          //       this.currentDate.getMonth(),
-          //       day
-          //     );
-          //     return (
-          //       scheduleDate.getFullYear() === currentDay.getFullYear() &&
-          //       scheduleDate.getMonth() === currentDay.getMonth() &&
-          //       scheduleDate.getDate() === currentDay.getDate()
-          //     );
-          //   }) &&
-          //   this.myMeetings.some((meeting) => {
-          //     const meetingDate = new Date(meeting.Date);
-          //     const currentDay = new Date(
-          //       this.currentDate.getFullYear(),
-          //       this.currentDate.getMonth(),
-          //       day
-          //     );
+              return (
+                meeting.meetingstaffs.some(
+                  (staff) => String(staff.Staff_ID) === this.staffId
+                ) &&
+                meetingDate.getFullYear() === currentDay.getFullYear() &&
+                meetingDate.getMonth() === currentDay.getMonth() &&
+                meetingDate.getDate() === currentDay.getDate()
+              );
+            }),
+            // conflict:
+            //   this.ownSchedule.some((e) => {
+            //     const scheduleDate = new Date(e.Date);
+            //     const currentDay = new Date(
+            //       this.currentDate.getFullYear(),
+            //       this.currentDate.getMonth(),
+            //       day
+            //     );
+            //     return (
+            //       scheduleDate.getFullYear() === currentDay.getFullYear() &&
+            //       scheduleDate.getMonth() === currentDay.getMonth() &&
+            //       scheduleDate.getDate() === currentDay.getDate()
+            //     );
+            //   }) &&
+            //   this.myMeetings.some((meeting) => {
+            //     const meetingDate = new Date(meeting.Date);
+            //     const currentDay = new Date(
+            //       this.currentDate.getFullYear(),
+            //       this.currentDate.getMonth(),
+            //       day
+            //     );
 
-          //     return (
-          //       meeting.meetingstaffs.some(
-          //         (staff) => String(staff.Staff_ID) === this.staffId
-          //       ) &&
-          //       meetingDate.getFullYear() === currentDay.getFullYear() &&
-          //       meetingDate.getMonth() === currentDay.getMonth() &&
-          //       meetingDate.getDate() === currentDay.getDate()
-          //     );
-          //   }),
-        }">
+            //     return (
+            //       meeting.meetingstaffs.some(
+            //         (staff) => String(staff.Staff_ID) === this.staffId
+            //       ) &&
+            //       meetingDate.getFullYear() === currentDay.getFullYear() &&
+            //       meetingDate.getMonth() === currentDay.getMonth() &&
+            //       meetingDate.getDate() === currentDay.getDate()
+            //     );
+            //   }),
+          }"
+        >
           <span v-if="day">{{ day }}</span>
         </div>
       </div>
@@ -90,7 +101,7 @@
       <div v-if="scheduleType === 'team'" class="legend">
         <div class="legend-item">
           <div class="wfh-color"></div>
-          <span class="legend-text">Personal WFH</span>
+          <span class="legend-text">Team WFH</span>
         </div>
         <div class="legend-item">
           <div class="meeting-color"></div>
@@ -105,22 +116,45 @@
 
     <!-- Team or personal schedule section -->
     <div v-if="scheduleType === 'team'" class="staff-schedule-container">
-      <Meeting :staffId="staffId" :selectedDate="selectedDate"></Meeting>
+      <Meeting
+        :staffId="staffId"
+        :selectedDate="selectedDate"
+        :selectedDay="selectedDay"
+        :daysInMonth="daysInMonth"
+        @getMyMeeting="getMeetings"
+      ></Meeting>
       <div class="filter-controls d-flex flex-column mb-4">
-        <div v-if="userRole === 3 || userRole === 1" class="filter-controls d-flex mb-4">
-          <div class="form-group mr-2" style="flex: 1;">
+        <div
+          v-if="userRole === 3 || userRole === 1"
+          class="filter-controls d-flex mb-4"
+        >
+          <div class="form-group mr-2" style="flex: 1">
             <label for="department">Department</label>
-            <select id="department" v-model="selectedDepartment" class="form-control" @change="filterByDepartment">
+            <select
+              id="department"
+              v-model="selectedDepartment"
+              class="form-control"
+              @change="filterByDepartment"
+            >
               <option value="">Select Department</option>
-              <option v-for="department in depts" :key="department" :value="department">
+              <option
+                v-for="department in depts"
+                :key="department"
+                :value="department"
+              >
                 {{ department }}
               </option>
             </select>
           </div>
 
-          <div class="form-group" style="flex: 1;">
+          <div class="form-group" style="flex: 1">
             <label for="team">Team</label>
-            <select id="team" v-model="selectedTeam" class="form-control" @change="filterByTeam">
+            <select
+              id="team"
+              v-model="selectedTeam"
+              class="form-control"
+              @change="filterByTeam"
+            >
               <option value="">Select Teams</option>
               <option v-for="team in teams" :key="team" :value="team">
                 {{ team }}
@@ -128,7 +162,6 @@
             </select>
           </div>
         </div>
-
 
         <div v-show="selectedDay" class="staff-schedule mt-4">
           <h5 class="schedule-title">
@@ -144,14 +177,20 @@
               <h6>Working from Home</h6>
               <ul class="staff-list">
                 <div v-if="userRole === 2">
-                  <li v-for="staff in filteredStaffWorkingFromHome" :key="staff.id">
+                  <li
+                    v-for="staff in filteredStaffWorkingFromHome"
+                    :key="staff.id"
+                  >
                     {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{
                       staff.Staff_ID
                     }}) - {{ staff.Position }}
                   </li>
                 </div>
                 <div v-if="userRole === 3">
-                  <li v-for="staff in filteredStaffWorkingFromHome" :key="staff.id">
+                  <li
+                    v-for="staff in filteredStaffWorkingFromHome"
+                    :key="staff.id"
+                  >
                     {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{
                       staff.Staff_ID
                     }}) - {{ staff.Position }}
@@ -278,8 +317,6 @@ export default {
       }
     },
   },
-
-  
 
   computed: {
     currentYear() {
@@ -489,10 +526,12 @@ fetchUsersNotInSchedule() {
           type: "Team",
           // staffId: sessionStorage.getItem('staffID'),
           reporting_manager: this.reportingManager,
-          start_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()
-            }`,
-          end_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()
-            }`,
+          start_date: `${this.currentYear}-${this.currentMonth + 1}-${
+            this.selectedDay || this.currentDate.getDate()
+          }`,
+          end_date: `${this.currentYear}-${this.currentMonth + 1}-${
+            this.selectedDay || this.currentDate.getDate()
+          }`,
         };
 
         axios
@@ -535,10 +574,12 @@ fetchUsersNotInSchedule() {
           type: "Team",
           // staffId: sessionStorage.getItem('staffID'),
           reporting_manager: parseInt(this.staffId, 10),
-          start_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()
-            }`,
-          end_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()
-            }`,
+          start_date: `${this.currentYear}-${this.currentMonth + 1}-${
+            this.selectedDay || this.currentDate.getDate()
+          }`,
+          end_date: `${this.currentYear}-${this.currentMonth + 1}-${
+            this.selectedDay || this.currentDate.getDate()
+          }`,
         };
 
         axios
@@ -559,10 +600,12 @@ fetchUsersNotInSchedule() {
       let params = {
         type: "Dept",
         dept: this.userDept,
-        start_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()
-          }`,
-        end_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()
-          }`,
+        start_date: `${this.currentYear}-${this.currentMonth + 1}-${
+          this.selectedDay || this.currentDate.getDate()
+        }`,
+        end_date: `${this.currentYear}-${this.currentMonth + 1}-${
+          this.selectedDay || this.currentDate.getDate()
+        }`,
       };
       axios
         .get(`http://localhost:6003/aggregateSchedule`, { params: params })
@@ -636,11 +679,18 @@ fetchUsersNotInSchedule() {
         const params = {
           type: "All",
           staff_id: parseInt(this.staffId, 10), // Ensures staff_id is parsed as an integer
-          start_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
-          end_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
+          start_date: `${this.currentYear}-${this.currentMonth + 1}-${
+            this.selectedDay || this.currentDate.getDate()
+          }`,
+          end_date: `${this.currentYear}-${this.currentMonth + 1}-${
+            this.selectedDay || this.currentDate.getDate()
+          }`,
         };
 
-        const response = await axios.get(`http://localhost:6003/aggregateSchedule`, { params });
+        const response = await axios.get(
+          `http://localhost:6003/aggregateSchedule`,
+          { params }
+        );
 
         this.schedule = response.data;
         // this.fetchAllMembers();
@@ -662,45 +712,46 @@ fetchUsersNotInSchedule() {
       }
     },
 
-
     selectDay(day) {
-    if (this.selectedDay === day) {
-      this.deselectDay(); // Call deselectDay if the same day is selected
-    } else {
-      this.deselectDay();
+      if (this.selectedDay === day) {
+        this.deselectDay(); // Call deselectDay if the same day is selected
+      } else {
+        this.deselectDay();
 
-      // Reset filters and clear dropdown options when a new day is selected
-      this.selectedDepartment = "";  // Reset department filter
-      this.selectedTeam = "";        // Reset team filter
-      this.depts = [];               // Clear department options
-      this.teams = [];               // Clear team options
+        // Reset filters and clear dropdown options when a new day is selected
+        this.selectedDepartment = ""; // Reset department filter
+        this.selectedTeam = ""; // Reset team filter
+        this.depts = []; // Clear department options
+        this.teams = []; // Clear team options
 
-      this.filteredStaffWorkingFromHome = []; // Clear WFH staff list for the new day
+        this.filteredStaffWorkingFromHome = []; // Clear WFH staff list for the new day
 
-      this.selectedDay = day; // Set the new day
-      this.selectedDate = `${this.currentYear}-${this.currentMonth + 1}-${
-        this.selectedDay.toString().length === 1
-          ? "0" + this.selectedDay
-          : this.selectedDay
-      }`;
+        this.selectedDay = day; // Set the new day
+        this.selectedDate = `${this.currentYear}-${String(
+          this.currentMonth + 1
+        ).padStart(2, "0")}-${
+          this.selectedDay.toString().length === 1
+            ? "0" + this.selectedDay
+            : this.selectedDay
+        }`;
 
       // Only fetch or update schedule if the day has WFH requests
       this.updateScheduleBasedOnRole();
       this.filterStaff(); // Reapply staff filtering logic
       this.fetchUsersNotInSchedule();
 
-      // Log state for debugging
-      console.log({
-        userRole: this.userRole,
-        staffId: this.staffId,
-        selectedDay: this.selectedDay,
-        schedule: this.schedule,
-        filteredStaffWorkingFromHome: this.filteredStaffWorkingFromHome,
-        depts: this.depts,
-        teams: this.teams
-      });
-    }
-  },
+        // Log state for debugging
+        console.log({
+          userRole: this.userRole,
+          staffId: this.staffId,
+          selectedDay: this.selectedDay,
+          schedule: this.schedule,
+          filteredStaffWorkingFromHome: this.filteredStaffWorkingFromHome,
+          depts: this.depts,
+          teams: this.teams,
+        });
+      }
+    },
 
     deselectDay() {
       this.selectedDay = null; // Deselect day
@@ -746,8 +797,9 @@ fetchUsersNotInSchedule() {
 
     selectToday() {
       this.selectedDay = this.currentDate.getDate(); // Automatically select today
-      this.selectedDate = `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay
-        }`;
+      this.selectedDate = `${this.currentYear}-${this.currentMonth + 1}-${
+        this.selectedDay
+      }`;
       this.filterStaff();
     },
   },
