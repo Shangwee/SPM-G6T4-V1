@@ -136,8 +136,11 @@
             <label for="team">Team</label>
             <select id="team" v-model="selectedTeam" class="form-control" @change="filterByTeam">
               <option value="">Select Teams</option>
-              <option v-for="team in teams" :key="team" :value="team">
-                {{ team }}
+              <!-- <option v-if="userRole === 3" v-for="team in teams" :key="team" :value="team">
+                {{ reportingManagerNames[team] || team }}
+              </option> -->
+              <option v-for="team in teams" :key="team.id" :value="team.id">
+                {{ team.name }}
               </option>
             </select>
           </div>
@@ -383,69 +386,122 @@ export default {
     },
 
 
-
-
-
     async fetchUsersForManagers() {
-      try {
-        const response = await axios.get("http://localhost:5001/users", {
-          params: { dept: this.userDept },
-        });
-        this.allUsers = response.data; // Store the users fetched by department
+  try {
+    const response = await axios.get("http://localhost:5001/users", {
+      params: { dept: this.userDept },
+    });
+    this.allUsers = response.data; // Store the users fetched by department
 
-        // Clear existing teams to prevent duplicates
-        const positions = response.data.map(user => user.Position); // Extract positions from the user data
-        this.teams = [...new Set([...this.teams, ...postions])]; // Add new positions to teams, ensuring uniqueness
-
-        this.fetchUsersNotInSchedule();
-      } catch (error) {
-        console.error("Error fetching users by department:", error);
+    // const userDept = response.data.find(user => user.Staff_ID === this.staffId)?.Dept; // Assuming `this.staffId` holds the current user's Staff ID
+    // if (userDept) {
+    //   this.depts = [...new Set([...this.depts, userDept])]; // Store the user's department uniquely
+    // }
+    // this.depts = this.staffId.Dept;
+    // Create a map to hold the reporting manager names by their IDs
+    const managerMap = {};
+    const response1 = await axios.get("http://localhost:5001/users", {});
+    // Iterate over the users to build the manager map
+    response1.data.forEach(user => {
+      if (user.Reporting_Manager) {
+        // Get the manager details
+        const manager = response1.data.find(u => u.Staff_ID === user.Reporting_Manager);
+        
+        if (manager) {
+          managerMap[user.Reporting_Manager] = `${manager.Staff_FName} ${manager.Staff_LName}`;
+        } else {
+          console.warn(`No manager found for ID: ${user.Reporting_Manager}`);
+        }
       }
-    },
+    });
+
+    // Extract unique reporting manager IDs and their names
+    this.teams = [...new Set(response.data.map(user => user.Reporting_Manager))]
+      .map(managerId => {
+        return {
+          id: managerId,
+          name: managerMap[managerId] || 'No Name' // Default to 'No Name' if not found
+        };
+      });
+
+    // Log the teams for debugging
+    console.log("Teams:", this.teams);
+
+    this.fetchUsersNotInSchedule();
+  } catch (error) {
+    console.error("Error fetching users by department:", error);
+  }
+},
+
 
     async fetchUsersForDirectors() {
       try {
-        const response = await axios.get("http://localhost:5001/users", {
-          params: { position: this.userPosition },
-        });
+        const response = await axios.get("http://localhost:5001/users", {});
         this.allUsers = response.data; // Store the users fetched by team
 
-        // Clear existing teams to prevent duplicates
-        const positions = response.data.map(user => user.Position); // Extract positions from the user data
-        this.teams = [...new Set([...this.teams, ...positions])]; // Add new positions to teams, ensuring uniqueness
+        // console.log("Response data:", response.data); // Log the response data for inspection
+
+        // Create a map to hold the reporting manager names by their IDs
+        const managerMap = {};
+
+        response.data.forEach(user => {
+          if (user.Reporting_Manager) {
+            // Get the manager details
+            const manager = response.data.find(u => u.Staff_ID === user.Reporting_Manager);
+            
+            if (manager) {
+              managerMap[user.Reporting_Manager] = `${manager.Staff_FName} ${manager.Staff_LName}`;
+            } else {
+              console.warn(`No manager found for ID: ${user.Reporting_Manager}`);
+            }
+          }
+        });
+
+        // Extract unique reporting manager IDs and their names
+        this.teams = [...new Set(response.data.map(user => user.Reporting_Manager))]
+          .map(managerId => {
+            return {
+              id: managerId,
+              name: managerMap[managerId] || 'No Name' // Default to 'No Name' if not found
+            };
+          });
+
+        // Log the teams for debugging
+        console.log("Teams:", this.teams);
+
         const dept = response.data.map(user => user.Dept);
         this.depts = [...new Set([...this.depts, ...dept])];
 
         this.fetchUsersNotInSchedule();
       } catch (error) {
-        console.error("Error fetching users by team:", error);
+        console.error("Error fetching users:", error);
       }
     },
 
 
     fetchUsersNotInSchedule() {
-  // Ensure that schedule and allUsers contain expected data
-  if (!Array.isArray(this.schedule) || !Array.isArray(this.allUsers)) {
-    console.error("Schedule or AllUsers is not an array");
-    return;
-  }
+      // Ensure that schedule and allUsers contain expected data
+      if (!Array.isArray(this.schedule) || !Array.isArray(this.allUsers)) {
+        console.error("Schedule or AllUsers is not an array");
+        return;
+      }
 
-  // Collect all Staff_IDs from filteredStaffWorkingFromHome into a Set
-  const wfhUserIds = new Set(this.filteredStaffWorkingFromHome.map(staff => parseInt(staff.Staff_ID, 10)));
+      // Collect all Staff_IDs from filteredStaffWorkingFromHome into a Set
+      const wfhUserIds = new Set(this.filteredStaffWorkingFromHome.map(staff => parseInt(staff.Staff_ID, 10)));
 
-  // Filter users who are not in the filtered WFH list (working from home)
-  this.usersNotInSchedule = this.allUsers.filter(user => {
-    const isNotInWFH = !wfhUserIds.has(parseInt(user.Staff_ID, 10));
+      // Filter users who are not in the filtered WFH list (working from home)
+      this.usersNotInSchedule = this.allUsers.filter(user => {
+        const isNotInWFH = !wfhUserIds.has(parseInt(user.Staff_ID, 10));
 
-    // Apply department and team filtering
-    const isDepartmentMatch = !this.selectedDepartment || user.Dept === this.selectedDepartment;
-    const isTeamMatch = !this.selectedTeam || user.Position === this.selectedTeam;
+        // Apply department and team filtering
+        const isDepartmentMatch = !this.selectedDepartment || user.Dept === this.selectedDepartment;
+        const isTeamMatch = !this.selectedTeam || user.Reporting_Manager === this.selectedTeam;
 
-    return isNotInWFH && isDepartmentMatch && isTeamMatch;
-  });
+        return isNotInWFH && isDepartmentMatch && isTeamMatch;
+      });
 
-  console.log("Users Not In Schedule (Working in Office):", this.usersNotInSchedule); // Debugging
-},
+      console.log("Users Not In Schedule (Working in Office):", this.usersNotInSchedule); // Debugging
+    },
 
 
 
@@ -664,7 +720,7 @@ export default {
         return (
           (!this.selectedDepartment ||
             staff.Dept === this.selectedDepartment) &&
-          (!this.selectedTeam || staff.Position === this.selectedTeam)
+          (!this.selectedTeam || staff.Reporting_Manager === this.selectedTeam)
         );
       });
     },
@@ -677,9 +733,9 @@ export default {
           .then((response) => {
             this.staffs.push(response.data);
             // get all teams
-            if (!this.teams.includes(response.data.Position)) {
-              this.teams.push(response.data.Position);
-            }
+            // if (!this.teams.includes(response.data.Position)) {
+            //   this.teams.push(response.data.Position);
+            // }
           })
           .catch((error) => {
             console.error("Error fetching Reporting Manager:", error);
@@ -708,9 +764,9 @@ export default {
         this.staffsDept.push(response.data);
 
         for (const staff of response.data) {
-          if (!this.teams.includes(staff.Position)) {
-            this.teams.push(staff.Position);
-          }
+          // if (!this.teams.includes(staff.Position)) {
+          //   this.teams.push(staff.Position);
+          // }
           if (!this.depts.includes(staff.Dept)) {
             this.depts.push(staff.Dept);
           }
