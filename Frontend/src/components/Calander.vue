@@ -228,6 +228,7 @@ export default {
       allUsers: [], // Array to hold all users
       scheduledUsers: [], // Array to hold scheduled users
       usersNotInSchedule: [], // Array to hold users not in schedule
+      reportingManagerNames: {},
     };
   },
 
