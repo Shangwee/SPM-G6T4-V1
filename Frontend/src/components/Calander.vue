@@ -10,7 +10,7 @@
           Next <i class="bi bi-arrow-right-circle"></i>
         </button>
       </div>
-      <div class="calendar-grid p-2">
+      <div class="calendar-grid p-2" id="calendar-refresh">
         <div class="calendar-day fw-bold text-center" v-for="day in daysOfWeek" :key="day">
           {{ day }}
         </div>
@@ -42,36 +42,49 @@
               day
             );
 
-            return (
-              meeting.meetingstaffs.some(
-                (staff) => String(staff.Staff_ID) === this.staffId
-              ) &&
-              meetingDate.getFullYear() === currentDay.getFullYear() &&
-              meetingDate.getMonth() === currentDay.getMonth() &&
-              meetingDate.getDate() === currentDay.getDate()
-            );
-          }),
-          // conflict:
-          //   this.ownSchedule.some((e) => {
-          //     const scheduleDate = new Date(e.Date);
-          //     const currentDay = new Date(
-          //       this.currentDate.getFullYear(),
-          //       this.currentDate.getMonth(),
-          //       day
-          //     );
-          //     return (
-          //       scheduleDate.getFullYear() === currentDay.getFullYear() &&
-          //       scheduleDate.getMonth() === currentDay.getMonth() &&
-          //       scheduleDate.getDate() === currentDay.getDate()
-          //     );
-          //   }) &&
-          //   this.myMeetings.some((meeting) => {
-          //     const meetingDate = new Date(meeting.Date);
-          //     const currentDay = new Date(
-          //       this.currentDate.getFullYear(),
-          //       this.currentDate.getMonth(),
-          //       day
-          //     );
+              return (
+                meeting.meetingstaffs.some(
+                  (staff) => String(staff.Staff_ID) === this.staffId
+                ) &&
+                meetingDate.getFullYear() === currentDay.getFullYear() &&
+                meetingDate.getMonth() === currentDay.getMonth() &&
+                meetingDate.getDate() === currentDay.getDate()
+              );
+            }),
+            wfh: this.schedule.some((entry) => {
+              const schedulesDate = new Date(entry.Date);
+              const currentDay = new Date(
+                this.currentDate.getFullYear(),
+                this.currentDate.getMonth(),
+                day
+              );
+              return (
+                schedulesDate.getFullYear() === currentDay.getFullYear() &&
+                schedulesDate.getMonth() === currentDay.getMonth() &&
+                schedulesDate.getDate() === currentDay.getDate()
+              );
+            }),
+            // conflict:
+            //   this.ownSchedule.some((e) => {
+            //     const scheduleDate = new Date(e.Date);
+            //     const currentDay = new Date(
+            //       this.currentDate.getFullYear(),
+            //       this.currentDate.getMonth(),
+            //       day
+            //     );
+            //     return (
+            //       scheduleDate.getFullYear() === currentDay.getFullYear() &&
+            //       scheduleDate.getMonth() === currentDay.getMonth() &&
+            //       scheduleDate.getDate() === currentDay.getDate()
+            //     );
+            //   }) &&
+            //   this.myMeetings.some((meeting) => {
+            //     const meetingDate = new Date(meeting.Date);
+            //     const currentDay = new Date(
+            //       this.currentDate.getFullYear(),
+            //       this.currentDate.getMonth(),
+            //       day
+            //     );
 
           //     return (
           //       meeting.meetingstaffs.some(
@@ -90,7 +103,7 @@
       <div v-if="scheduleType === 'team'" class="legend">
         <div class="legend-item">
           <div class="wfh-color"></div>
-          <span class="legend-text">Personal WFH</span>
+          <span class="legend-text">Team WFH</span>
         </div>
         <div class="legend-item">
           <div class="meeting-color"></div>
@@ -105,10 +118,11 @@
 
     <!-- Team or personal schedule section -->
     <div v-if="scheduleType === 'team'" class="staff-schedule-container">
-      <Meeting :staffId="staffId" :selectedDate="selectedDate"></Meeting>
+      <Meeting :staffId="staffId" :selectedDate="selectedDate" :selectedDay="selectedDay" :daysInMonth="daysInMonth"
+        @getMyMeeting="getMeetings"></Meeting>
       <div class="filter-controls d-flex flex-column mb-4">
         <div v-if="userRole === 3 || userRole === 1" class="filter-controls d-flex mb-4">
-          <div class="form-group mr-2" style="flex: 1;">
+          <div class="form-group mr-2" style="flex: 1">
             <label for="department">Department</label>
             <select id="department" v-model="selectedDepartment" class="form-control" @change="filterByDepartment">
               <option value="">Select Department</option>
@@ -118,17 +132,19 @@
             </select>
           </div>
 
-          <div class="form-group" style="flex: 1;">
+          <div class="form-group" style="flex: 1">
             <label for="team">Team</label>
             <select id="team" v-model="selectedTeam" class="form-control" @change="filterByTeam">
               <option value="">Select Teams</option>
-              <option v-for="team in teams" :key="team" :value="team">
-                {{ team }}
+              <!-- <option v-if="userRole === 3" v-for="team in teams" :key="team" :value="team">
+                {{ reportingManagerNames[team] || team }}
+              </option> -->
+              <option v-for="team in teams" :key="team.id" :value="team.id">
+                {{ team.name }}
               </option>
             </select>
           </div>
         </div>
-
 
         <div v-show="selectedDay" class="staff-schedule mt-4">
           <h5 class="schedule-title">
@@ -139,31 +155,35 @@
 
         <!-- Team members list -->
         <div class="row" v-if="schedule.length > 0">
-          <div class="col-md-6 mb-3 full-width">
+          <div class="col-md-6 mb-3">
             <div class="card home-card">
               <h6>Working from Home</h6>
               <ul class="staff-list">
                 <div v-if="userRole === 2">
-                  <li v-for="staff in filteredStaffWorkingFromHome" :key="staff.id">
-                    {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{
-                      staff.Staff_ID
-                    }})
+                  <li class="staff-item" v-for="staff in filteredStaffWorkingFromHome" :key="staff.id">
+                    {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }}) - {{ staff.Position }}
                   </li>
                 </div>
                 <div v-if="userRole === 3">
-                  <li v-for="staff in filteredStaffWorkingFromHome" :key="staff.id">
-                    {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{
-                      staff.Staff_ID
-                    }}) - {{ staff.Position }}
+                  <li class="staff-item" v-for="staff in filteredStaffWorkingFromHome" :key="staff.id">
+                    {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }}) - {{ staff.Position }}
                   </li>
                 </div>
                 <div v-if="userRole === 1">
-                  <li v-for="staff in filteredStaffWorkingFromHome">
-                    {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{
-                      staff.Staff_ID
-                    }}) - {{ staff.Position }}
+                  <li class="staff-item" v-for="staff in filteredStaffWorkingFromHome" :key="staff.id">
+                    {{ staff.Staff_FName }} {{ staff.Staff_LName }} ({{ staff.Staff_ID }}) - {{ staff.Position }}
                   </li>
                 </div>
+              </ul>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="card home-card">
+              <h6>Working In Office</h6>
+              <ul class="staff-list">
+                <li class="staff-item" v-for="user in usersNotInSchedule" :key="user.id">
+                  {{ user.Staff_FName }} {{ user.Staff_LName }} ({{ user.Staff_ID }}) - {{ user.Position }}
+                </li>
               </ul>
             </div>
           </div>
@@ -187,6 +207,7 @@ export default {
       staffId: null,
       reportingManager: null,
       userRole: null,
+      userPosition: null,
       userDept: null,
       ownSchedule: [],
       schedule: [],
@@ -203,6 +224,11 @@ export default {
       filteredStaffWorkingFromHome: [],
       selectedDate: "",
       myMeetings: [],
+
+      allUsers: [], // Array to hold all users
+      scheduledUsers: [], // Array to hold scheduled users
+      usersNotInSchedule: [], // Array to hold users not in schedule
+      reportingManagerNames: {},
     };
   },
 
@@ -233,12 +259,15 @@ export default {
         if (this.userRole === 2) {
           console.log("Fetching staff team schedule for user role 2");
           this.fetchStaffTeamSchedule();
+          this.fetchUsersForStaff();
         } else if (this.userRole === 3) {
           this.fetchbyOwnDept();
           this.fetchManageTeamSchedule();
+          this.fetchUsersForManagers();
         } else if (this.userRole === 1) {
           // this.fetchbyOwnDept();
           this.fetchALLSchedule();
+          this.fetchUsersForDirectors();
         }
       } catch (error) {
         console.error("Error in created lifecycle:", error);
@@ -259,8 +288,6 @@ export default {
       }
     },
   },
-
-  
 
   computed: {
     currentYear() {
@@ -299,8 +326,187 @@ export default {
       return days;
     },
   },
+  mounted() {
+    // this.staffId = sessionStorage.getItem("staffID"); // Retrieve Staff_ID
+
+    // if (this.staffId) {
+    //   this.initializeData(); // Call the method to initialize data
+    // } else {
+    //   console.error("No Staff ID found.");
+    // }
+  },
 
   methods: {
+    // async initializeData() {
+    //   try {
+    //     await this.fetchUserRole(); // Wait for user role to be fetched
+    //     this.fetchUserDept();
+    //     this.fetchOwnSchedule();
+    //     this.selectToday(); // Automatically select today's date
+    //     this.filterStaff();
+    //     this.fetchReportingManager(); // Fetch Reporting_Manager for the logged-in staff
+    //     this.getMeetings();
+
+    //     // Wait for reportingManager to be set before checking userRole
+    //     if (this.userRole === 2) {
+    //       console.log("Fetching staff team schedule for user role 2");
+    //       this.fetchStaffTeamSchedule();
+    //       this.fetchUsersForStaff();
+    //     } else if (this.userRole === 3) {
+    //       this.fetchbyOwnDept();
+    //       this.fetchManageTeamSchedule();
+    //       this.fetchUsersForManagers();
+    //     } else if (this.userRole === 1) {
+    //       this.fetchALLSchedule();
+    //       this.fetchUsersForDirectors();
+    //     }
+    //   } catch (error) {
+    //     console.error("Error in initializing data:", error);
+    //   }
+    // },
+
+    async fetchUsersForStaff() {
+      try {
+        // Fetch the general list of users reporting to the manager
+        const allUsersResponse = await axios.get("http://localhost:5001/users", {
+          params: { Reporting_Manager: this.reportingManager },
+        });
+
+        // Fetch the reporting manager's details
+        const managerResponse = await axios.get(`http://localhost:5001/user/${this.reportingManager}`);
+        const manager = managerResponse.data;
+
+        // Combine manager with the users list, placing the manager at the start
+        this.allUsers = [manager, ...allUsersResponse.data];
+
+        // Proceed to filter users not in the schedule
+        this.fetchUsersNotInSchedule();
+      } catch (error) {
+        console.error("Error fetching all users including manager:", error);
+      }
+    },
+
+
+    async fetchUsersForManagers() {
+  try {
+    const response = await axios.get("http://localhost:5001/users", {
+      params: { dept: this.userDept },
+    });
+    this.allUsers = response.data; // Store the users fetched by department
+
+    // const userDept = response.data.find(user => user.Staff_ID === this.staffId)?.Dept; // Assuming `this.staffId` holds the current user's Staff ID
+    // if (userDept) {
+    //   this.depts = [...new Set([...this.depts, userDept])]; // Store the user's department uniquely
+    // }
+    // this.depts = this.staffId.Dept;
+    // Create a map to hold the reporting manager names by their IDs
+    const managerMap = {};
+    const response1 = await axios.get("http://localhost:5001/users", {});
+    // Iterate over the users to build the manager map
+    response1.data.forEach(user => {
+      if (user.Reporting_Manager) {
+        // Get the manager details
+        const manager = response1.data.find(u => u.Staff_ID === user.Reporting_Manager);
+        
+        if (manager) {
+          managerMap[user.Reporting_Manager] = `${manager.Staff_FName} ${manager.Staff_LName}`;
+        } else {
+          console.warn(`No manager found for ID: ${user.Reporting_Manager}`);
+        }
+      }
+    });
+
+    // Extract unique reporting manager IDs and their names
+    this.teams = [...new Set(response.data.map(user => user.Reporting_Manager))]
+      .map(managerId => {
+        return {
+          id: managerId,
+          name: managerMap[managerId] || 'No Name' // Default to 'No Name' if not found
+        };
+      });
+
+    // Log the teams for debugging
+    console.log("Teams:", this.teams);
+
+    this.fetchUsersNotInSchedule();
+  } catch (error) {
+    console.error("Error fetching users by department:", error);
+  }
+},
+
+
+    async fetchUsersForDirectors() {
+      try {
+        const response = await axios.get("http://localhost:5001/users", {});
+        this.allUsers = response.data; // Store the users fetched by team
+
+        // console.log("Response data:", response.data); // Log the response data for inspection
+
+        // Create a map to hold the reporting manager names by their IDs
+        const managerMap = {};
+
+        response.data.forEach(user => {
+          if (user.Reporting_Manager) {
+            // Get the manager details
+            const manager = response.data.find(u => u.Staff_ID === user.Reporting_Manager);
+            
+            if (manager) {
+              managerMap[user.Reporting_Manager] = `${manager.Staff_FName} ${manager.Staff_LName}`;
+            } else {
+              console.warn(`No manager found for ID: ${user.Reporting_Manager}`);
+            }
+          }
+        });
+
+        // Extract unique reporting manager IDs and their names
+        this.teams = [...new Set(response.data.map(user => user.Reporting_Manager))]
+          .map(managerId => {
+            return {
+              id: managerId,
+              name: managerMap[managerId] || 'No Name' // Default to 'No Name' if not found
+            };
+          });
+
+        // Log the teams for debugging
+        console.log("Teams:", this.teams);
+
+        const dept = response.data.map(user => user.Dept);
+        this.depts = [...new Set([...this.depts, ...dept])];
+
+        this.fetchUsersNotInSchedule();
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    },
+
+
+    fetchUsersNotInSchedule() {
+      // Ensure that schedule and allUsers contain expected data
+      if (!Array.isArray(this.schedule) || !Array.isArray(this.allUsers)) {
+        console.error("Schedule or AllUsers is not an array");
+        return;
+      }
+
+      // Collect all Staff_IDs from filteredStaffWorkingFromHome into a Set
+      const wfhUserIds = new Set(this.filteredStaffWorkingFromHome.map(staff => parseInt(staff.Staff_ID, 10)));
+
+      // Filter users who are not in the filtered WFH list (working from home)
+      this.usersNotInSchedule = this.allUsers.filter(user => {
+        const isNotInWFH = !wfhUserIds.has(parseInt(user.Staff_ID, 10));
+
+        // Apply department and team filtering
+        const isDepartmentMatch = !this.selectedDepartment || user.Dept === this.selectedDepartment;
+        const isTeamMatch = !this.selectedTeam || user.Reporting_Manager === this.selectedTeam;
+
+        return isNotInWFH && isDepartmentMatch && isTeamMatch;
+      });
+
+      console.log("Users Not In Schedule (Working in Office):", this.usersNotInSchedule); // Debugging
+    },
+
+
+
+
     getMeetings() {
       let url = "http://localhost:5004/meeting";
       let params = {
@@ -323,6 +529,17 @@ export default {
         })
         .catch((error) => {
           console.error("Failed to fetch user role:", error);
+          throw error; // Re-throw the error to catch it in created()
+        });
+    },
+    fetchUserPosition() {
+      return axios
+        .get(`http://localhost:5001/user/${this.staffId}`)
+        .then((response) => {
+          this.userPosition = response.data.Position; // Set the userRole based on response
+        })
+        .catch((error) => {
+          console.error("Failed to fetch user Position:", error);
           throw error; // Re-throw the error to catch it in created()
         });
     },
@@ -356,10 +573,10 @@ export default {
           .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
           .then((response) => {
             this.staffs.push(response.data);
-            // get all teams
-            if (!this.teams.includes(response.data.Position)) {
-              this.teams.push(response.data.Position);
-            }
+            // // get all teams
+            // if (!this.teams.includes(response.data.Position)) {
+            //   this.teams.push(response.data.Position);
+            // }
             this.filterStaff();
           })
           .catch((error) => {
@@ -396,8 +613,10 @@ export default {
           })
           .then((response) => {
             this.schedule = response.data;
+            console.log("Schedule data:", this.schedule);
             // this.fetchStaffTeamMembers(); // ** running before this.schedule retrieves
           });
+        this.filterUsersNotInSchedule();
       } catch (error) {
         this.schedule = [];
         console.error("Error fetching team schedule:", error);
@@ -411,10 +630,10 @@ export default {
           .get(`http://localhost:5001/user/${schedule.Staff_ID}`)
           .then((response) => {
             this.staffs.push(response.data);
-            // get all teams
-            if (!this.teams.includes(response.data.Position)) {
-              this.teams.push(response.data.Position);
-            }
+            // // get all teams
+            // if (!this.teams.includes(response.data.Position)) {
+            //   this.teams.push(response.data.Position);
+            // }
           })
           .catch((error) => {
             console.error("Error fetching Reporting Manager:", error);
@@ -490,9 +709,11 @@ export default {
 
     filterByDepartment() {
       this.filterStaff();
+      this.fetchUsersNotInSchedule();
     },
     filterByTeam() {
       this.filterStaff();
+      this.fetchUsersNotInSchedule();
     },
     filterStaff() {
       // Filter staff based on selected department and team
@@ -500,7 +721,7 @@ export default {
         return (
           (!this.selectedDepartment ||
             staff.Dept === this.selectedDepartment) &&
-          (!this.selectedTeam || staff.Position === this.selectedTeam)
+          (!this.selectedTeam || staff.Reporting_Manager === this.selectedTeam)
         );
       });
     },
@@ -513,9 +734,9 @@ export default {
           .then((response) => {
             this.staffs.push(response.data);
             // get all teams
-            if (!this.teams.includes(response.data.Position)) {
-              this.teams.push(response.data.Position);
-            }
+            // if (!this.teams.includes(response.data.Position)) {
+            //   this.teams.push(response.data.Position);
+            // }
           })
           .catch((error) => {
             console.error("Error fetching Reporting Manager:", error);
@@ -528,20 +749,25 @@ export default {
         const params = {
           type: "All",
           staff_id: parseInt(this.staffId, 10), // Ensures staff_id is parsed as an integer
-          start_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
-          end_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()}`,
+          start_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()
+            }`,
+          end_date: `${this.currentYear}-${this.currentMonth + 1}-${this.selectedDay || this.currentDate.getDate()
+            }`,
         };
 
-        const response = await axios.get(`http://localhost:6003/aggregateSchedule`, { params });
+        const response = await axios.get(
+          `http://localhost:6003/aggregateSchedule`,
+          { params }
+        );
 
         this.schedule = response.data;
         // this.fetchAllMembers();
         this.staffsDept.push(response.data);
 
         for (const staff of response.data) {
-          if (!this.teams.includes(staff.Position)) {
-            this.teams.push(staff.Position);
-          }
+          // if (!this.teams.includes(staff.Position)) {
+          //   this.teams.push(staff.Position);
+          // }
           if (!this.depts.includes(staff.Dept)) {
             this.depts.push(staff.Dept);
           }
@@ -554,44 +780,45 @@ export default {
       }
     },
 
-
     selectDay(day) {
-    if (this.selectedDay === day) {
-      this.deselectDay(); // Call deselectDay if the same day is selected
-    } else {
-      this.deselectDay();
+      if (this.selectedDay === day) {
+        this.deselectDay(); // Call deselectDay if the same day is selected
+      } else {
+        this.deselectDay();
 
-      // Reset filters and clear dropdown options when a new day is selected
-      this.selectedDepartment = "";  // Reset department filter
-      this.selectedTeam = "";        // Reset team filter
-      this.depts = [];               // Clear department options
-      this.teams = [];               // Clear team options
+        // Reset filters and clear dropdown options when a new day is selected
+        this.selectedDepartment = ""; // Reset department filter
+        this.selectedTeam = ""; // Reset team filter
+        this.depts = []; // Clear department options
+        this.teams = []; // Clear team options
 
-      this.filteredStaffWorkingFromHome = []; // Clear WFH staff list for the new day
+        this.filteredStaffWorkingFromHome = []; // Clear WFH staff list for the new day
 
-      this.selectedDay = day; // Set the new day
-      this.selectedDate = `${this.currentYear}-${this.currentMonth + 1}-${
-        this.selectedDay.toString().length === 1
+        this.selectedDay = day; // Set the new day
+        this.selectedDate = `${this.currentYear}-${String(
+          this.currentMonth + 1
+        ).padStart(2, "0")}-${this.selectedDay.toString().length === 1
           ? "0" + this.selectedDay
           : this.selectedDay
-      }`;
+          }`;
 
-      // Only fetch or update schedule if the day has WFH requests
-      this.updateScheduleBasedOnRole();
-      this.filterStaff(); // Reapply staff filtering logic
+        // Only fetch or update schedule if the day has WFH requests
+        this.updateScheduleBasedOnRole();
+        this.filterStaff(); // Reapply staff filtering logic
+        this.fetchUsersNotInSchedule();
 
-      // Log state for debugging
-      console.log({
-        userRole: this.userRole,
-        staffId: this.staffId,
-        selectedDay: this.selectedDay,
-        schedule: this.schedule,
-        filteredStaffWorkingFromHome: this.filteredStaffWorkingFromHome,
-        depts: this.depts,
-        teams: this.teams
-      });
-    }
-  },
+        // Log state for debugging
+        console.log({
+          userRole: this.userRole,
+          staffId: this.staffId,
+          selectedDay: this.selectedDay,
+          schedule: this.schedule,
+          filteredStaffWorkingFromHome: this.filteredStaffWorkingFromHome,
+          depts: this.depts,
+          teams: this.teams,
+        });
+      }
+    },
 
     deselectDay() {
       this.selectedDay = null; // Deselect day
@@ -604,12 +831,15 @@ export default {
       if (this.userRole === 2) {
         // this.fetchReportingManager();
         this.fetchStaffTeamSchedule();
+        this.fetchUsersForStaff();
       } else if (this.userRole === 3) {
         this.fetchbyOwnDept();
         this.fetchManageTeamSchedule();
+        this.fetchUsersForManagers();
       } else if (this.userRole === 1) {
         // this.fetchbyOwnDept();
         this.fetchALLSchedule();
+        this.fetchUsersForDirectors();
       }
     },
 
@@ -648,21 +878,6 @@ export default {
   /* Expand to full width */
 }
 
-.filter-controls.full-width {
-  justify-content: flex-start;
-  /* Prevent misalignment */
-}
-
-.filter-controls .form-group.full-width {
-  width: 100%;
-  /* Ensure full width for form-group */
-}
-
-.filter-controls select {
-  width: 100%;
-  /* Ensure select element is also full width */
-}
-
 .calendar-container {
   display: flex;
   justify-content: space-between;
@@ -674,11 +889,27 @@ export default {
 
 .calendar {
   background-color: rgba(255, 255, 255, 0.9);
-  width: 70%;
-  /* Increased width from 58% to 65% */
-  margin: 0 auto;
+  width: 58%; /* Fixed width for the calendar */
   border-radius: 8px;
   padding: 10px;
+  box-sizing: border-box;
+}
+
+.staff-schedule-container {
+  width: 80%; /* Fixed width for the staff schedule */
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.card {
+  width: 100%;
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fff;
+  box-sizing: border-box;
 }
 
 .calendar-grid {
@@ -723,6 +954,10 @@ export default {
   background-color: #ffc494;
 }
 
+.calendar-cell.wfh {
+  background-color: #b6c6fd;
+}
+
 .calendar-cell.conflict {
   background-color: #ff564a;
   color: white;
@@ -741,14 +976,6 @@ export default {
 
 .empty-day {
   background-color: #fafafa;
-}
-
-.staff-schedule-container {
-  width: 70%;
-  /* Increased width from 40% to 50% */
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
 }
 
 .filter-controls {
@@ -787,39 +1014,31 @@ export default {
   margin-bottom: 20px;
 }
 
-.card {
-  flex-grow: 1;
-  background-color: #fff;
-  border: 1px solid #e0e0e0;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 15px;
-}
-
 .office-card h6,
 .home-card h6 {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: bold;
   color: #333;
   border-bottom: 1px solid #ddd;
   padding-bottom: 10px;
 }
 
-/* Updated staff list to be more compact */
 .staff-list {
-  list-style-type: none;
-  /* Removed bullet points */
   padding-left: 0;
-  /* Removed extra padding */
   margin: 0;
 }
 
 .staff-item {
+  display: block;
+  padding: 5px 0;
   font-size: 0.85rem;
-  /* Reduced font size for compactness */
-  padding: 3px 0;
-  /* Reduced padding between list items */
   color: #555;
+  white-space: wrap;
+  border-bottom: 1px solid #ddd; /* Adds a line between each name */
+}
+
+.staff-item:last-child {
+  border-bottom: none; /* Remove the line for the last item */
 }
 
 @media (max-width: 768px) {
@@ -830,16 +1049,8 @@ export default {
 
   .calendar,
   .staff-schedule-container {
-    width: 100%;
+    width: 100%; /* Full width on smaller screens */
     margin-bottom: 20px;
-  }
-
-  .calendar-cell {
-    height: 60px;
-  }
-
-  .card {
-    margin-bottom: 10px;
   }
 }
 
@@ -882,3 +1093,5 @@ export default {
   margin: 8px 8px;
 }
 </style>
+
+

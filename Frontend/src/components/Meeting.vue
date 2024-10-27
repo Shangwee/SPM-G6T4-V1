@@ -79,9 +79,10 @@ export default {
       selectedStaff: [],
       checked: false,
       title: "",
+      cell: null,
     };
   },
-  props: ["staffId", "selectedDate"],
+  props: ["staffId", "selectedDate", "selectedDay", "daysInMonth"],
   watch: {
     selectedDate(newDate, oldDate) {
       this.getMeeting();
@@ -136,7 +137,7 @@ export default {
           console.log(r.data);
           const meetingId = r.data.data.Meeting_ID;
           if (this.selectedStaff != []) {
-            this.selectedStaff.push(this.staffId);
+            this.selectedStaff.push(parseInt(this.staffId));
             for (let staff of this.selectedStaff) {
               // send notification to all selected staffs
               let url = "http://localhost:5004/meetingstaffs";
@@ -165,7 +166,15 @@ export default {
               });
             }
           }
-          location.reload();
+          // this.getMeeting();
+          // location.reload();
+          this.cell =
+            document.getElementsByClassName("calendar-cell")[
+              this.daysInMonth.indexOf(this.selectedDay)
+            ].classList;
+          this.cell.add("meeting");
+          this.$emit("getMyMeeting");
+          this.getMeeting();
         })
         .catch((e) => {
           console.log(e);
