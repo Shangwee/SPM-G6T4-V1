@@ -40,7 +40,7 @@ services:
       - account
     env_file:
       - ./SimpleService/Account/.account_env
-    command: /bin/sh -c "sleep 20 && python -m unittest account_test.py"
+    command: /bin/sh -c "sleep 50 && python -m unittest account_test.py"
 
   #################################
   # Schedule: The Schedule microservice
@@ -79,7 +79,7 @@ services:
       - schedule
     env_file:
       - ./SimpleService/Schedule/.schedule_env
-    command: /bin/sh -c "sleep 20 && python -m unittest schedule_test.py"
+    command: /bin/sh -c "sleep 50 && python -m unittest schedule_test.py"
 
   #################################
   # Request: The Request microservice
@@ -118,7 +118,7 @@ services:
       - request
     env_file:
       - ./SimpleService/Request/.request_env
-    command: /bin/sh -c "sleep 20 && python -m unittest request_test.py"
+    command: /bin/sh -c "sleep 50 && python -m unittest request_test.py"
 
   #################################
   # Meeting: The Meeting microservice
