@@ -31,6 +31,15 @@
 import axios from "axios";
 import { getSocket, disconnectSocket } from "../socket"; // Import the socket functions
 
+const ACCOUNT_API = import.meta.env.VITE_ACCOUNT_API;
+const SCHEDULE_API = import.meta.env.VITE_SCHEDULE_API;
+const REQUEST_API = import.meta.env.VITE_REQUEST_API;
+const MEETING_API = import.meta.env.VITE_MEETING_API;
+const NOTIFICATION_API = import.meta.env.VITE_NOTIFICATION_API;
+const FLEXIBLE_ARRANGEMENT_API = import.meta.env.VITE_FLEXIBLE_ARRANGEMENT_API;
+const MANAGE_REQUEST_API = import.meta.env.VITE_MANAGE_REQUEST_API;
+const SCHEDULE_AGGREGATION_API = import.meta.env.VITE_SCHEDULE_AGGREGATION_API;
+
 // Get Staff ID from session storage
 const staffId = parseInt(sessionStorage.getItem('staffID'));
 
@@ -45,7 +54,7 @@ export default {
   async mounted() {
     // Fetch existing notifications from the backend API
     try {
-      const response = await axios.get("http://localhost:5005/api/notifications/user/" + staffId);
+      const response = await axios.get(`${NOTIFICATION_API}/api/notifications/user/` + staffId);
       this.notifications = response.data;
     } catch (error) {
       console.error("Error fetching notifications:", error);
