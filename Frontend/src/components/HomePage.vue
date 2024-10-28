@@ -3,6 +3,15 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import NavBar from './NavBar.vue';
 
+const ACCOUNT_API = import.meta.env.VITE_ACCOUNT_API;
+const SCHEDULE_API = import.meta.env.VITE_SCHEDULE_API;
+const REQUEST_API = import.meta.env.VITE_REQUEST_API;
+const MEETING_API = import.meta.env.VITE_MEETING_API;
+const NOTIFICATION_API = import.meta.env.VITE_NOTIFICATION_API;
+const FLEXIBLE_ARRANGEMENT_API = import.meta.env.VITE_FLEXIBLE_ARRANGEMENT_API;
+const MANAGE_REQUEST_API = import.meta.env.VITE_MANAGE_REQUEST_API;
+const SCHEDULE_AGGREGATION_API = import.meta.env.VITE_SCHEDULE_AGGREGATION_API;
+
 const inOfficeCount = ref(null); 
 const wfhCount = ref(null); 
 const totalDeptCount = ref(null); 
@@ -33,7 +42,7 @@ const todayFormattedDisplay = ref(formatDateDisplay(today.value));
 
 const fetchUserDetails = async () => {
   try {
-    const response = await axios.get(`http://localhost:5001/user/${staffId}`);
+    const response = await axios.get(`${ACCOUNT_API}/user/${staffId}`);
     if (response.data) {
       const { Dept, Role } = response.data;
       userDept.value = Dept;
@@ -52,7 +61,7 @@ const fetchUserDetails = async () => {
 // Fetch the total department count for the logged-in user's department
 const fetchTotalDeptCount = async () => {
   try {
-    const response = await axios.get(`http://localhost:5001/users`, {
+    const response = await axios.get(`${ACCOUNT_API}/users`, {
       params: { dept: userDept.value },
     });
     totalDeptCount.value = response.data.length || 0;
@@ -65,7 +74,7 @@ const fetchTotalDeptCount = async () => {
 // Fetch WFH schedules for the current day in the user's department
 const fetchWFHCountForDepartment = async () => {
   try {
-    const response = await axios.get(`http://localhost:6003/aggregateSchedule`, {
+    const response = await axios.get(`${SCHEDULE_AGGREGATION_API}/aggregateSchedule`, {
       params: {
         type: 'Dept',
         dept: userDept.value,
@@ -100,7 +109,7 @@ const fetchWFHCountForDepartment = async () => {
 
 const fetchApprovedWFHDates = async () => {
   try {
-    const response = await axios.get(`http://localhost:6001/flexibleArrangement/ownRequests/${staffId}`);
+    const response = await axios.get(`${FLEXIBLE_ARRANGEMENT_API}/flexibleArrangement/ownRequests/${staffId}`);
     const todayDate = new Date();
     todayDate.setHours(0, 0, 0, 0);
 
@@ -120,7 +129,7 @@ const fetchApprovedWFHDates = async () => {
 
 const fetchPendingRequests = async () => {
   try {
-    const response = await axios.get(`http://localhost:6001/flexibleArrangement/approvalRequests/${staffId}`);
+    const response = await axios.get(`${FLEXIBLE_ARRANGEMENT_API}/flexibleArrangement/approvalRequests/${staffId}`);
     pendingRequestCount.value = response.data.filter(request => request.Status === 0).length;
   } catch (error) {
     pendingRequestCount.value = 0;
