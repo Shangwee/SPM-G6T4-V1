@@ -13,11 +13,6 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: account
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     volumes:
       - ./Account/db/account.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
       - ./Account/employee.csv:/var/lib/mysql-files/employee.csv # Mount the file
@@ -31,8 +26,7 @@ services:
     restart: always
     ports: [5001:5001]
     depends_on:
-      account_db:
-        condition: service_healthy
+      - account_db
     environment:
       DB_HOST: account_db
       DB_USER: root
@@ -47,10 +41,8 @@ services:
     build: ./Account
     image: gcr.io/spmprojecttest/account_test:1.0 # Updated for GCR
     depends_on:
-      account_db:
-        condition: service_healthy
-      account:
-        condition: service_started
+      - account_db
+      - account
     environment:
       DB_HOST: account_db
       DB_USER: root
@@ -73,7 +65,7 @@ services:
       DB_HOST: schedule_db
       DB_USER: root
       DB_PASSWORD: root
-      DB_NAME: db
+      DB_NAME: schedule
       DB_PORT: 3306
 
   #################################
@@ -85,16 +77,11 @@ services:
     ports: [3302:3306]
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: db
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      MYSQL_DATABASE: schedule
     volumes:
       - ./Schedule/db/schedule.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
       - ./Schedule/schedule.csv:/var/lib/mysql-files/schedule.csv # Mount the file
-
+      
   #################################
   # Service_Test: Testing for scheduke microservice
   #################################
@@ -102,15 +89,13 @@ services:
     build: ./Schedule
     image: gcr.io/spmprojecttest/schedule_test:1.0
     depends_on:
-      schedule_db:
-        condition: service_healthy
-      schedule:
-        condition: service_started
+      - schedule_db
+      - schedule
     environment:
       DB_HOST: schedule_db
       DB_USER: root
       DB_PASSWORD: root
-      DB_NAME: db
+      DB_NAME: schedule
       DB_PORT: 3306
     command: /bin/sh -c "sleep 20 && python -m unittest schedule_test.py"
 
@@ -123,13 +108,12 @@ services:
     restart: always
     ports: [5003:5000]
     depends_on:
-      request_db:
-        condition: service_healthy
+      - request_db
     environment:
       DB_HOST: request_db
       DB_USER: root
       DB_PASSWORD: root
-      DB_NAME: db
+      DB_NAME: request
       DB_PORT: 3306
 
   #################################
@@ -141,12 +125,7 @@ services:
     ports: [3303:3306]
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: db
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      MYSQL_DATABASE: request
     volumes:
       - ./Request/db/request.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
       - ./Request/request.csv:/var/lib/mysql-files/request.csv # Mount the file
@@ -158,15 +137,13 @@ services:
     build: ./Request
     image: gcr.io/spmprojecttest/request_test:1.0 # Updated for GCR
     depends_on:
-      request_db:
-        condition: service_healthy
-      request:
-        condition: service_started
+      - request_db
+      - request
     environment:
       DB_HOST: request_db
       DB_USER: root
       DB_PASSWORD: root
-      DB_NAME: db
+      DB_NAME: request
       DB_PORT: 3306
     command: /bin/sh -c "sleep 20 && python -m unittest request_test.py"
 
@@ -184,7 +161,7 @@ services:
       DB_HOST: meeting_db
       DB_USER: root
       DB_PASSWORD: root
-      DB_NAME: db
+      DB_NAME: meeting
       DB_PORT: 3306
 
   #################################
@@ -196,12 +173,7 @@ services:
     ports: [3304:3306]
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: db
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      MYSQL_DATABASE: meeting
     volumes:
       - ./Meeting/db/meeting.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
       - ./Meeting/meeting.csv:/var/lib/mysql-files/meeting.csv # Mount the file
@@ -210,9 +182,9 @@ services:
   #################################
   # notification: The Notification microservice
   #################################
-  notification-service:
-    build: ./notification-service
-    image: gcr.io/spmprojecttest/notification-service:1.0
+  notification:
+    build: ./Notification
+    image: gcr.io/spmprojecttest/notification:1.0
     restart: always
     ports : [5005:5005]
     depends_on:
@@ -221,7 +193,7 @@ services:
       DB_HOST: notifications_db
       DB_USER: root
       DB_PASSWORD: root
-      DB_NAME: notifications_db
+      DB_NAME: notifications
       DB_PORT: 3306
 
   #################################
@@ -233,6 +205,6 @@ services:
     ports: [3305:3306]
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: notifications_db
+      MYSQL_DATABASE: notifications
     volumes:
-      - ./notification-service/src/config/notification.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./Notification/src/config/notification.sql:/docker-entrypoint-initdb.d/init.sql
