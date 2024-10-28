@@ -10,9 +10,8 @@ services:
     image: mysql:latest
     restart: always
     ports: [3301:3306]
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: account
+    env_file:
+      - ./SimpleService/Account/.account_env
     volumes:
       - ./SimpleService/Account/db/account.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
       - ./SimpleService/Account/employee.csv:/var/lib/mysql-files/employee.csv # Mount the file
@@ -27,12 +26,8 @@ services:
     ports: [5001:5001]
     depends_on:
       - account_db
-    environment:
-      DB_HOST: account_db
-      DB_USER: root
-      DB_PASSWORD: root
-      DB_NAME: account
-      DB_PORT: 3306
+    env_file:
+      - ./SimpleService/Account/.account_env
 
   #################################
   # Account test: testing the Account microservice
@@ -43,12 +38,8 @@ services:
     depends_on:
       - account_db
       - account
-    environment:
-      DB_HOST: account_db
-      DB_USER: root
-      DB_PASSWORD: root
-      DB_NAME: account
-      DB_PORT: 3306
+    env_file:
+      - ./SimpleService/Account/.account_env
     command: /bin/sh -c "sleep 20 && python -m unittest account_test.py"
 
   #################################
@@ -61,12 +52,8 @@ services:
     ports: [5002:5000]
     depends_on:
       - schedule_db
-    environment:
-      DB_HOST: schedule_db
-      DB_USER: root
-      DB_PASSWORD: root
-      DB_NAME: schedule
-      DB_PORT: 3306
+    env_file:
+      - ./SimpleService/Schedule/.schedule_env
 
   #################################
   # Schedule SQL Database
@@ -75,13 +62,12 @@ services:
     image: mysql:latest
     restart: always
     ports: [3302:3306]
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: schedule
+    env_file:
+      - ./SimpleService/Schedule/.schedule_env
     volumes:
       - ./SimpleService/Schedule/db/schedule.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
       - ./SimpleService/Schedule/schedule.csv:/var/lib/mysql-files/schedule.csv # Mount the file
-      
+
   #################################
   # Service_Test: Testing for scheduke microservice
   #################################
@@ -91,12 +77,8 @@ services:
     depends_on:
       - schedule_db
       - schedule
-    environment:
-      DB_HOST: schedule_db
-      DB_USER: root
-      DB_PASSWORD: root
-      DB_NAME: schedule
-      DB_PORT: 3306
+    env_file:
+      - ./SimpleService/Schedule/.schedule_env
     command: /bin/sh -c "sleep 20 && python -m unittest schedule_test.py"
 
   #################################
@@ -109,12 +91,8 @@ services:
     ports: [5003:5000]
     depends_on:
       - request_db
-    environment:
-      DB_HOST: request_db
-      DB_USER: root
-      DB_PASSWORD: root
-      DB_NAME: request
-      DB_PORT: 3306
+    env_file:
+      - ./SimpleService/Request/.request_env
 
   #################################
   # Request SQL Database
@@ -123,9 +101,8 @@ services:
     image: mysql:latest
     restart: always
     ports: [3303:3306]
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: request
+    env_file:
+      - ./SimpleService/Request/.request_env
     volumes:
       - ./SimpleService/Request/db/request.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
       - ./SimpleService/Request/request.csv:/var/lib/mysql-files/request.csv # Mount the file
@@ -139,12 +116,8 @@ services:
     depends_on:
       - request_db
       - request
-    environment:
-      DB_HOST: request_db
-      DB_USER: root
-      DB_PASSWORD: root
-      DB_NAME: request
-      DB_PORT: 3306
+    env_file:
+      - ./SimpleService/Request/.request_env
     command: /bin/sh -c "sleep 20 && python -m unittest request_test.py"
 
   #################################
@@ -157,12 +130,8 @@ services:
     ports: [5004:5000]
     depends_on:
       - meeting_db
-    environment:
-      DB_HOST: meeting_db
-      DB_USER: root
-      DB_PASSWORD: root
-      DB_NAME: meeting
-      DB_PORT: 3306
+    env_file:
+      - ./SimpleService/Meeting/.meeting_env
 
   #################################
   # Meeting SQL Database
@@ -171,9 +140,8 @@ services:
     image: mysql:latest
     restart: always
     ports: [3304:3306]
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: meeting
+    env_file:
+      - ./SimpleService/Meeting/.meeting_env
     volumes:
       - ./SimpleService/Meeting/db/meeting.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
       - ./SimpleService/Meeting/meeting.csv:/var/lib/mysql-files/meeting.csv # Mount the file
@@ -186,15 +154,11 @@ services:
     build: ./SimpleService/Notification
     image: gcr.io/spmprojecttest/notification:1.0
     restart: always
-    ports : [5005:5005]
+    ports: [5005:5005]
     depends_on:
       - notifications_db
-    environment:
-      DB_HOST: notifications_db
-      DB_USER: root
-      DB_PASSWORD: root
-      DB_NAME: notifications
-      DB_PORT: 3306
+    env_file:
+      - ./SimpleService/Notification/.notification_env
 
   #################################
   # notification_db: The Notification SQL Database
@@ -203,9 +167,8 @@ services:
     image: mysql:latest
     restart: always
     ports: [3305:3306]
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: notifications
+    env_file:
+      - ./SimpleService/Notification/.notification_env
     volumes:
       - ./SimpleService/Notification/src/config/notification.sql:/docker-entrypoint-initdb.d/init.sql
 
@@ -218,7 +181,7 @@ services:
     build:
       context: ./ComplexService/FlexibleArrangement
       dockerfile: Dockerfile
-    image: gcr.io/spmprojecttest/flexiblearrangement:1.0  # Updated for GCR
+    image: gcr.io/spmprojecttest/flexiblearrangement:1.0 # Updated for GCR
     restart: always
     ports: ["6001:6001"]
     environment:
@@ -243,11 +206,11 @@ services:
     build:
       context: ./ComplexService/ManageRequest
       dockerfile: Dockerfile
-    image: gcr.io/spmprojecttest/managerequest:1.0  # Updated for GCR
+    image: gcr.io/spmprojecttest/managerequest:1.0 # Updated for GCR
     restart: always
     ports: ["6002:6002"]
     environment:
-      PYTHONUNBUFFERED: 1 
+      PYTHONUNBUFFERED: 1
 
   #################################
   # ManageRequest test: testing the ManageRequest microservice
@@ -256,7 +219,7 @@ services:
     build:
       context: ./ComplexService/ManageRequest
       dockerfile: Dockerfile
-    image: gcr.io/spmprojecttest/managerequest_test:1.0  # Updated for GCR
+    image: gcr.io/spmprojecttest/managerequest_test:1.0 # Updated for GCR
     depends_on:
       - ManageRequest
     command: /bin/sh -c "sleep 100 && python -m unittest manage_request_test.py"
@@ -268,7 +231,7 @@ services:
     build:
       context: ./ComplexService/ScheduleAggregation
       dockerfile: Dockerfile
-    image: gcr.io/spmprojecttest/scheduleaggregation:1.0  # Updated for GCR
+    image: gcr.io/spmprojecttest/scheduleaggregation:1.0 # Updated for GCR
     restart: always
     ports: ["6003:6003"]
     environment:
@@ -281,7 +244,7 @@ services:
     build:
       context: ./ComplexService/ScheduleAggregation
       dockerfile: Dockerfile
-    image: gcr.io/spmprojecttest/scheduleaggregation_test:1.0  # Updated for GCR
+    image: gcr.io/spmprojecttest/scheduleaggregation_test:1.0 # Updated for GCR
     depends_on:
       - ScheduleAggregation
     command: /bin/sh -c "sleep 100 && python -m unittest schedule_aggregation_test.py"
