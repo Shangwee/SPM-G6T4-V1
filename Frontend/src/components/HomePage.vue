@@ -3,9 +3,18 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import NavBar from './NavBar.vue';
 
+const ACCOUNT_API = import.meta.env.VITE_ACCOUNT_API;
+const SCHEDULE_API = import.meta.env.VITE_SCHEDULE_API;
+const REQUEST_API = import.meta.env.VITE_REQUEST_API;
+const MEETING_API = import.meta.env.VITE_MEETING_API;
+const NOTIFICATION_API = import.meta.env.VITE_NOTIFICATION_API;
+const FLEXIBLE_ARRANGEMENT_API = import.meta.env.VITE_FLEXIBLE_ARRANGEMENT_API;
+const MANAGE_REQUEST_API = import.meta.env.VITE_MANAGE_REQUEST_API;
+const SCHEDULE_AGGREGATION_API = import.meta.env.VITE_SCHEDULE_AGGREGATION_API;
+
 const inOfficeCount = ref(null); 
 const wfhCount = ref(null); 
-const totalDeptCount = ref(null); 
+const totalTeamCount = ref(null); 
 const userDept = ref(''); 
 const filteredStaffWorkingFromHome = ref([]); 
 const today = ref(new Date()); 
@@ -14,6 +23,9 @@ const pendingRequestCount = ref(0);
 const isLoadingWFH = ref(true); 
 const isLoadingPendingRequests = ref(true); 
 const isManagerOrHR = ref(false); 
+const reportingManager = ref(null);
+const userRole = ref(null);
+const reportingManagerName = ref(null);
 
 const staffId = sessionStorage.getItem('staffID');
 
@@ -33,7 +45,7 @@ const todayFormattedDisplay = ref(formatDateDisplay(today.value));
 
 const fetchUserDetails = async () => {
   try {
-    const response = await axios.get(`http://localhost:5001/user/${staffId}`);
+    const response = await axios.get(`${ACCOUNT_API}/user/${staffId}`);
     if (response.data) {
       const { Dept, Role } = response.data;
       userDept.value = Dept;
@@ -48,27 +60,55 @@ const fetchUserDetails = async () => {
     console.error('Error fetching user details:', error);
   }
 };
-
-// Fetch the total department count for the logged-in user's department
-const fetchTotalDeptCount = async () => {
+const fetchReportingManager = async () => {
   try {
-    const response = await axios.get(`http://localhost:5001/users`, {
-      params: { dept: userDept.value },
-    });
-    totalDeptCount.value = response.data.length || 0;
+    const response = await axios.get(`${ACCOUNT_API}/user/${staffId}`);
+    userRole.value = response.data.Role;
+
+    if (userRole.value === 2) {
+      reportingManager.value = parseInt(response.data.Reporting_Manager);
+    } else {
+      reportingManager.value = parseInt(staffId);
+    }
+    const response1 = await axios.get(`${ACCOUNT_API}/user/${reportingManager.value}`);
+    reportingManagerName.value = response1.data.Staff_FName + " " + response1.data.Staff_LName
+    console.log("Reporting Manager set to:", reportingManager.value);
   } catch (error) {
-    console.error('Error fetching total department count:', error);
-    totalDeptCount.value = 0;
+    console.error("Error fetching Reporting Manager:", error);
   }
 };
+
+// Fetch the total department count for the logged-in user's department
+const fetchTotalTeamCount = async () => {
+  try {
+    await fetchReportingManager(); // Ensure reportingManager is set
+    if (reportingManager.value) {
+      const response = await axios.get(`${ACCOUNT_API}/users`, {
+        params: { Reporting_Manager: reportingManager.value },
+      });
+      console.log("Using Reporting Manager ID:", reportingManager.value);
+      totalTeamCount.value = (response.data.length + 1)|| 0;
+
+      console.log("Total Dept Count:", totalTeamCount.value);
+    } else {
+      console.error("Reporting Manager ID is not set yet.");
+    }
+  } catch (error) {
+    console.error('Error fetching total department count:', error);
+    totalTeamCount.value = 0;
+  }
+};
+
+
 
 // Fetch WFH schedules for the current day in the user's department
 const fetchWFHCountForDepartment = async () => {
   try {
-    const response = await axios.get(`http://localhost:6003/aggregateSchedule`, {
+    const response = await axios.get(`${SCHEDULE_AGGREGATION_API}/aggregateSchedule`, {
       params: {
-        type: 'Dept',
-        dept: userDept.value,
+        type: 'Team',
+        // dept: userDept.value,
+        reporting_manager: reportingManager.value,
         start_date: formatDate(today.value),
         end_date: formatDate(today.value),
       },
@@ -85,7 +125,7 @@ const fetchWFHCountForDepartment = async () => {
 
     // Correct the in-office count
     wfhCount.value = schedules.length - wfhCount.value;
-    inOfficeCount.value = totalDeptCount.value - wfhCount.value;
+    inOfficeCount.value = totalTeamCount.value - wfhCount.value;
 
     // Log counts to verify correctness
     console.log(`WFH Count: ${wfhCount.value}`);
@@ -94,13 +134,13 @@ const fetchWFHCountForDepartment = async () => {
   } catch (error) {
     console.error('Error fetching WFH requests:', error);
     wfhCount.value = 0; // Default to 0 if an error occurs
-    inOfficeCount.value = totalDeptCount.value || 0; // Assume all are in office if there's an error
+    inOfficeCount.value = totalTeamCount.value || 0; // Assume all are in office if there's an error
   }
 };
 
 const fetchApprovedWFHDates = async () => {
   try {
-    const response = await axios.get(`http://localhost:6001/flexibleArrangement/ownRequests/${staffId}`);
+    const response = await axios.get(`${FLEXIBLE_ARRANGEMENT_API}/flexibleArrangement/ownRequests/${staffId}`);
     const todayDate = new Date();
     todayDate.setHours(0, 0, 0, 0);
 
@@ -120,7 +160,7 @@ const fetchApprovedWFHDates = async () => {
 
 const fetchPendingRequests = async () => {
   try {
-    const response = await axios.get(`http://localhost:6001/flexibleArrangement/approvalRequests/${staffId}`);
+    const response = await axios.get(`${FLEXIBLE_ARRANGEMENT_API}/flexibleArrangement/approvalRequests/${staffId}`);
     pendingRequestCount.value = response.data.filter(request => request.Status === 0).length;
   } catch (error) {
     pendingRequestCount.value = 0;
@@ -131,7 +171,8 @@ const fetchPendingRequests = async () => {
 
 onMounted(async () => {
   await fetchUserDetails();
-  await fetchTotalDeptCount(); // Fetch department count first
+  await fetchReportingManager();
+  await fetchTotalTeamCount(); // Fetch department count first
   await fetchWFHCountForDepartment(); // Then fetch WFH count and in-office count based on total
   await fetchApprovedWFHDates();
 });
@@ -143,6 +184,7 @@ onMounted(async () => {
     <h2 class="text-center">Today's Office Status</h2>
     <h5 class="text-center">{{ todayFormattedDisplay }}</h5>
     <h4 class="text-center mb-4 department-title">Department: {{ userDept }}</h4>
+    <h4 class="text-center mb-4 department-title">Team: {{ reportingManagerName }}</h4>
     
     <!-- Show loading state for office counts -->
     <div v-if="inOfficeCount === null || wfhCount === null" class="loading-placeholder">
