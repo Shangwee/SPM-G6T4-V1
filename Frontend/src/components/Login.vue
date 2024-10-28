@@ -31,6 +31,15 @@
 </template>
 
 <script>
+const ACCOUNT_API = import.meta.env.VITE_ACCOUNT_API;
+const SCHEDULE_API = import.meta.env.VITE_SCHEDULE_API;
+const REQUEST_API = import.meta.env.VITE_REQUEST_API;
+const MEETING_API = import.meta.env.VITE_MEETING_API;
+const NOTIFICATION_API = import.meta.env.VITE_NOTIFICATION_API;
+const FLEXIBLE_ARRANGEMENT_API = import.meta.env.VITE_FLEXIBLE_ARRANGEMENT_API;
+const MANAGE_REQUEST_API = import.meta.env.VITE_MANAGE_REQUEST_API;
+const SCHEDULE_AGGREGATION_API = import.meta.env.VITE_SCHEDULE_AGGREGATION_API;
+
 export default {
     data() {
         return {
@@ -47,7 +56,7 @@ export default {
                 // Reset the error message before trying login
                 this.errorMessage = '';
 
-                const response = await fetch('http://localhost:5001/login', {
+                const response = await fetch(`${ACCOUNT_API}/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

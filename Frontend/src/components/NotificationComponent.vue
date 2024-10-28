@@ -1,33 +1,64 @@
 <template>
   <div class="container-fluid h-100 d-flex align-items-center">
     <div class="notification-box p-3 h-100">
-      <div class="notification-header d-flex justify-content-between align-items-center pb-2 border-bottom">
+      <div
+        class="notification-header d-flex justify-content-between align-items-center pb-2 border-bottom"
+      >
         <h3 class="h5 mb-0">Notifications</h3>
-        <button class="btn btn-primary btn-sm" @click="markAllAsRead" :disabled="notifications.length === 0">
+        <button
+          class="btn btn-primary btn-sm"
+          @click="markAllAsRead"
+          :disabled="notifications.length === 0"
+        >
           Mark All as Read
         </button>
       </div>
-      
+
       <!-- Check if there are notifications -->
-      <ul v-if="notifications.length > 0" class="notification-list list-unstyled mt-3">
-        <li 
-          v-for="notification in notifications" 
-          :key="notification.id" 
-          :class="{'unread': !notification.is_read, 'p-3 mb-2 border-bottom': true}">
+      <ul
+        v-if="notifications.length > 0"
+        class="notification-list list-unstyled mt-3"
+      >
+        <li
+          v-for="notification in notifications"
+          :key="notification.id"
+          :class="{
+            unread: !notification.is_read,
+            'p-3 mb-2 border-bottom': true,
+          }"
+        >
           <div class="notification-content">
-            <p class="mb-1">{{ notification.message }} <span class="text-muted">({{ notification.notification_type }})</span></p>
+            <p class="mb-1">
+              {{ notification.message }}
+              <span class="text-muted"
+                >({{ notification.notification_type }})</span
+              >
+            </p>
           </div>
-          <button class="btn btn-link text-danger p-0" @click="dismissNotification(notification.id)">Dismiss</button>
+          <button
+            class="btn btn-link text-danger p-0"
+            @click="dismissNotification(notification.id)"
+          >
+            Dismiss
+          </button>
         </li>
       </ul>
-      
-      <li v-else class="text-center text-muted d-flex align-items-center justify-content-center" style="height: 100%; width: 100%;">
+
+      <li
+        v-else
+        class="text-center text-muted d-flex align-items-center justify-content-center"
+        style="height: 100%; width: 100%"
+      >
         No notifications available.
       </li>
 
       <!-- Load More Button -->
       <div v-if="hasMoreNotifications" class="text-center mt-3">
-        <button class="btn btn-secondary" @click="loadMoreNotifications" :disabled="loading">
+        <button
+          class="btn btn-secondary"
+          @click="loadMoreNotifications"
+          :disabled="loading"
+        >
           <span v-if="loading">Loading...</span>
           <span v-else>Load More</span>
         </button>
@@ -41,18 +72,27 @@ import axios from "axios";
 import { getSocket, disconnectSocket } from "../socket"; // Import the socket functions
 
 // Get Staff ID from session storage
-const staffId = parseInt(sessionStorage.getItem('staffID'));
+const staffId = parseInt(sessionStorage.getItem("staffID"));
+
+const ACCOUNT_API = import.meta.env.VITE_ACCOUNT_API;
+const SCHEDULE_API = import.meta.env.VITE_SCHEDULE_API;
+const REQUEST_API = import.meta.env.VITE_REQUEST_API;
+const MEETING_API = import.meta.env.VITE_MEETING_API;
+const NOTIFICATION_API = import.meta.env.VITE_NOTIFICATION_API;
+const FLEXIBLE_ARRANGEMENT_API = import.meta.env.VITE_FLEXIBLE_ARRANGEMENT_API;
+const MANAGE_REQUEST_API = import.meta.env.VITE_MANAGE_REQUEST_API;
+const SCHEDULE_AGGREGATION_API = import.meta.env.VITE_SCHEDULE_AGGREGATION_API;
 
 export default {
   data() {
     return {
-      notifications: [],  // Array to store both fetched and real-time notifications
-      page: 1,            // Current page for pagination
-      limit: 5,           // Number of notifications per page
-      count: 0,           // Total count of notifications
-      hasMoreNotifications: true,  // To check if more notifications are available
-      loading: false,     // To track loading state
-      socket: null        // Socket.IO instance
+      notifications: [], // Array to store both fetched and real-time notifications
+      page: 1, // Current page for pagination
+      limit: 5, // Number of notifications per page
+      count: 0, // Total count of notifications
+      hasMoreNotifications: true, // To check if more notifications are available
+      loading: false, // To track loading state
+      socket: null, // Socket.IO instance
     };
   },
   async mounted() {
@@ -66,7 +106,7 @@ export default {
     this.socket.on("notification", (data) => {
       // Add the new notification to the array if it matches the current staff ID
       if (data.user_id === staffId) {
-        this.notifications.unshift(data);  // Add the new notification to the top of the list
+        this.notifications.unshift(data); // Add the new notification to the top of the list
       }
     });
   },
@@ -79,7 +119,9 @@ export default {
       // Set loading to true while fetching
       this.loading = true;
       try {
-        const response = await axios.get(`http://localhost:5005/api/notifications/user/${staffId}?page=${this.page}&limit=${this.limit}`);
+        const response = await axios.get(
+          `${NOTIFICATION_API}/api/notifications/user/${staffId}?page=${this.page}&limit=${this.limit}`
+        );
         const newNotifications = response.data;
 
         // Append new notifications to the current list
@@ -87,7 +129,7 @@ export default {
 
         // Check if we have more notifications to load
         if (newNotifications.length < this.limit) {
-          this.hasMoreNotifications = false;  // Disable Load More if fewer than limit notifications are returned
+          this.hasMoreNotifications = false; // Disable Load More if fewer than limit notifications are returned
         }
 
         // Increase the page number for the next fetch
@@ -104,8 +146,10 @@ export default {
     },
     dismissNotification(id) {
       try {
-        axios.put(`http://localhost:5005/api/notifications/read/${id}`, { is_read: true });
-        const notification = this.notifications.find(n => n.id === id);
+        axios.put(`${NOTIFICATION_API}/api/notifications/read/${id}`, {
+          is_read: true,
+        });
+        const notification = this.notifications.find((n) => n.id === id);
         if (notification) notification.is_read = true;
       } catch (error) {
         console.error("Error dismissing notification:", error);
@@ -113,13 +157,17 @@ export default {
     },
     markAllAsRead() {
       try {
-        axios.put(`http://localhost:5005/api/notifications/read/all/${staffId}`);
-        this.notifications.forEach(notification => notification.is_read = true);
+        axios.put(
+          `${NOTIFICATION_API}/api/notifications/read/all/${staffId}`
+        );
+        this.notifications.forEach(
+          (notification) => (notification.is_read = true)
+        );
       } catch (error) {
         console.error("Error marking all notifications as read:", error);
       }
-    }
-  }
+    },
+  },
 };
 </script>
 

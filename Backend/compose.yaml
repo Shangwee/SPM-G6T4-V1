@@ -1,0 +1,250 @@
+version: "3.8"
+
+services:
+  # Simple microservice
+
+  #################################
+  # Account SQL Database
+  #################################
+  account_db:
+    image: mysql:latest
+    restart: always
+    ports: [3301:3306]
+    env_file:
+      - ./SimpleService/Account/.account_env
+    volumes:
+      - ./SimpleService/Account/db/account.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
+      - ./SimpleService/Account/employee.csv:/var/lib/mysql-files/employee.csv # Mount the file
+
+  #################################
+  # Account: The Account microservice
+  #################################
+  account:
+    build: ./SimpleService/Account
+    image: gcr.io/spmprojecttest/account:1.0 # Updated for GCR
+    restart: always
+    ports: [5001:5001]
+    depends_on:
+      - account_db
+    env_file:
+      - ./SimpleService/Account/.account_env
+
+  #################################
+  # Account test: testing the Account microservice
+  #################################
+  account_test:
+    build: ./SimpleService/Account
+    image: gcr.io/spmprojecttest/account_test:1.0 # Updated for GCR
+    depends_on:
+      - account_db
+      - account
+    env_file:
+      - ./SimpleService/Account/.account_env
+    command: /bin/sh -c "sleep 20 && python -m unittest account_test.py"
+
+  #################################
+  # Schedule: The Schedule microservice
+  #################################
+  schedule:
+    build: ./SimpleService/Schedule
+    image: gcr.io/spmprojecttest/schedule:1.0 # Updated for GCR
+    restart: always
+    ports: [5002:5000]
+    depends_on:
+      - schedule_db
+    env_file:
+      - ./SimpleService/Schedule/.schedule_env
+
+  #################################
+  # Schedule SQL Database
+  #################################
+  schedule_db:
+    image: mysql:latest
+    restart: always
+    ports: [3302:3306]
+    env_file:
+      - ./SimpleService/Schedule/.schedule_env
+    volumes:
+      - ./SimpleService/Schedule/db/schedule.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
+      - ./SimpleService/Schedule/schedule.csv:/var/lib/mysql-files/schedule.csv # Mount the file
+
+  #################################
+  # Service_Test: Testing for scheduke microservice
+  #################################
+  schedule_test:
+    build: ./SimpleService/Schedule
+    image: gcr.io/spmprojecttest/schedule_test:1.0
+    depends_on:
+      - schedule_db
+      - schedule
+    env_file:
+      - ./SimpleService/Schedule/.schedule_env
+    command: /bin/sh -c "sleep 20 && python -m unittest schedule_test.py"
+
+  #################################
+  # Request: The Request microservice
+  #################################
+  request:
+    build: ./SimpleService/Request
+    image: gcr.io/spmprojecttest/request:1.0 # Updated for GCR
+    restart: always
+    ports: [5003:5000]
+    depends_on:
+      - request_db
+    env_file:
+      - ./SimpleService/Request/.request_env
+
+  #################################
+  # Request SQL Database
+  #################################
+  request_db:
+    image: mysql:latest
+    restart: always
+    ports: [3303:3306]
+    env_file:
+      - ./SimpleService/Request/.request_env
+    volumes:
+      - ./SimpleService/Request/db/request.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
+      - ./SimpleService/Request/request.csv:/var/lib/mysql-files/request.csv # Mount the file
+
+  #################################
+  # Request test: testing the Request microservice
+  #################################
+  request_test:
+    build: ./SimpleService/Request
+    image: gcr.io/spmprojecttest/request_test:1.0 # Updated for GCR
+    depends_on:
+      - request_db
+      - request
+    env_file:
+      - ./SimpleService/Request/.request_env
+    command: /bin/sh -c "sleep 20 && python -m unittest request_test.py"
+
+  #################################
+  # Meeting: The Meeting microservice
+  #################################
+  meeting:
+    build: ./SimpleService/Meeting
+    image: gcr.io/spmprojecttest/meeting:1.0 # Updated for GCR
+    restart: always
+    ports: [5004:5000]
+    depends_on:
+      - meeting_db
+    env_file:
+      - ./SimpleService/Meeting/.meeting_env
+
+  #################################
+  # Meeting SQL Database
+  #################################
+  meeting_db:
+    image: mysql:latest
+    restart: always
+    ports: [3304:3306]
+    env_file:
+      - ./SimpleService/Meeting/.meeting_env
+    volumes:
+      - ./SimpleService/Meeting/db/meeting.sql:/docker-entrypoint-initdb.d/init.sql # Mount the file
+      - ./SimpleService/Meeting/meeting.csv:/var/lib/mysql-files/meeting.csv # Mount the file
+      - ./SimpleService/Meeting/meetingstaffs.csv:/var/lib/mysql-files/meetingstaffs.csv # Mount the file
+
+  #################################
+  # notification: The Notification microservice
+  #################################
+  notification:
+    build: ./SimpleService/Notification
+    image: gcr.io/spmprojecttest/notification:1.0
+    restart: always
+    ports: [5005:5005]
+    depends_on:
+      - notifications_db
+    env_file:
+      - ./SimpleService/Notification/.notification_env
+
+  #################################
+  # notification_db: The Notification SQL Database
+  #################################
+  notifications_db:
+    image: mysql:latest
+    restart: always
+    ports: [3305:3306]
+    env_file:
+      - ./SimpleService/Notification/.notification_env
+    volumes:
+      - ./SimpleService/Notification/src/config/notification.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # complex microservice
+
+  #################################
+  # FlexibleArrangement: The FlexibleArrangement microservice
+  #################################
+  FlexibleArrangement:
+    build:
+      context: ./ComplexService/FlexibleArrangement
+      dockerfile: Dockerfile
+    image: gcr.io/spmprojecttest/flexiblearrangement:1.0 # Updated for GCR
+    restart: always
+    ports: ["6001:6001"]
+    environment:
+      PYTHONUNBUFFERED: 1
+
+  #################################
+  # FlexibleArrangement test: testing the FlexibleArrangement microservice
+  #################################
+  FlexibleArrangement_test:
+    build:
+      context: ./ComplexService/FlexibleArrangement
+      dockerfile: Dockerfile
+    image: spm/flexiblearrangement_test:1.0
+    depends_on:
+      - FlexibleArrangement
+    command: /bin/sh -c "sleep 80 && python -m unittest flexible_arrangement_test.py"
+
+  #################################
+  # ManageRequest: The ManageRequest microservice
+  #################################
+  ManageRequest:
+    build:
+      context: ./ComplexService/ManageRequest
+      dockerfile: Dockerfile
+    image: gcr.io/spmprojecttest/managerequest:1.0 # Updated for GCR
+    restart: always
+    ports: ["6002:6002"]
+    environment:
+      PYTHONUNBUFFERED: 1
+
+  #################################
+  # ManageRequest test: testing the ManageRequest microservice
+  #################################
+  ManageRequest_test:
+    build:
+      context: ./ComplexService/ManageRequest
+      dockerfile: Dockerfile
+    image: gcr.io/spmprojecttest/managerequest_test:1.0 # Updated for GCR
+    depends_on:
+      - ManageRequest
+    command: /bin/sh -c "sleep 100 && python -m unittest manage_request_test.py"
+
+  #################################
+  # ScheduleAggregation: The ScheduleAggregation microservice
+  #################################
+  ScheduleAggregation:
+    build:
+      context: ./ComplexService/ScheduleAggregation
+      dockerfile: Dockerfile
+    image: gcr.io/spmprojecttest/scheduleaggregation:1.0 # Updated for GCR
+    restart: always
+    ports: ["6003:6003"]
+    environment:
+      PYTHONUNBUFFERED: 1
+
+  #################################
+  # ScheduleAggregation test: testing the ScheduleAggregation microservice
+  #################################
+  ScheduleAggregation_test:
+    build:
+      context: ./ComplexService/ScheduleAggregation
+      dockerfile: Dockerfile
+    image: gcr.io/spmprojecttest/scheduleaggregation_test:1.0 # Updated for GCR
+    depends_on:
+      - ScheduleAggregation
+    command: /bin/sh -c "sleep 100 && python -m unittest schedule_aggregation_test.py"

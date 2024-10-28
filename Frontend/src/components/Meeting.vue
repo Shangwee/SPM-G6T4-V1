@@ -67,6 +67,12 @@
 <script>
 import axios from "axios";
 
+const ACCOUNT_API = import.meta.env.VITE_ACCOUNT_API;
+const SCHEDULE_API = import.meta.env.VITE_SCHEDULE_API;
+const REQUEST_API = import.meta.env.VITE_REQUEST_API;
+const MEETING_API = import.meta.env.VITE_MEETING_API;
+const NOTIFICATION_API = import.meta.env.VITE_NOTIFICATION_API;
+
 export default {
   data() {
     return {
@@ -123,7 +129,7 @@ export default {
       }
     },
     createMeeting() {
-      let url = "http://localhost:5004/meeting";
+      let url = `${MEETING_API}/meeting`;
       let params = {
         Created_By: this.staffId,
         Date: this.selectedDate,
@@ -139,7 +145,7 @@ export default {
             this.selectedStaff.push(this.staffId);
             for (let staff of this.selectedStaff) {
               // send notification to all selected staffs
-              let url = "http://localhost:5004/meetingstaffs";
+              let url = `${MEETING_API}/meetingstaffs`;
               let params = {
                 Meeting_ID: parseInt(meetingId),
                 Staff_ID: staff,
@@ -153,7 +159,7 @@ export default {
                   console.log(e);
                 });
               // Send notification to staff
-              let notifiurl = "http://localhost:5005/api/notifications/create";
+              let notifiurl = `${NOTIFICATION_API}/api/notifications/create`;
               let notifiparams = {
                 user_id: staff,
                 message: `You have a meeting on ${this.selectedDate}`,
@@ -172,7 +178,7 @@ export default {
         });
     },
     getMeeting() {
-      let url = "http://localhost:5004/meeting";
+      let url = `${MEETING_API}/meeting`;
       let params = {
         Date: this.selectedDate,
       };
@@ -200,7 +206,7 @@ export default {
         });
     },
     deleteMeeting() {
-      let url = "http://localhost:5004/meeting/" + this.meeting.Meeting_ID;
+      let url = `${MEETING_API}/meeting/` + this.meeting.Meeting_ID;
 
       return axios
         .delete(url)
@@ -209,7 +215,7 @@ export default {
           // TODO: send notification to all staffs that meeting is cancelled
           for (let staff of this.meeting.meetingstaffs) {
             let meetingstaffid = staff.Staff_ID;
-            let notifiurl = "http://localhost:5005/api/notifications/create";
+            let notifiurl = `${NOTIFICATION_API}/api/notifications/create`;
             let notifiparams = {
               user_id: meetingstaffid,
               message: `Meeting have been cancelled on ${this.selectedDate}`,
@@ -228,7 +234,7 @@ export default {
     },
     getReportingManager() {
       return axios
-        .get(`http://localhost:5001/user/${this.staffId}`)
+        .get(`${ACCOUNT_API}/user/${this.staffId}`)
         .then((response) => {
           this.reportingManager = response.data.Reporting_Manager;
           console.log("reporting Manager: " + this.reportingManager);
@@ -239,7 +245,7 @@ export default {
     },
     getUserRole() {
       return axios
-        .get(`http://localhost:5001/user/${this.staffId}`)
+        .get(`${ACCOUNT_API}/user/${this.staffId}`)
         .then((response) => {
           this.userRole = response.data.Role; // Set the userRole based on response
           console.log(this.userRole);
@@ -254,7 +260,7 @@ export default {
         Reporting_Manager: this.staffId,
       };
       return axios
-        .get(`http://localhost:5001/users`, { params: params })
+        .get(`${ACCOUNT_API}/users`, { params: params })
         .then((response) => {
           this.team = response.data; // Set the userRole based on response
           console.log("Team:" + JSON.stringify(this.team));

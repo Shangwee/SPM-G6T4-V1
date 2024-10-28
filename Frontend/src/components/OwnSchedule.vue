@@ -3,6 +3,15 @@ import { ref, onMounted } from 'vue';
 import NavBar from "./NavBar.vue";
 import axios from 'axios'; // Import Axios
 
+const ACCOUNT_API = import.meta.env.VITE_ACCOUNT_API;
+const SCHEDULE_API = import.meta.env.VITE_SCHEDULE_API;
+const REQUEST_API = import.meta.env.VITE_REQUEST_API;
+const MEETING_API = import.meta.env.VITE_MEETING_API;
+const NOTIFICATION_API = import.meta.env.VITE_NOTIFICATION_API;
+const FLEXIBLE_ARRANGEMENT_API = import.meta.env.VITE_FLEXIBLE_ARRANGEMENT_API;
+const MANAGE_REQUEST_API = import.meta.env.VITE_MANAGE_REQUEST_API;
+const SCHEDULE_AGGREGATION_API = import.meta.env.VITE_SCHEDULE_AGGREGATION_API;
+
 // Track selected date and form visibility
 const selectedDay = ref(null);
 const currentDate = ref(new Date());
@@ -96,7 +105,7 @@ const confirmApplyWorkFromHome = async () => {
   const requestDate = `${currentDate.value.getFullYear()}-${String(currentDate.value.getMonth() + 1).padStart(2, '0')}-${String(dayToConfirm.value).padStart(2, '0')}`;
 
   try {
-    const response = await axios.post('http://localhost:6001/flexibleArrangement/createRequest', {
+    const response = await axios.post(`${FLEXIBLE_ARRANGEMENT_API}/flexibleArrangement/createRequest`, {
       staff_id: staffId,
       date: requestDate,
       reason: reason.value
@@ -133,7 +142,7 @@ const confirmWithdraw = async () => {
   const requestId = requestToWithdraw.request_id;
 
   try {
-    const response = await axios.delete('http://localhost:6001/flexibleArrangement/withdrawRequest', {
+    const response = await axios.delete(`${FLEXIBLE_ARRANGEMENT_API}/flexibleArrangement/withdrawRequest`, {
       data: { staff_id: parseInt(staffId, 10), request_id: requestId } // Ensure staff_id is an integer
     });
 
@@ -188,7 +197,7 @@ const autoDeleteRejectedRequest = async (requestId) => {
 
   try {
     // Send DELETE request to withdraw the rejected WFH request
-    const response = await axios.delete('http://localhost:6001/flexibleArrangement/withdrawRequest', {
+    const response = await axios.delete(`${FLEXIBLE_ARRANGEMENT_API}/flexibleArrangement/withdrawRequest`, {
       headers: { 'Content-Type': 'application/json' },
       data: {
         staff_id: parseInt(staffId, 10), // Ensure staff_id is sent as an integer
@@ -222,7 +231,7 @@ const withdrawWorkFromHome = async () => {
 
   try {
     // Send DELETE request to withdraw WFH request
-    const response = await axios.delete('http://localhost:6001/flexibleArrangement/withdrawRequest', {
+    const response = await axios.delete(`${FLEXIBLE_ARRANGEMENT_API}/flexibleArrangement/withdrawRequest`, {
       headers: { 'Content-Type': 'application/json' },
       data: {
         staff_id: parseInt(staffId, 10), // Ensure staff_id is sent as an integer
@@ -254,7 +263,7 @@ const fetchWfhDates = async () => {
     return;
   }
 
-  const url = `http://localhost:6001/flexibleArrangement/ownRequests/${staffId}`;
+  const url = `${FLEXIBLE_ARRANGEMENT_API}/flexibleArrangement/ownRequests/${staffId}`;
 
   try {
     const response = await axios.get(url);
@@ -356,7 +365,7 @@ const changeWfhDate = async () => {
 
   try {
     // Send the PUT request to the backend to update the WFH request
-    const response = await axios.put('http://localhost:6001/flexibleArrangement/updateRequest', {
+    const response = await axios.put(`${FLEXIBLE_ARRANGEMENT_API}/flexibleArrangement/updateRequest`, {
       staff_id: staffId,
       request_id: requestId,
       date: newDate,

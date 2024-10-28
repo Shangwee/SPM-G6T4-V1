@@ -1,9 +1,18 @@
 <script setup>
-import { onMounted, ref, onBeforeUnmount } from 'vue';
-import { useRouter } from 'vue-router';
-import { io } from 'socket.io-client';
+import { onMounted, ref, onBeforeUnmount } from "vue";
+import { useRouter } from "vue-router";
+import { io } from "socket.io-client";
 import axios from "axios";
-import NotificationToasterComponent from './NotificationToasterComponent.vue';
+import NotificationToasterComponent from "./NotificationToasterComponent.vue";
+
+const ACCOUNT_API = import.meta.env.VITE_ACCOUNT_API;
+const SCHEDULE_API = import.meta.env.VITE_SCHEDULE_API;
+const REQUEST_API = import.meta.env.VITE_REQUEST_API;
+const MEETING_API = import.meta.env.VITE_MEETING_API;
+const NOTIFICATION_API = import.meta.env.VITE_NOTIFICATION_API;
+const FLEXIBLE_ARRANGEMENT_API = import.meta.env.VITE_FLEXIBLE_ARRANGEMENT_API;
+const MANAGE_REQUEST_API = import.meta.env.VITE_MANAGE_REQUEST_API;
+const SCHEDULE_AGGREGATION_API = import.meta.env.VITE_SCHEDULE_AGGREGATION_API;
 
 const router = useRouter();
 const activeButton = ref(null);
@@ -11,23 +20,23 @@ const userRole = ref(null);
 const staffID = ref(null);
 const loading = ref(true); // Loading state
 const notificationCount = ref(0); // Notification count badge
-const socket = io('http://localhost:5005'); // Socket.io connection to the backend
+const socket = io(`${NOTIFICATION_API}`); // Socket.io connection to the backend
 
 // Fetch user role from backend
 const fetchUserRole = async () => {
   try {
-    staffID.value = JSON.parse(sessionStorage.getItem('staffID'));
-    const response = await fetch(`http://localhost:5001/user/${staffID.value}`, {
-      method: 'GET',
+    staffID.value = JSON.parse(sessionStorage.getItem("staffID"));
+    const response = await fetch(`${ACCOUNT_API}/user/${staffID.value}`, {
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json'
-      }
+        "Content-Type": "application/json",
+      },
     });
 
     const data = await response.json();
     userRole.value = data.Role;
   } catch (error) {
-    console.error('Failed to fetch user role:', error);
+    console.error("Failed to fetch user role:", error);
   } finally {
     loading.value = false; // Set loading to false after fetching
   }
@@ -35,50 +44,51 @@ const fetchUserRole = async () => {
 
 const fetchNotificationCount = async () => {
   try {
-    const response = await axios.get(`http://localhost:5005/api/notifications/count/${staffID.value}`);
+    const response = await axios.get(
+      `${NOTIFICATION_API}/api/notifications/count/${staffID.value}`
+    );
     console.log(response);
     notificationCount.value = response.data.count;
   } catch (error) {
-    console.error('Failed to fetch notification count:', error);
+    console.error("Failed to fetch notification count:", error);
   }
 };
 
 // Check if user logged in
 const checkLoggedIn = () => {
   if (!staffID.value) {
-    router.push('/login');
+    router.push("/login");
   }
 };
 
 const handleLogin = async () => {
   sessionStorage.clear();
-  router.push('/login');
+  router.push("/login");
 };
 
 const handleOwnSchedule = () => {
-  router.push('/ownschedule');
-  activeButton.value = 'Own Schedule';
+  router.push("/ownschedule");
+  activeButton.value = "Own Schedule";
 };
 
 const handleTeamSchedule = () => {
-  router.push('/teamschedule');
-  activeButton.value = 'Team Schedule';
+  router.push("/teamschedule");
+  activeButton.value = "Team Schedule";
 };
 
 const handleRequests = () => {
-  router.push('/requests');
-  activeButton.value = 'Requests';
+  router.push("/requests");
+  activeButton.value = "Requests";
 };
 
 const handleNotifications = () => {
-  router.push('/notifications');
-  activeButton.value = 'Notifications';
+  router.push("/notifications");
+  activeButton.value = "Notifications";
 };
 
 // Socket.io real-time notification listener
 const setupSocketListeners = () => {
-  socket.on('notification', (newNotificationCount) => {
-
+  socket.on("notification", (newNotificationCount) => {
     if (newNotificationCount.user_id === staffID.value) {
       // Increment the notification count when a new notification is received
       notificationCount.value += 1;
@@ -97,11 +107,12 @@ onMounted(() => {
 onBeforeUnmount(() => {
   socket.disconnect();
 });
-
 </script>
 
 <template>
-  <nav class="navbar navbar-expand-lg py-3 navbar-white bg-white border rounded-2 border-2 shadow-sm fixed-top">
+  <nav
+    class="navbar navbar-expand-lg py-3 navbar-white bg-white border rounded-2 border-2 shadow-sm fixed-top"
+  >
     <div class="container">
       <router-link to="/" class="navbar-brand">
         <h3 class="text-primary">All-in-One</h3>
@@ -120,15 +131,44 @@ onBeforeUnmount(() => {
       </button>
 
       <div id="navbarSupportedContent" class="collapse navbar-collapse">
-        <ul v-if="!loading" class="navbar-nav ml-auto">
-          <li class="nav-item btn nav-link navbar-btn-hover" :class="{ 'navbar-btn-active': activeButton === 'Own Schedule' }" @click="handleOwnSchedule">My Schedule</li>
-          <li class="nav-item btn nav-link navbar-btn-hover" :class="{ 'navbar-btn-active': activeButton === 'Team Schedule' }" @click="handleTeamSchedule">Team Schedule</li>
-          <!-- <li v-if="userRole === 2" class="nav-item btn nav-link navbar-btn-hover" :class="{ 'navbar-btn-active': activeButton === 'Arrangements' }" @click="handleArrangements">Arrangements</li> -->
-          <li v-if="userRole === 3 || userRole === 1" class="nav-item btn nav-link navbar-btn-hover" :class="{ 'navbar-btn-active': activeButton === 'Requests' }" @click="handleRequests">Requests</li>
-          <li class="nav-item btn ml-3 nav-link navbar-btn" @click="handleLogin">Logout</li>
-          <li class="nav-item btn nav-link navbar-btn-hover position-relative" @click="handleNotifications">
+        <ul class="navbar-nav ml-auto">
+          <li
+            class="nav-item btn nav-link navbar-btn-hover"
+            :class="{ 'navbar-btn-active': activeButton === 'Own Schedule' }"
+            @click="handleOwnSchedule"
+          >
+            My Schedule
+          </li>
+          <li
+            class="nav-item btn nav-link navbar-btn-hover"
+            :class="{ 'navbar-btn-active': activeButton === 'Team Schedule' }"
+            @click="handleTeamSchedule"
+          >
+            Team Schedule
+          </li>
+          <li
+            v-if="userRole === 3 || userRole === 1"
+            class="nav-item btn nav-link navbar-btn-hover"
+            :class="{ 'navbar-btn-active': activeButton === 'Requests' }"
+            @click="handleRequests"
+          >
+            Requests
+          </li>
+          <li
+            class="nav-item btn ml-3 nav-link navbar-btn"
+            @click="handleLogin"
+          >
+            Logout
+          </li>
+          <li
+            class="nav-item btn nav-link navbar-btn-hover position-relative"
+            @click="handleNotifications"
+          >
             Notifications
-            <span v-if="notificationCount > 0" class="badge bg-danger position-absolute top-0 start-100 translate-middle">
+            <span
+              v-if="notificationCount > 0"
+              class="badge bg-danger position-absolute top-0 start-100 translate-middle"
+            >
               {{ notificationCount }}
             </span>
           </li>
