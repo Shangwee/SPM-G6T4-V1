@@ -52,49 +52,36 @@
                 day
               );
 
-              return (
-                meeting.meetingstaffs.some(
-                  (staff) => String(staff.Staff_ID) === this.staffId
-                ) &&
-                meetingDate.getFullYear() === currentDay.getFullYear() &&
-                meetingDate.getMonth() === currentDay.getMonth() &&
-                meetingDate.getDate() === currentDay.getDate()
-              );
-            }),
-            wfh: this.schedule.some((entry) => {
-              const schedulesDate = new Date(entry.Date);
-              const currentDay = new Date(
-                this.currentDate.getFullYear(),
-                this.currentDate.getMonth(),
-                day
-              );
-              return (
-                schedulesDate.getFullYear() === currentDay.getFullYear() &&
-                schedulesDate.getMonth() === currentDay.getMonth() &&
-                schedulesDate.getDate() === currentDay.getDate()
-              );
-            }),
-            // conflict:
-            //   this.ownSchedule.some((e) => {
-            //     const scheduleDate = new Date(e.Date);
-            //     const currentDay = new Date(
-            //       this.currentDate.getFullYear(),
-            //       this.currentDate.getMonth(),
-            //       day
-            //     );
-            //     return (
-            //       scheduleDate.getFullYear() === currentDay.getFullYear() &&
-            //       scheduleDate.getMonth() === currentDay.getMonth() &&
-            //       scheduleDate.getDate() === currentDay.getDate()
-            //     );
-            //   }) &&
-            //   this.myMeetings.some((meeting) => {
-            //     const meetingDate = new Date(meeting.Date);
-            //     const currentDay = new Date(
-            //       this.currentDate.getFullYear(),
-            //       this.currentDate.getMonth(),
-            //       day
-            //     );
+            return (
+              meeting.meetingstaffs.some(
+                (staff) => String(staff.Staff_ID) === this.staffId
+              ) &&
+              meetingDate.getFullYear() === currentDay.getFullYear() &&
+              meetingDate.getMonth() === currentDay.getMonth() &&
+              meetingDate.getDate() === currentDay.getDate()
+            );
+          }),
+          // conflict:
+          //   this.ownSchedule.some((e) => {
+          //     const scheduleDate = new Date(e.Date);
+          //     const currentDay = new Date(
+          //       this.currentDate.getFullYear(),
+          //       this.currentDate.getMonth(),
+          //       day
+          //     );
+          //     return (
+          //       scheduleDate.getFullYear() === currentDay.getFullYear() &&
+          //       scheduleDate.getMonth() === currentDay.getMonth() &&
+          //       scheduleDate.getDate() === currentDay.getDate()
+          //     );
+          //   }) &&
+          //   this.myMeetings.some((meeting) => {
+          //     const meetingDate = new Date(meeting.Date);
+          //     const currentDay = new Date(
+          //       this.currentDate.getFullYear(),
+          //       this.currentDate.getMonth(),
+          //       day
+          //     );
 
             //     return (
             //       meeting.meetingstaffs.some(
@@ -114,7 +101,7 @@
       <div v-if="scheduleType === 'team'" class="legend">
         <div class="legend-item">
           <div class="wfh-color"></div>
-          <span class="legend-text">Team WFH</span>
+          <span class="legend-text">Personal WFH</span>
         </div>
         <div class="legend-item">
           <div class="meeting-color"></div>
@@ -160,7 +147,7 @@
             </select>
           </div>
 
-          <div class="form-group" style="flex: 1">
+          <div class="form-group" style="flex: 1;">
             <label for="team">Team</label>
             <select
               id="team"
@@ -169,15 +156,13 @@
               @change="filterByTeam"
             >
               <option value="">Select Teams</option>
-              <!-- <option v-if="userRole === 3" v-for="team in teams" :key="team" :value="team">
-                {{ reportingManagerNames[team] || team }}
-              </option> -->
-              <option v-for="team in teams" :key="team.id" :value="team.id">
-                {{ team.name }}
+              <option v-for="team in teams" :key="team" :value="team">
+                {{ team }}
               </option>
             </select>
           </div>
         </div>
+
 
         <div v-show="selectedDay" class="staff-schedule mt-4">
           <h5 class="schedule-title">
@@ -188,7 +173,7 @@
 
         <!-- Team members list -->
         <div class="row" v-if="schedule.length > 0">
-          <div class="col-md-6 mb-3">
+          <div class="col-md-6 mb-3 full-width">
             <div class="card home-card">
               <h6>Working from Home</h6>
               <ul class="staff-list">
@@ -273,7 +258,6 @@ export default {
       staffId: null,
       reportingManager: null,
       userRole: null,
-      userPosition: null,
       userDept: null,
       ownSchedule: [],
       schedule: [],
@@ -290,11 +274,6 @@ export default {
       filteredStaffWorkingFromHome: [],
       selectedDate: "",
       myMeetings: [],
-
-      allUsers: [], // Array to hold all users
-      scheduledUsers: [], // Array to hold scheduled users
-      usersNotInSchedule: [], // Array to hold users not in schedule
-      reportingManagerNames: {},
     };
   },
 
@@ -325,15 +304,12 @@ export default {
         if (this.userRole === 2) {
           console.log("Fetching staff team schedule for user role 2");
           this.fetchStaffTeamSchedule();
-          this.fetchUsersForStaff();
         } else if (this.userRole === 3) {
           this.fetchbyOwnDept();
           this.fetchManageTeamSchedule();
-          this.fetchUsersForManagers();
         } else if (this.userRole === 1) {
           // this.fetchbyOwnDept();
           this.fetchALLSchedule();
-          this.fetchUsersForDirectors();
         }
       } catch (error) {
         console.error("Error in created lifecycle:", error);
@@ -354,6 +330,8 @@ export default {
       }
     },
   },
+
+  
 
   computed: {
     currentYear() {
@@ -657,10 +635,10 @@ export default {
           .get(`${ACCOUNT_API}/user/${schedule.Staff_ID}`)
           .then((response) => {
             this.staffs.push(response.data);
-            // // get all teams
-            // if (!this.teams.includes(response.data.Position)) {
-            //   this.teams.push(response.data.Position);
-            // }
+            // get all teams
+            if (!this.teams.includes(response.data.Position)) {
+              this.teams.push(response.data.Position);
+            }
             this.filterStaff();
           })
           .catch((error) => {
@@ -699,10 +677,8 @@ export default {
           })
           .then((response) => {
             this.schedule = response.data;
-            console.log("Schedule data:", this.schedule);
             // this.fetchStaffTeamMembers(); // ** running before this.schedule retrieves
           });
-        this.filterUsersNotInSchedule();
       } catch (error) {
         this.schedule = [];
         console.error("Error fetching team schedule:", error);
@@ -716,10 +692,10 @@ export default {
           .get(`${ACCOUNT_API}/${schedule.Staff_ID}`)
           .then((response) => {
             this.staffs.push(response.data);
-            // // get all teams
-            // if (!this.teams.includes(response.data.Position)) {
-            //   this.teams.push(response.data.Position);
-            // }
+            // get all teams
+            if (!this.teams.includes(response.data.Position)) {
+              this.teams.push(response.data.Position);
+            }
           })
           .catch((error) => {
             console.error("Error fetching Reporting Manager:", error);
@@ -801,11 +777,9 @@ export default {
 
     filterByDepartment() {
       this.filterStaff();
-      this.fetchUsersNotInSchedule();
     },
     filterByTeam() {
       this.filterStaff();
-      this.fetchUsersNotInSchedule();
     },
     filterStaff() {
       // Filter staff based on selected department and team
@@ -813,7 +787,7 @@ export default {
         return (
           (!this.selectedDepartment ||
             staff.Dept === this.selectedDepartment) &&
-          (!this.selectedTeam || staff.Reporting_Manager === this.selectedTeam)
+          (!this.selectedTeam || staff.Position === this.selectedTeam)
         );
       });
     },
@@ -826,9 +800,9 @@ export default {
           .then((response) => {
             this.staffs.push(response.data);
             // get all teams
-            // if (!this.teams.includes(response.data.Position)) {
-            //   this.teams.push(response.data.Position);
-            // }
+            if (!this.teams.includes(response.data.Position)) {
+              this.teams.push(response.data.Position);
+            }
           })
           .catch((error) => {
             console.error("Error fetching Reporting Manager:", error);
@@ -859,9 +833,9 @@ export default {
         this.staffsDept.push(response.data);
 
         for (const staff of response.data) {
-          // if (!this.teams.includes(staff.Position)) {
-          //   this.teams.push(staff.Position);
-          // }
+          if (!this.teams.includes(staff.Position)) {
+            this.teams.push(staff.Position);
+          }
           if (!this.depts.includes(staff.Dept)) {
             this.depts.push(staff.Dept);
           }
@@ -874,19 +848,20 @@ export default {
       }
     },
 
+
     selectDay(day) {
-      if (this.selectedDay === day) {
-        this.deselectDay(); // Call deselectDay if the same day is selected
-      } else {
-        this.deselectDay();
+    if (this.selectedDay === day) {
+      this.deselectDay(); // Call deselectDay if the same day is selected
+    } else {
+      this.deselectDay();
 
-        // Reset filters and clear dropdown options when a new day is selected
-        this.selectedDepartment = ""; // Reset department filter
-        this.selectedTeam = ""; // Reset team filter
-        this.depts = []; // Clear department options
-        this.teams = []; // Clear team options
+      // Reset filters and clear dropdown options when a new day is selected
+      this.selectedDepartment = "";  // Reset department filter
+      this.selectedTeam = "";        // Reset team filter
+      this.depts = [];               // Clear department options
+      this.teams = [];               // Clear team options
 
-        this.filteredStaffWorkingFromHome = []; // Clear WFH staff list for the new day
+      this.filteredStaffWorkingFromHome = []; // Clear WFH staff list for the new day
 
         this.selectedDay = day; // Set the new day
         this.selectedDate = `${this.currentYear}-${String(
@@ -897,23 +872,22 @@ export default {
             : this.selectedDay
         }`;
 
-        // Only fetch or update schedule if the day has WFH requests
-        this.updateScheduleBasedOnRole();
-        this.filterStaff(); // Reapply staff filtering logic
-        this.fetchUsersNotInSchedule();
+      // Only fetch or update schedule if the day has WFH requests
+      this.updateScheduleBasedOnRole();
+      this.filterStaff(); // Reapply staff filtering logic
 
-        // Log state for debugging
-        console.log({
-          userRole: this.userRole,
-          staffId: this.staffId,
-          selectedDay: this.selectedDay,
-          schedule: this.schedule,
-          filteredStaffWorkingFromHome: this.filteredStaffWorkingFromHome,
-          depts: this.depts,
-          teams: this.teams,
-        });
-      }
-    },
+      // Log state for debugging
+      console.log({
+        userRole: this.userRole,
+        staffId: this.staffId,
+        selectedDay: this.selectedDay,
+        schedule: this.schedule,
+        filteredStaffWorkingFromHome: this.filteredStaffWorkingFromHome,
+        depts: this.depts,
+        teams: this.teams
+      });
+    }
+  },
 
     deselectDay() {
       this.selectedDay = null; // Deselect day
@@ -926,15 +900,12 @@ export default {
       if (this.userRole === 2) {
         // this.fetchReportingManager();
         this.fetchStaffTeamSchedule();
-        this.fetchUsersForStaff();
       } else if (this.userRole === 3) {
         this.fetchbyOwnDept();
         this.fetchManageTeamSchedule();
-        this.fetchUsersForManagers();
       } else if (this.userRole === 1) {
         // this.fetchbyOwnDept();
         this.fetchALLSchedule();
-        this.fetchUsersForDirectors();
       }
     },
 
@@ -974,6 +945,21 @@ export default {
   /* Expand to full width */
 }
 
+.filter-controls.full-width {
+  justify-content: flex-start;
+  /* Prevent misalignment */
+}
+
+.filter-controls .form-group.full-width {
+  width: 100%;
+  /* Ensure full width for form-group */
+}
+
+.filter-controls select {
+  width: 100%;
+  /* Ensure select element is also full width */
+}
+
 .calendar-container {
   display: flex;
   justify-content: space-between;
@@ -985,27 +971,11 @@ export default {
 
 .calendar {
   background-color: rgba(255, 255, 255, 0.9);
-  width: 58%; /* Fixed width for the calendar */
+  width: 70%;
+  /* Increased width from 58% to 65% */
+  margin: 0 auto;
   border-radius: 8px;
   padding: 10px;
-  box-sizing: border-box;
-}
-
-.staff-schedule-container {
-  width: 80%; /* Fixed width for the staff schedule */
-  display: flex;
-  flex-direction: column;
-  padding: 10px;
-  box-sizing: border-box;
-}
-
-.card {
-  width: 100%;
-  padding: 15px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: #fff;
-  box-sizing: border-box;
 }
 
 .calendar-grid {
@@ -1050,10 +1020,6 @@ export default {
   background-color: #ffc494;
 }
 
-.calendar-cell.wfh {
-  background-color: #b6c6fd;
-}
-
 .calendar-cell.conflict {
   background-color: #ff564a;
   color: white;
@@ -1072,6 +1038,14 @@ export default {
 
 .empty-day {
   background-color: #fafafa;
+}
+
+.staff-schedule-container {
+  width: 70%;
+  /* Increased width from 40% to 50% */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .filter-controls {
@@ -1110,31 +1084,39 @@ export default {
   margin-bottom: 20px;
 }
 
+.card {
+  flex-grow: 1;
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
 .office-card h6,
 .home-card h6 {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: bold;
   color: #333;
   border-bottom: 1px solid #ddd;
   padding-bottom: 10px;
 }
 
+/* Updated staff list to be more compact */
 .staff-list {
+  list-style-type: none;
+  /* Removed bullet points */
   padding-left: 0;
+  /* Removed extra padding */
   margin: 0;
 }
 
 .staff-item {
-  display: block;
-  padding: 5px 0;
   font-size: 0.85rem;
+  /* Reduced font size for compactness */
+  padding: 3px 0;
+  /* Reduced padding between list items */
   color: #555;
-  white-space: wrap;
-  border-bottom: 1px solid #ddd; /* Adds a line between each name */
-}
-
-.staff-item:last-child {
-  border-bottom: none; /* Remove the line for the last item */
 }
 
 @media (max-width: 768px) {
@@ -1145,8 +1127,16 @@ export default {
 
   .calendar,
   .staff-schedule-container {
-    width: 100%; /* Full width on smaller screens */
+    width: 100%;
     margin-bottom: 20px;
+  }
+
+  .calendar-cell {
+    height: 60px;
+  }
+
+  .card {
+    margin-bottom: 10px;
   }
 }
 

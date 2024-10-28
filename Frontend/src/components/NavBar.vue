@@ -181,37 +181,70 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.nav-link.aria-current {
-  background-color: #f5f5f5;
-  border-bottom: 2px solid #000;
-}
-.nav-item {
-  margin: 10px;
+/* Import Google Font Poppins */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap');
+
+.navbar {
+  font-family: 'Poppins', sans-serif; /* Apply the Poppins font for a clean, bold look */
+  font-size: 16px;
+  color: #333;
+  background-color: #f8f8f8;
 }
 
-.navbar-btn-hover:hover,
-.navbar-btn-active {
-  background-color: #ffffff;
-  color: rgb(0, 0, 0);
-  font-weight: bold;
+/* Navbar brand styling */
+.navbar-brand {
+  font-size: 20px;
+  font-weight: 700;
+  color: #007bff;
+  text-decoration: none;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
-.navbar-btn:hover {
-  background-color: #ffffff;
+
+.navbar-brand:hover,
+.navbar-brand:focus,
+.navbar-brand:active {
+  color: #0056b3;
+  background-color: transparent; /* Remove any background color on hover */
+  text-decoration: none; /* Remove underline or other text decoration on hover */
+  outline: none; /* Remove the outline on focus */
+  box-shadow: none; /* Remove any focus or active box shadow */
+}
+
+/* Navbar links styling */
+.navbar-nav .nav-link {
+  color: #333;
+  padding: 0 15px;
+  font-weight: 600;
+  text-transform: uppercase; /* Make all text uppercase for a similar look */
+  letter-spacing: 1px; /* Add slight spacing between letters */
+  transition: color 0.3s ease;
+}
+
+/* Active and hover styling */
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.navbar-btn-active {
+  color: #000;
+  font-weight: 700;
+}
+
+.logout-btn {
   color: red;
-  font-weight: bold;
+  font-weight: 700;
 }
 
+/* Spacing for navbar items */
 .navbar-nav {
   width: 100%;
   display: flex;
   justify-content: space-between;
+  align-items: center;
 }
+
 .navbar-nav .nav-item {
   flex: 1;
   text-align: center;
-}
-.navbar-brand:hover {
-  background-color: transparent; /* Change to the desired background color or none */
+  margin: 0 10px;
 }
 
 /* Style for notification badge */

@@ -39,6 +39,11 @@ export default {
 </script>
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+.mb-3 {
+  font-family: 'Poppins', sans-serif;
+}
 .calendar-wrapper {
   max-width: 100%; /* Adjust the width here */
   margin: 0 auto;   /* Center the calendar */

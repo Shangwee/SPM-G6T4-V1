@@ -26,5 +26,10 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+*.account_env
+*.meeting_env
+*.notification_env
+*.request_env
+*.schedule_env
 
 *.tsbuildinfo
