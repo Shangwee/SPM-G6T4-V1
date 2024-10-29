@@ -70,6 +70,7 @@ export default {
                     // Successful login
                     sessionStorage.setItem('staffID', data.Staff_ID);
                     sessionStorage.setItem('role', data.Role);
+                    sessionStorage.setItem('refreshIsTrue', true);
 
                     // Redirect user to the homepage or dashboard
                     this.$router.push('/');

@@ -5,13 +5,22 @@
         class="notification-header d-flex justify-content-between align-items-center pb-2 border-bottom"
       >
         <h3 class="h5 mb-0">Notifications</h3>
-        <button
-          class="btn btn-primary btn-sm"
-          @click="markAllAsRead"
-          :disabled="notifications.length === 0"
-        >
-          Mark All as Read
-        </button>
+        <div class="d-flex">
+          <button
+        class="btn btn-secondary btn-sm me-2"
+        @click="refreshNotifications"
+        :disabled="loading"
+          >
+        Refresh
+          </button>
+          <button
+        class="btn btn-primary btn-sm"
+        @click="markAllAsRead"
+        :disabled="notifications.length === 0"
+          >
+        Mark All as Read
+          </button>
+        </div>
       </div>
 
       <!-- Check if there are notifications -->
@@ -139,6 +148,9 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+    async refreshNotifications() {
+      location.reload(); // Reload the page to refresh notifications
     },
     async loadMoreNotifications() {
       // Load more notifications when Load More button is clicked
