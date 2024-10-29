@@ -246,7 +246,9 @@ def create_app():
 
         retrieve_requests = requests.get(f"{REQUEST_SERVICE_URL}{query_string}")
 
-        if retrieve_requests is not None:
+        print(retrieve_requests, "retrieve_requests is herer")
+
+        if retrieve_requests.status_code == 200:
             # combine the request with the employee information
             requests_data = retrieve_requests.json()
             for request_data in requests_data:
