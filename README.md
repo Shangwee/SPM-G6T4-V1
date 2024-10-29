@@ -46,8 +46,8 @@ input this into ```http://localhost:5173``` to start using the application
     - password: 2QN3Etdp
 
 - HR account
-    - user ID: 160306
-    - password: OQACVKHE
+    - user ID: 160008
+    - password: Etxwo7mF
 
 - Staff account 
     - user ID: 210028
