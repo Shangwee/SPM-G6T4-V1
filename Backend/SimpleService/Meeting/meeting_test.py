@@ -1,7 +1,7 @@
 import unittest
 import requests
 
-class TestScheduleAPI(unittest.TestCase): 
+class TestMeetingAPI(unittest.TestCase): 
     def setUp(self):
         self.API_URL = "http://host.docker.internal:5004"  
 

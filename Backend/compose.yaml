@@ -162,7 +162,7 @@ services:
       DB_PASSWORD: root
       DB_NAME: meeting
       DB_PORT: 3306
-    command: /bin/sh -c "sleep 20 && python -m unittest meeting_test.py"
+    command: /bin/sh -c "sleep 80 && python -m unittest meeting_test.py"
 
   #################################
   # notification: The Notification microservice
