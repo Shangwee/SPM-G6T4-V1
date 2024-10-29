@@ -1,341 +1,254 @@
 import unittest
-from unittest.mock import patch
-import json
-import os
+import requests
+from schedule_aggregation import app
 
 class TestScheduleAggregation(unittest.TestCase):
     
     def setUp(self):
-        # Directory where mock responses are saved (current directory)
-        self.mock_data_dir = os.getcwd()
-    
-    def load_mock_response(self, filename):
-        """Helper function to load mock data from a file."""
-        file_path = os.path.join(self.mock_data_dir, filename)
-        with open(file_path, 'r') as file:
-            return json.load(file)
+        self.app = app.test_client()
+        self.app.testing = True
 
-    @patch('requests.get')
-    def test_aggregate_schedules(self, mock_get):
-        # Load mock account data
-        mock_account_response = self.load_mock_response('user_151547.json')
-        mock_schedule_response = self.load_mock_response('schedule_151547.json')
+    def get_actual_response(self, url):
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.json()
 
-        # Set side effect for the mock requests.get call
-        # When first called (account service), return mock_account_response
-        # When second called (schedule service), return mock_schedule_response
-        mock_get.side_effect = [
-            unittest.mock.Mock(status_code=200, json=lambda: mock_account_response),
-            unittest.mock.Mock(status_code=200, json=lambda: mock_schedule_response)
+    def test_aggregate_schedules_single(self):
+        expected_response = [
+            {
+                "Country": "Singapore",
+                "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
+                "Dept": "Engineering",
+                "Email": "Koh.Loo@allinone.com.sg",
+                "Position": "Junior Engineers",
+                "Reporting_Manager": 151408,
+                "Request_ID": 1,
+                "Role": 2,
+                "Schedule_ID": 1,
+                "Staff_FName": "Koh",
+                "Staff_ID": 151547,
+                "Staff_LName": "Loo"
+            },
+            {
+                "Country": "Singapore",
+                "Date": "Thu, 26 Sep 2024 00:00:00 GMT",
+                "Dept": "Engineering",
+                "Email": "Koh.Loo@allinone.com.sg",
+                "Position": "Junior Engineers",
+                "Reporting_Manager": 151408,
+                "Request_ID": 3,
+                "Role": 2,
+                "Schedule_ID": 3,
+                "Staff_FName": "Koh",
+                "Staff_ID": 151547,
+                "Staff_LName": "Loo"
+            }
         ]
 
-        # Perform the test logic, which should use the mocked responses
-        response = self.client.get('/aggregateSchedule?type=Single&staff_id=151547&start_date=2024-09-24&end_date=2024-09-24')
+        actual_response = self.get_actual_response('http://host.docker.internal:6003/aggregateSchedule?type=Single&staff_id=151547&start_date=2024-09-24&end_date=2026-09-30')
+        self.assertEqual(actual_response, expected_response)
 
-        self.assertEqual(response.status_code, 200)
-        data = response.get_json()
-        
-        # Validate the augmented response
-        self.assertIn('augmented_schedules', data)
-        self.assertEqual(data['augmented_schedules'][0]['Staff_FName'], 'Koh')
-        self.assertEqual(data['augmented_schedules'][0]['Email'], 'Koh.Loo@allinone.com.sg')
+    def test_aggregate_schedules_team(self):
+        expected_response = [
+            {
+                "Country": "Singapore",
+                "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
+                "Dept": "Engineering",
+                "Email": "Koh.Loo@allinone.com.sg",
+                "Position": "Junior Engineers",
+                "Reporting_Manager": 151408,
+                "Request_ID": 1,
+                "Role": 2,
+                "Schedule_ID": 1,
+                "Staff_FName": "Koh",
+                "Staff_ID": 151547,
+                "Staff_LName": "Loo"
+            },
+            {
+                "Country": "Singapore",
+                "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
+                "Dept": "Engineering",
+                "Email": "Vannah.Seng@allinone.com.sg",
+                "Position": "Operation Planning Team",
+                "Reporting_Manager": 151408,
+                "Request_ID": 2,
+                "Role": 2,
+                "Schedule_ID": 2,
+                "Staff_FName": "Vannah",
+                "Staff_ID": 151602,
+                "Staff_LName": "Seng"
+            }
+        ]
 
-    # More tests can be added here, loading different mock responses as needed
+        actual_response = self.get_actual_response('http://host.docker.internal:6003/aggregateSchedule?type=Team&staff_id=151547&reporting_manager=151408&start_date=2024-09-01&end_date=2024-09-25')
+        self.assertEqual(actual_response, expected_response)
 
-if __name__ == '__main__':
-    unittest.main()
+    def test_aggregate_schedules_dept(self):
+        expected_response = [
+            {
+                "Country": "Singapore",
+                "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
+                "Dept": "Engineering",
+                "Email": "Koh.Loo@allinone.com.sg",
+                "Position": "Junior Engineers",
+                "Reporting_Manager": 151408,
+                "Request_ID": 1,
+                "Role": 2,
+                "Schedule_ID": 1,
+                "Staff_FName": "Koh",
+                "Staff_ID": 151547,
+                "Staff_LName": "Loo"
+            },
+            {
+                "Country": "Singapore",
+                "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
+                "Dept": "Engineering",
+                "Email": "Vannah.Seng@allinone.com.sg",
+                "Position": "Operation Planning Team",
+                "Reporting_Manager": 151408,
+                "Request_ID": 2,
+                "Role": 2,
+                "Schedule_ID": 2,
+                "Staff_FName": "Vannah",
+                "Staff_ID": 151602,
+                "Staff_LName": "Seng"
+            }
+        ]
+
+        actual_response = self.get_actual_response('http://host.docker.internal:6003/aggregateSchedule?type=Dept&staff_id=151547&dept=Engineering&start_date=2024-09-01&end_date=2024-09-24')
+        self.assertEqual(actual_response, expected_response)
+
+    def test_aggregate_schedules_all(self):
+        expected_response = [
+            {
+                "Country": "Singapore",
+                "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
+                "Dept": "Engineering",
+                "Email": "Koh.Loo@allinone.com.sg",
+                "Position": "Junior Engineers",
+                "Reporting_Manager": 151408,
+                "Request_ID": 1,
+                "Role": 2,
+                "Schedule_ID": 1,
+                "Staff_FName": "Koh",
+                "Staff_ID": 151547,
+                "Staff_LName": "Loo"
+            },
+            {
+                "Country": "Singapore",
+                "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
+                "Dept": "Engineering",
+                "Email": "Vannah.Seng@allinone.com.sg",
+                "Position": "Operation Planning Team",
+                "Reporting_Manager": 151408,
+                "Request_ID": 2,
+                "Role": 2,
+                "Schedule_ID": 2,
+                "Staff_FName": "Vannah",
+                "Staff_ID": 151602,
+                "Staff_LName": "Seng"
+            },
+            {
+                "Country": "Singapore",
+                "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
+                "Dept": "Sales",
+                "Email": "Emma.Heng@allinone.com.sg",
+                "Position": "Account Manager",
+                "Reporting_Manager": 140894,
+                "Request_ID": 8,
+                "Role": 2,
+                "Schedule_ID": 8,
+                "Staff_FName": "Emma",
+                "Staff_ID": 140025,
+                "Staff_LName": "Heng"
+            },
+            {
+                "Country": "Singapore",
+                "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
+                "Dept": "Sales",
+                "Email": "Mary.Teo@allinone.com.sg",
+                "Position": "Account Manager",
+                "Reporting_Manager": 140894,
+                "Request_ID": 9,
+                "Role": 2,
+                "Schedule_ID": 9,
+                "Staff_FName": "Mary",
+                "Staff_ID": 140004,
+                "Staff_LName": "Teo"
+            },
+            {
+                "Country": "Singapore",
+                "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
+                "Dept": "Sales",
+                "Email": "Oliva.Lim@allinone.com.sg",
+                "Position": "Account Manager",
+                "Reporting_Manager": 140894,
+                "Request_ID": 10,
+                "Role": 2,
+                "Schedule_ID": 10,
+                "Staff_FName": "Oliva",
+                "Staff_ID": 140015,
+                "Staff_LName": "Lim"
+            },
+            {
+                "Country": "Singapore",
+                "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
+                "Dept": "Sales",
+                "Email": "Heng.Chan@allinone.com.sg",
+                "Position": "Account Manager",
+                "Reporting_Manager": 140008,
+                "Request_ID": 11,
+                "Role": 2,
+                "Schedule_ID": 11,
+                "Staff_FName": "Heng",
+                "Staff_ID": 140880,
+                "Staff_LName": "Chan"
+            }
+        ]
+
+        actual_response = self.get_actual_response('http://host.docker.internal:6003/aggregateSchedule?type=All&staff_id=140001&start_date=2024-09-24&end_date=2024-09-24')
+        self.assertEqual(actual_response, expected_response)
+    def test_aggregate_schedules_single_error(self):
+        # Simulate an error response from the API
+        with self.assertRaises(requests.exceptions.HTTPError):
+            self.get_actual_response('http://host.docker.internal:6003/aggregateSchedule?type=Single&staff_id=invalid_id&start_date=2024-09-24&end_date=2026-09-30')
+
+    def test_aggregate_schedules_team_error(self):
+        # Simulate an error response from the API
+        with self.assertRaises(requests.exceptions.HTTPError):
+            self.get_actual_response('http://host.docker.internal:6003/aggregateSchedule?type=Team&staff_id=151547&reporting_manager=invalid&start_date=2024-09-01&end_date=2024-09-25')
+
+    def test_aggregate_schedules_dept_error(self):
+        # Simulate an error response from the API
+        with self.assertRaises(requests.exceptions.HTTPError):
+            self.get_actual_response('http://host.docker.internal:6003/aggregateSchedule?type=Dept&staff_id=151547&dept=wasd&start_date=2024-09-01&end_date=2024-09-24')
+
+    def test_aggregate_schedules_all_error(self):
+        # Simulate an error response from the API
+        with self.assertRaises(requests.exceptions.HTTPError):
+            self.get_actual_response('http://host.docker.internal:6003/aggregateSchedule?type=All&staff_id=invalid_id&start_date=2024-09-24&end_date=2024-09-24')
 
 
-    # Test for "Team" type aggregation
-    @patch('schedule_aggregation.requests.get')  # <-- Correct the path here
-    def test_team_schedule(self, mock_get):
-        mock_get.return_value.json.return_value = {
-    "augmented_schedules": [
-        {
-            "Country": "Singapore",
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Dept": "Engineering",
-            "Email": "Koh.Loo@allinone.com.sg",
-            "Position": "Junior Engineers",
-            "Reporting_Manager": 151408,
-            "Request_ID": 10,
-            "Role": 2,
-            "Schedule_ID": 1,
-            "Staff_FName": "Koh",
-            "Staff_ID": 151547,
-            "Staff_LName": "Loo"
-        },
-        {
-            "Country": "Singapore",
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Dept": "Engineering",
-            "Email": "Vannah.Seng@allinone.com.sg",
-            "Position": "Operation Planning Team",
-            "Reporting_Manager": 151408,
-            "Request_ID": 11,
-            "Role": 2,
-            "Schedule_ID": 2,
-            "Staff_FName": "Vannah",
-            "Staff_ID": 151602,
-            "Staff_LName": "Seng"
-        },
-        {
-            "Country": "Singapore",
-            "Date": "Thu, 26 Sep 2024 00:00:00 GMT",
-            "Dept": "Engineering",
-            "Email": "Koh.Loo@allinone.com.sg",
-            "Position": "Junior Engineers",
-            "Reporting_Manager": 151408,
-            "Request_ID": 12,
-            "Role": 2,
-            "Schedule_ID": 3,
-            "Staff_FName": "Koh",
-            "Staff_ID": 151547,
-            "Staff_LName": "Loo"
-        },
-        {
-            "Country": "Vietnam",
-            "Date": "Thu, 26 Sep 2024 00:00:00 GMT",
-            "Dept": "Engineering",
-            "Email": "Phalla.Yong@allinone.com.vn",
-            "Position": "Junior Engineers",
-            "Reporting_Manager": 151408,
-            "Request_ID": 13,
-            "Role": 2,
-            "Schedule_ID": 4,
-            "Staff_FName": "Phalla",
-            "Staff_ID": 151459,
-            "Staff_LName": "Yong"
-        }
-    ],
-    "original_schedules": [
-        {
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Request_ID": 10,
-            "Schedule_ID": 1,
-            "Staff_ID": 151547
-        },
-        {
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Request_ID": 11,
-            "Schedule_ID": 2,
-            "Staff_ID": 151602
-        },
-        {
-            "Date": "Thu, 26 Sep 2024 00:00:00 GMT",
-            "Request_ID": 12,
-            "Schedule_ID": 3,
-            "Staff_ID": 151547
-        },
-        {
-            "Date": "Thu, 26 Sep 2024 00:00:00 GMT",
-            "Request_ID": 13,
-            "Schedule_ID": 4,
-            "Staff_ID": 151459
-        }
-    ]
-}
-        mock_get.return_value.status_code = 200
+    def test_invalid_date_format(self):
+        response = self.app.get('/aggregateSchedule?type=Single&staff_id=151547&start_date=invalid_date&end_date=2024-09-30')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.get_json())
 
-        response = self.client.get('/aggregateSchedule?type=Team&staff_id=151547&reporting_manager=151408&start_date=2024-09-01&end_date=2024-09-30')
-            # Add this to see what the mock is returning
-        print(f"Mock returned: {mock_get.return_value.json.return_value}")
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('augmented_schedules', response.json)
+    def test_start_date_after_end_date(self):
+        response = self.app.get('/aggregateSchedule?type=Single&staff_id=151547&start_date=2024-10-01&end_date=2024-09-30')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.get_json())
 
-    # Test for "Department" type aggregation
-    @patch('schedule_aggregation.requests.get')  # <-- Correct the path here
-    def test_department_schedule(self, mock_get):
-        mock_get.return_value.json.return_value = {
-    "augmented_schedules": [
-        {
-            "Country": "Singapore",
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Dept": "Engineering",
-            "Email": "Koh.Loo@allinone.com.sg",
-            "Position": "Junior Engineers",
-            "Reporting_Manager": 151408,
-            "Request_ID": 10,
-            "Role": 2,
-            "Schedule_ID": 1,
-            "Staff_FName": "Koh",
-            "Staff_ID": 151547,
-            "Staff_LName": "Loo"
-        },
-        {
-            "Country": "Singapore",
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Dept": "Engineering",
-            "Email": "Vannah.Seng@allinone.com.sg",
-            "Position": "Operation Planning Team",
-            "Reporting_Manager": 151408,
-            "Request_ID": 11,
-            "Role": 2,
-            "Schedule_ID": 2,
-            "Staff_FName": "Vannah",
-            "Staff_ID": 151602,
-            "Staff_LName": "Seng"
-        }
-    ],
-    "original_schedules": [
-        {
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Request_ID": 10,
-            "Schedule_ID": 1,
-            "Staff_ID": 151547
-        },
-        {
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Request_ID": 11,
-            "Schedule_ID": 2,
-            "Staff_ID": 151602
-        }
-    ]
-}
-        mock_get.return_value.status_code = 200
+    def test_unauthorized_access(self):
+        response = self.app.get('/aggregateSchedule?type=All&staff_id=151547&start_date=2024-09-24&end_date=2024-09-24')
+        self.assertEqual(response.status_code, 403)
+        self.assertIn('error', response.get_json())
 
-        response = self.client.get('/aggregateSchedule?type=Dept&staff_id=151547&dept=Engineering&start_date=2024-09-01&end_date=2024-09-24')
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('augmented_schedules', response.json)
+    def test_no_schedules_found(self):
+        response = self.app.get('/aggregateSchedule?type=Single&staff_id=151547&start_date=2024-01-01&end_date=2024-01-02')
+        self.assertEqual(response.status_code, 404)
+        self.assertIn('error', response.get_json())
 
-    # Test for "All" type aggregation (only HR or Director should access)
-    @patch('schedule_aggregation.get_user_position')
-    @patch('schedule_aggregation.requests.get')  # <-- Correct the path here
-    def test_authorized_all_schedule(self, mock_get_user_position, mock_get):
-        mock_get_user_position.return_value = 'Director'
-        mock_get.return_value.json.return_value = {
-    "augmented_schedules": [
-        {
-            "Country": "Singapore",
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Dept": "Engineering",
-            "Email": "Koh.Loo@allinone.com.sg",
-            "Position": "Junior Engineers",
-            "Reporting_Manager": 151408,
-            "Request_ID": 10,
-            "Role": 2,
-            "Schedule_ID": 1,
-            "Staff_FName": "Koh",
-            "Staff_ID": 151547,
-            "Staff_LName": "Loo"
-        },
-        {
-            "Country": "Singapore",
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Dept": "Engineering",
-            "Email": "Vannah.Seng@allinone.com.sg",
-            "Position": "Operation Planning Team",
-            "Reporting_Manager": 151408,
-            "Request_ID": 11,
-            "Role": 2,
-            "Schedule_ID": 2,
-            "Staff_FName": "Vannah",
-            "Staff_ID": 151602,
-            "Staff_LName": "Seng"
-        },
-        {
-            "Country": "Singapore",
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Dept": "Sales",
-            "Email": "Emma.Heng@allinone.com.sg",
-            "Position": "Account Manager",
-            "Reporting_Manager": 140894,
-            "Request_ID": 17,
-            "Role": 2,
-            "Schedule_ID": 8,
-            "Staff_FName": "Emma",
-            "Staff_ID": 140025,
-            "Staff_LName": "Heng"
-        },
-        {
-            "Country": "Singapore",
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Dept": "Sales",
-            "Email": "Mary.Teo@allinone.com.sg",
-            "Position": "Account Manager",
-            "Reporting_Manager": 140894,
-            "Request_ID": 18,
-            "Role": 2,
-            "Schedule_ID": 9,
-            "Staff_FName": "Mary",
-            "Staff_ID": 140004,
-            "Staff_LName": "Teo"
-        },
-        {
-            "Country": "Singapore",
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Dept": "Sales",
-            "Email": "Oliva.Lim@allinone.com.sg",
-            "Position": "Account Manager",
-            "Reporting_Manager": 140894,
-            "Request_ID": 19,
-            "Role": 2,
-            "Schedule_ID": 10,
-            "Staff_FName": "Oliva",
-            "Staff_ID": 140015,
-            "Staff_LName": "Lim"
-        },
-        {
-            "Country": "Singapore",
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Dept": "Sales",
-            "Email": "Heng.Chan@allinone.com.sg",
-            "Position": "Account Manager",
-            "Reporting_Manager": 140008,
-            "Request_ID": 20,
-            "Role": 2,
-            "Schedule_ID": 11,
-            "Staff_FName": "Heng",
-            "Staff_ID": 140880,
-            "Staff_LName": "Chan"
-        }
-    ],
-    "original_schedules": [
-        {
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Request_ID": 10,
-            "Schedule_ID": 1,
-            "Staff_ID": 151547
-        },
-        {
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Request_ID": 11,
-            "Schedule_ID": 2,
-            "Staff_ID": 151602
-        },
-        {
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Request_ID": 17,
-            "Schedule_ID": 8,
-            "Staff_ID": 140025
-        },
-        {
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Request_ID": 18,
-            "Schedule_ID": 9,
-            "Staff_ID": 140004
-        },
-        {
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Request_ID": 19,
-            "Schedule_ID": 10,
-            "Staff_ID": 140015
-        },
-        {
-            "Date": "Tue, 24 Sep 2024 00:00:00 GMT",
-            "Request_ID": 20,
-            "Schedule_ID": 11,
-            "Staff_ID": 140880
-        }
-    ]
-}
-        mock_get.return_value.status_code = 200
-
-        response = self.client.get('/aggregateSchedule?type=All&staff_id=140001&start_date=2024-09-24&end_date=2026-09-30')
-        print(f"Mocked user position: {mock_get_user_position.return_value}")
-        print(f"Response: {response.status_code}")
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('augmented_schedules', response.json)
 
 if __name__ == '__main__':
     unittest.main()
