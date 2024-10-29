@@ -180,6 +180,23 @@ services:
       - ./SimpleService/Meeting/meetingstaffs.csv:/var/lib/mysql-files/meetingstaffs.csv # Mount the file
 
   #################################
+  # Request test: testing the Request microservice
+  #################################
+  meeting_test:
+    build: ./SimpleService/Meeting
+    image: gcr.io/spmprojecttest/meeting_test:1.0 # Updated for GCR
+    depends_on:
+      - meeting_db
+      - meeting
+    environment:
+      DB_HOST: meeting_db
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: meeting
+      DB_PORT: 3306
+    command: /bin/sh -c "sleep 20 && python -m unittest meeting_test.py"
+
+  #################################
   # notification: The Notification microservice
   #################################
   notification:
