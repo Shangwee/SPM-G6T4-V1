@@ -28,12 +28,20 @@ const userRole = ref(null);
 const reportingManagerName = ref(null);
 
 const staffId = sessionStorage.getItem('staffID');
+const RefreshIsTrue = sessionStorage.getItem('refreshIsTrue');
 
 const formatDate = (date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+};
+
+const refreshonload = () => {
+  if (RefreshIsTrue === 'true') {
+    location.reload();
+    sessionStorage.setItem('refreshIsTrue', false);
+  }
 };
 
 const formatDateDisplay = (date) => {
@@ -170,6 +178,7 @@ const fetchPendingRequests = async () => {
 };
 
 onMounted(async () => {
+  await refreshonload();
   await fetchUserDetails();
   await fetchReportingManager();
   await fetchTotalTeamCount(); // Fetch department count first
