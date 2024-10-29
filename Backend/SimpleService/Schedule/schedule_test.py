@@ -3,7 +3,7 @@ import requests
 
 class TestScheduleAPI(unittest.TestCase): 
     def setUp(self):
-        self.API_URL = "http://host.docker.internal:5002"  
+        self.API_URL = "http://192.168.0.10:5002"  
 
     # Test for getting a personal schedule
     def test_get_personal_schedule(self):
