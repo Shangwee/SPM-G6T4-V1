@@ -3,7 +3,7 @@ import requests
 
 class TestMeetingAPI(unittest.TestCase): 
     def setUp(self):
-        self.API_URL = "http://192.168.0.10:5004"  
+        self.API_URL = "http://10.128.0.2:5004"  
 
 
 

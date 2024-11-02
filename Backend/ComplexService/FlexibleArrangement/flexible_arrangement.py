@@ -7,10 +7,10 @@ app = Flask(__name__)
 CORS(app)
 
 # Microservice URL configurations
-ACCOUNTS_SERVICE_URL = "http://192.168.0.10:5001"
-SCHEDULE_SERVICE_URL = "http://192.168.0.10:5002"
-REQUEST_SERVICE_URL = "http://192.168.0.10:5003"
-NOTIFICATION_SERVICE_URL = "http://192.168.0.10:5005"
+ACCOUNTS_SERVICE_URL = "http://10.128.0.2:5001"
+SCHEDULE_SERVICE_URL = "http://10.128.0.2:5002"
+REQUEST_SERVICE_URL = "http://10.128.0.2:5003"
+NOTIFICATION_SERVICE_URL = "http://10.128.0.2:5005"
 
 def create_app():
     app = Flask(__name__)

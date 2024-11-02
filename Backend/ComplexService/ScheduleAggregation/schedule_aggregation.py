@@ -10,8 +10,8 @@ app = Flask(__name__)
 CORS(app)
 
 # Microservice URL configurations
-ACCOUNTS_SERVICE_URL = "http://192.168.0.10:5001"
-SCHEDULE_SERVICE_URL = "http://192.168.0.10:5002"
+ACCOUNTS_SERVICE_URL = "http://10.128.0.2:5001"
+SCHEDULE_SERVICE_URL = "http://10.128.0.2:5002"
 
 # Schedule aggregation based on type (team, department, or all)
 @app.route('/aggregateSchedule', methods=['GET'])
