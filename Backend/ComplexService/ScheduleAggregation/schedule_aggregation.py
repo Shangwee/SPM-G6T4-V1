@@ -35,28 +35,28 @@ def aggregate_schedules():
             return jsonify({'error': 'Staff ID not found'}), 400
         
         schedules = get_schedule_by_staff_id(staff_id, start_date, end_date)
-        print(f"Schedule service response: {schedules}")  # Output the schedule service response
+        # print(f"Schedule service response: {schedules}")  # Output the schedule service response
             
     elif schedule_type == 'Team':
         if not reporting_manager:
             return jsonify({'error': 'Reporting Manager is required for team-based aggregation'}), 400
         staff_ids = get_staff_ids_by_team(reporting_manager)
         schedules = get_schedules_by_staff_ids(staff_ids, start_date, end_date)
-        print(f"Schedule service response: {schedules}")  # Output the schedule service response
+        # print(f"Schedule service response: {schedules}")  # Output the schedule service response
 
     elif schedule_type == 'Dept':
         if not dept:
             return jsonify({'error': 'Department is required for department-based aggregation'}), 400
         staff_ids = get_staff_ids_by_department(dept)
         schedules = get_schedules_by_staff_ids(staff_ids, start_date, end_date)
-        print(f"Schedule service response: {schedules}")  # Output the schedule service response
+        # print(f"Schedule service response: {schedules}")  # Output the schedule service response
 
     elif schedule_type == 'All':
         # Validate role for "All" type schedules: Only allow HR and Directors
         if not validate_position(position):
             return jsonify({'error': 'Unauthorized access: Only HR or Directors can access all schedules'}), 403
         schedules = get_all_schedules(start_date, end_date)
-        print(f"Schedule service response: {schedules}")  # Output the schedule service response
+        # print(f"Schedule service response: {schedules}")  # Output the schedule service response
 
     # Initialize lists to collect original and augmented schedules
     augmented_schedules = []  # This will store the schedules after augmentation with user data
@@ -75,7 +75,7 @@ def aggregate_schedules():
         try:
             print(f"Fetching data for Staff_ID: {staff_id}")  # Debugging print statement
             response = requests.get(f"{ACCOUNTS_SERVICE_URL}/user/{staff_id}")
-            print(f"Account service response for Staff_ID {staff_id}: {response.text}")  # Output account service response
+            # print(f"Account service response for Staff_ID {staff_id}: {response.text}")  # Output account service response
             response.raise_for_status()
             user_data = response.json()
 
@@ -108,16 +108,6 @@ def aggregate_schedules():
     return jsonify(augmented_schedules), 200
 
 
-# # Helper function to get schedules by staff IDs #TODO: Keep or delete idk see how
-# def get_schedules_by_staff_ids(staff_ids, start_date, end_date):
-#     try:
-#         # Fetch schedules based on staff IDs with optional date filtering
-#         response = requests.get(f"{SCHEDULE_SERVICE_URL}/schedule/personal?staff_ids={','.join(map(str, staff_ids))}&start_date={start_date}&end_date={end_date}")
-#         print(response.text)  # Log the response body
-#         response.raise_for_status()
-#         return response.json()
-#     except requests.exceptions.RequestException as e:
-#         return {'error': f'Failed to retrieve schedules: {str(e)}'}
 
 # Utility function to validate date format
 def validate_date(date_string):
@@ -163,7 +153,7 @@ def get_user_position(staff_id):
     try:
         # Call the accounts microservice to get user details
         response = requests.get(f"{ACCOUNTS_SERVICE_URL}/user/{staff_id}")
-        print(response.text)  # Log the response body
+        # print(response.text)  # Log the response body
         response.raise_for_status()  # Will raise an HTTPError for bad responses
         
         user_data = response.json()
@@ -182,7 +172,7 @@ def get_schedule_by_staff_id(staff_id,start_date,end_date):
     
     try:
         response = requests.get(f"{SCHEDULE_SERVICE_URL}/schedule/personal/{staff_id}?start_date={start_date}&end_date={end_date}")
-        print(response.text)  # Log the response body
+        # print(response.text)  # Log the response body
         response.raise_for_status()
 
         schedule = response.json()  
@@ -196,7 +186,7 @@ def get_schedule_by_staff_id(staff_id,start_date,end_date):
 def get_staff_ids_by_department(department):
     try:
         response = requests.get(f"{ACCOUNTS_SERVICE_URL}/users?dept={department}")
-        print(response.text)  # Log the response body
+        # print(response.text)  # Log the response body
         response.raise_for_status()
         
         # Assuming the response is a list of users
@@ -214,7 +204,7 @@ def get_staff_ids_by_department(department):
 def get_staff_ids_by_team(reporting_manager):
     try:
         response = requests.get(f"{ACCOUNTS_SERVICE_URL}/users?Reporting_Manager={reporting_manager}")
-        print(response.text)  # Log the response body
+        # print(response.text)  # Log the response body
         response.raise_for_status()
         
         # Assuming the response is a list of users
@@ -236,7 +226,7 @@ def get_schedules_by_staff_ids(staff_ids,start_date,end_date):
         # Convert list of staff_ids into a comma-separated string so that can pass as param
         staff_ids = ','.join(map(str, staff_ids))
         response = requests.get(f"{SCHEDULE_SERVICE_URL}/schedule/group?staff_ids={staff_ids}&start_date={start_date}&end_date={end_date}")
-        print(response.text)  # Log the response body
+        # print(response.text)  # Log the response body
         response.raise_for_status()
 
         schedules = response.json()  
@@ -250,7 +240,7 @@ def get_schedules_by_staff_ids(staff_ids,start_date,end_date):
 def get_all_schedules(start_date, end_date):
     try:
         response = requests.get(f"{SCHEDULE_SERVICE_URL}/schedule/organisation?start_date={start_date}&end_date={end_date}")
-        print(response.text)  # Log the response body
+        # print(response.text)  # Log the response body
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:

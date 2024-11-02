@@ -1,7 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flexiblearrangement-deployment
+  name: flexiblearrangement
+  namespace: spmproject
 spec:
   replicas: 1
   selector:
@@ -25,6 +26,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: flexiblearrangement-service
+  namespace: spmproject
 spec:
   selector:
     app: flexiblearrangement
@@ -32,13 +34,12 @@ spec:
     - protocol: TCP
       port: 6001
       targetPort: 6001
-  type: LoadBalancer  # Optional: Use NodePort if not using a cloud provider
-
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: managerequest-deployment
+  name: managerequest
+  namespace: spmproject
 spec:
   replicas: 1
   selector:
@@ -62,6 +63,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: managerequest-service
+  namespace: spmproject
 spec:
   selector:
     app: managerequest
@@ -69,32 +71,12 @@ spec:
     - protocol: TCP
       port: 6002
       targetPort: 6002
-  type: LoadBalancer  # Optional: Use NodePort if not using a cloud provider
-
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: managerequest-test-deployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: managerequest-test
-  template:
-    metadata:
-      labels:
-        app: managerequest-test
-    spec:
-      containers:
-        - name: managerequest-test
-          image: gcr.io/spmprojecttest/managerequest_test:1.0
-          command: ["/bin/sh", "-c", "sleep 20 && python -m unittest manage_request_test.py"]
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: scheduleaggregation-deployment
+  name: scheduleaggregation
+  namespace: spmproject
 spec:
   replicas: 1
   selector:
@@ -118,6 +100,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: scheduleaggregation-service
+  namespace: spmproject
 spec:
   selector:
     app: scheduleaggregation
@@ -125,4 +108,4 @@ spec:
     - protocol: TCP
       port: 6003
       targetPort: 6003
-  type: LoadBalancer  # Optional: Use NodePort if not using a cloud provider
+---
