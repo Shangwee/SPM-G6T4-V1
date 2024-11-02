@@ -43,9 +43,9 @@ class TestManageRequestAPI(flask_testing.TestCase):
         response = self.client.post('/manageRequest/accept', json={"staff_id": 150008, "request_id": 4})
         self.assertEqual(response.status_code, 401)
 
-    # def test_accept_request(self):
-    #     response = self.client.post('/manageRequest/accept', json={"staff_id": 210001, "request_id": 4})
-    #     self.assertEqual(response.status_code, 200)
+    def test_accept_request(self):
+        response = self.client.post('/manageRequest/accept', json={"staff_id": 210001, "request_id": 4})
+        self.assertEqual(response.status_code, 200)
 
     def test_accept_request_not_allowed_when_accepted_already(self):
         response = self.client.post('/manageRequest/accept', json={"staff_id": 210001, "request_id": 5})
