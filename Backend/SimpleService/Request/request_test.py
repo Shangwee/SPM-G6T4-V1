@@ -3,7 +3,7 @@ import requests
 
 class TestRequestAPI(unittest.TestCase):
     def setUp(self):
-        self.API_URL = "http://10.128.0.2:5003"
+        self.API_URL = "http://10.128.0.3:5003"
     
     def test_get_requests(self):
         response = requests.get(self.API_URL + "/request")

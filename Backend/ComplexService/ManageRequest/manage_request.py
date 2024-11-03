@@ -4,10 +4,10 @@ from datetime import datetime
 from flask_cors import CORS
 
 # Microservice URL configurations
-ACCOUNTS_SERVICE_URL = "http://10.128.0.2:5001"
-SCHEDULE_SERVICE_URL = "http://10.128.0.2:5002"
-REQUEST_SERVICE_URL = "http://10.128.0.2:5003"
-NOTIFICATION_SERVICE_URL = "http://10.128.0.2:5005"
+ACCOUNTS_SERVICE_URL = "http://10.128.0.3:5001"
+SCHEDULE_SERVICE_URL = "http://10.128.0.3:5002"
+REQUEST_SERVICE_URL = "http://10.128.0.3:5003"
+NOTIFICATION_SERVICE_URL = "http://10.128.0.3:5005"
 
 def create_app():
     app = Flask(__name__)

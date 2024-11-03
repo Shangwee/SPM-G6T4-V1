@@ -3,8 +3,8 @@ import flask_testing
 import requests
 from flexible_arrangement import create_app
 
-REQUEST_SERVICE_URL = "http://10.128.0.2:5003"
-SCHEDULE_SERVICE_URL = "http://10.128.0.2:5002"
+REQUEST_SERVICE_URL = "http://10.128.0.3:5003"
+SCHEDULE_SERVICE_URL = "http://10.128.0.3:5002"
 
 request_id = 0
 
