@@ -1,4 +1,4 @@
-# SPM-G6T4-Testing
+# SPM-G6T4-V1
 
 ### Note
 
@@ -39,19 +39,3 @@ input this into ```http://localhost:5173``` to start using the application
 
 ### Access deployed version
 https://spm-g6-t4-testing.vercel.app/login
-
-### test accounts available to use
-
-- Role 1: HR
-    - user ID: 210001
-    - password: 2QN3Etdp
-
-- Role 2: Staff 
-    - user ID: 210028
-    - password: eVZntP8I
-
-- Role 3: Manager
-    - user ID: 140879
-    - password: O72kpwlO
-
-* ID 210001 can approve for ID 210028
